@@ -51,3 +51,23 @@ def test_todo_correcto_devuelve_resumen_con_firmas():
     r = check_source(FACT)
     assert r == {"ok": True, "examples": 2,
                  "functions": [{"name": "factorial", "signature": "factorial(n: Int) -> Int", "examples": 2}]}
+
+
+CLAMP_DOBLE = """
+fn clamp(x: Int, lo: Int, hi: Int) -> Int
+  requires lo <= hi
+  ensures result >= lo
+  ensures result <= hi
+  effects pure
+  example clamp(5, 1, 10) == 5
+  example clamp(-5, 1, 10) == 1
+{ if x < lo then lo else if x > hi then hi else x }
+"""
+
+
+def test_varias_clausulas_ensures_son_conjuncion():
+    """Hallazgo de la medición 2026-09-02: el modelo escribe dos `ensures` como en Dafny."""
+    assert check_source(CLAMP_DOBLE)["ok"]
+    roto = CLAMP_DOBLE.replace("ensures result <= hi", "ensures result <= 4")
+    e = fails_with(roto, "E201")
+    assert "result <= 4" in e.detail

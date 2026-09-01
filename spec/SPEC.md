@@ -29,7 +29,8 @@ fn max(a: Int, b: Int) -> Int
 Rules:
 
 - `requires`, `ensures`, `effects` and at least one `example` are **mandatory**.
-  Omitting any of them is error `E100`.
+  Omitting any of them is error `E100`. `requires` and `ensures` may appear several
+  times; all of them must hold.
 - `result` names the return value inside `ensures`.
 - `effects` is `pure` in v0. Other effects (`io`, `random`) are reserved.
 - Examples are executed at compile time. A failing example is error `E200`.
@@ -38,6 +39,7 @@ Rules:
 
 Literals (`42`, `true`, `"text"`, `[1, 2]`, `Some(3)`, `None`) · `if c then a else b` ·
 Int arithmetic `+ - * / %` (`/` is integer division rounding down, like Python `//`) ·
+`and` / `or` short-circuit: the right side is not evaluated when the left decides ·
 `++` concatenates two `List` or two `Text` · comparison `== != < <= > >=` (`<` family on
 Int only) · `and or not` · function call `f(x, y)` · `match` on `Option` and `List`:
 

@@ -81,19 +81,16 @@ class Parser:
         self.expect_sym("->")
         ret = self.type()
 
-        requires = ensures = None
+        requires: list[Expr] = []
+        ensures: list[Expr] = []
         effects: str | None = None
         examples: list[Expr] = []
         while self.at("KW") and self.cur.value in ("requires", "ensures", "effects", "example"):
             kw = self.advance()
             if kw.value == "requires":
-                if requires is not None:
-                    raise self.fail("duplicate `requires`", kw)
-                requires = self.expr()
+                requires.append(self.expr())
             elif kw.value == "ensures":
-                if ensures is not None:
-                    raise self.fail("duplicate `ensures`", kw)
-                ensures = self.expr()
+                ensures.append(self.expr())
             elif kw.value == "effects":
                 if effects is not None:
                     raise self.fail("duplicate `effects`", kw)

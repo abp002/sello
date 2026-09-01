@@ -189,8 +189,8 @@ class Fn:
     name: str
     params: list[Param]
     ret: Type
-    requires: Expr | None
-    ensures: Expr | None
+    requires: list[Expr]
+    ensures: list[Expr]
     effects: str | None
     examples: list[Expr]
     body: Expr

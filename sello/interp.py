@@ -70,17 +70,19 @@ class Interpreter:
         fn = self.fns[name]
         env: Env = {p.name: a for p, a in zip(fn.params, args)}
         shown = f"{name}(" + ", ".join(fmt(a) for a in args) + ")"
-        if fn.requires is not None and not self.eval(fn.requires, env, name):
-            raise SelloError("E300", f"{shown} violates `requires {unparse(fn.requires)}`",
-                             line, col, caller or name, {"call": shown})
+        for r in fn.requires:
+            if not self.eval(r, env, name):
+                raise SelloError("E300", f"{shown} violates `requires {unparse(r)}`",
+                                 line, col, caller or name, {"call": shown})
         try:
             value = self.eval(fn.body, env, name)
         except RecursionError:
             raise SelloError("E500", f"recursion too deep in {shown}", fn.line, fn.col, name) from None
-        if fn.ensures is not None and not self.eval(fn.ensures, {**env, "result": value}, name):
-            raise SelloError("E201", f"{shown} returned {fmt(value)}, which violates "
-                             f"`ensures {unparse(fn.ensures)}`", fn.line, fn.col, name,
-                             {"call": shown, "got": fmt(value)})
+        for en in fn.ensures:
+            if not self.eval(en, {**env, "result": value}, name):
+                raise SelloError("E201", f"{shown} returned {fmt(value)}, which violates "
+                                 f"`ensures {unparse(en)}`", fn.line, fn.col, name,
+                                 {"call": shown, "got": fmt(value)})
         return value
 
     def eval(self, e: Expr, env: Env, fn: str | None = None) -> Value:

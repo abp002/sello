@@ -9,7 +9,7 @@ def test_parsea_funcion_con_contrato():
     fn = parse(MAX).fns[0]
     assert fn.name == "max"
     assert [p.name for p in fn.params] == ["a", "b"]
-    assert fn.requires is not None and fn.ensures is not None
+    assert len(fn.requires) == 1 and len(fn.ensures) == 1
     assert fn.effects == "pure" and len(fn.examples) == 1
     assert isinstance(fn.body, If)
 

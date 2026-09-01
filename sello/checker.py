@@ -38,7 +38,7 @@ class Checker:
     # ---- por función ----
     def check_fn(self, fn: Fn) -> None:
         missing = [n for n, v in (("requires", fn.requires), ("ensures", fn.ensures),
-                                  ("effects", fn.effects)) if v is None]
+                                  ("effects", fn.effects)) if not v]
         if not fn.examples:
             missing.append("example")
         if missing:
@@ -55,8 +55,10 @@ class Checker:
             seen.add(p.name)
         env: Env = {p.name: p.type for p in fn.params}
 
-        self.expect(fn.requires, env, BOOL, fn, "`requires` must be Bool")  # type: ignore[arg-type]
-        self.expect(fn.ensures, {**env, "result": fn.ret}, BOOL, fn, "`ensures` must be Bool")  # type: ignore[arg-type]
+        for r in fn.requires:
+            self.expect(r, env, BOOL, fn, "`requires` must be Bool")
+        for en in fn.ensures:
+            self.expect(en, {**env, "result": fn.ret}, BOOL, fn, "`ensures` must be Bool")
         for ex in fn.examples:
             self.expect(ex, {}, BOOL, fn, "`example` must be Bool (usually `call == expected`)")
         self.expect(fn.body, env, fn.ret, fn, f"body of `{_name(fn)}` must return {fn.ret}")
