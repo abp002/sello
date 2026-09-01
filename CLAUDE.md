@@ -6,10 +6,12 @@ Público en `github.com/abp002/sello`. Todo se documenta en abierto, errores inc
 
 ## Cómo se trabaja aquí
 
-- **Las decisiones van a `docs/decisiones/NNNN-titulo.md`** (ADR: contexto, decisión,
-  descartado, consecuencias). Una decisión que no está escrita no está tomada.
-- **La bitácora (`docs/bitacora.md`) se escribe al cerrar cada sesión de trabajo**, con
-  fecha absoluta: qué se hizo, qué se midió, qué falló.
+- **La documentación del proceso NO va en el repo.** Decisiones, bitácora y estado del
+  arte viven en el vault de Obsidian: `~/Desktop/vault/Proyectos/Lenguaje para IA/`
+  (una nota por decisión, título como afirmación; la bitácora es `Bitácora de Sello.md`).
+  Una decisión que no está escrita allí no está tomada.
+- **La bitácora se escribe al cerrar cada sesión de trabajo**, con fecha absoluta: qué se
+  hizo, qué se midió, qué falló.
 - **La spec (`spec/`) está en inglés** porque es el prompt que lee el modelo. El resto del
   repo, en español.
 - **Nada se añade al lenguaje sin medirlo.** Si una feature no baja los intentos hasta

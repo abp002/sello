@@ -28,17 +28,15 @@ estructurado que dice qué decisión de diseño está fallando.
 | Carpeta | Qué es |
 |---|---|
 | `spec/` | La especificación del lenguaje. En inglés, porque es el prompt que lee el modelo |
-| `docs/decisiones/` | Registros de decisión (ADR): qué se decidió, por qué, qué se descartó |
-| `docs/bitacora.md` | Diario del proyecto, con fecha. Lo que se probó y lo que pasó |
-| `docs/estado-del-arte.md` | Qué existe ya (41 lenguajes para IA) y por qué Sello es distinto |
 | `sello/` | El compilador y el almacén, en Python |
 | `tests/` | Tests de la lógica: parser, hash, verificador |
 | `bench/` | El experimento: harness de medición contra Python |
 
 ## Estado
 
-**Arrancando** (1 de septiembre de 2026). Hay decisiones y un borrador de spec. No hay
-compilador todavía. Todo el proceso, incluidos los errores, se documenta aquí en abierto.
+**Fase 1** (septiembre de 2026). El porqué de cada decisión, la bitácora y el estado
+del arte viven en el vault de notas del autor, no en el repo. Aquí hay código, spec y
+este README.
 
 ## Hoja de ruta
 
@@ -60,7 +58,7 @@ Sello roba sin vergüenza: los contratos triples y el formato de errores de
 [Vera](https://github.com/aallan/vera); el almacén por contenido y la API de consulta de
 [Unison](https://www.unison-lang.org/); la elección de solver automático del
 [benchmark de vericoding](https://arxiv.org/abs/2509.22908). Lo que no hace nadie es
-juntarlo y guardar el certificado junto al hash. Ver `docs/estado-del-arte.md`.
+juntarlo y guardar el certificado junto al hash.
 
 ## Licencia
 
