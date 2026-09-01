@@ -30,21 +30,28 @@ estructurado que dice qué decisión de diseño está fallando.
 | `spec/` | La especificación del lenguaje. En inglés, porque es el prompt que lee el modelo |
 | `sello/` | El compilador y el almacén, en Python |
 | `tests/` | Tests de la lógica: parser, hash, verificador |
-| `bench/` | El experimento: harness de medición contra Python |
+| `bench/` | El experimento: harness, problemas y resultados de cada medición |
 
 ## Estado
 
-**Fase 1** (septiembre de 2026). El porqué de cada decisión, la bitácora y el estado
-del arte viven en el vault de notas del autor, no en el repo. Aquí hay código, spec y
-este README.
+**Fase 2 hecha** (2 de septiembre de 2026): núcleo, almacén con certificados, API de
+consulta y dos mediciones. El porqué de cada decisión, la bitácora y el estado del arte
+viven en el vault de notas del autor, no en el repo. Aquí hay código, spec y este README.
+
+    uv sync --extra dev
+    uv run sello check ejemplos/basicos.sello     # parse, tipos, ejemplos
+    uv run sello add ejemplos/basicos.sello       # al almacén, con certificado
+    uv run sello sig safe_div                     # firma + contrato + certificado
+    uv run sello users head                       # quién la llama
+    uv run sello eval 'first_or([], factorial(4))'
 
 ## Hoja de ruta
 
-0. **Cimientos** (ahora): repo, decisiones, spec v0, harness de medición vacío.
-1. **Núcleo**: lexer, parser e intérprete de un lenguaje mínimo con contratos. Nivel de
-   verificación 1: los ejemplos se ejecutan. Errores en JSON. Primera medición.
-2. **Almacén**: hash del AST normalizado, nombres como alias, certificado por hash, API de
-   consulta. Segunda medición: ¿leer por API en vez de por fichero baja los intentos?
+0. ~~**Cimientos**: repo, decisiones, spec v0, harness de medición vacío.~~
+1. ~~**Núcleo**: lexer, parser e intérprete con contratos. Nivel de verificación 1: los
+   ejemplos se ejecutan. Errores en JSON. Primera medición.~~
+2. ~~**Almacén**: hash del AST normalizado, nombres como alias, certificado por hash, API
+   de consulta. Segunda medición: leer por API no baja los aciertos.~~
 3. **Solver**: Z3 sobre los contratos decidibles (nivel 2), guardas en tiempo de ejecución
    para el resto (nivel 3). Servidor MCP para que los agentes consulten el almacén.
 4. **Benchmark**: contra el conjunto público de vericoding.
