@@ -1,0 +1,46 @@
+{
+  "fn": "contains",
+  "statement": "Return true if x appears in the list, false otherwise.",
+  "sello": "contains(xs: List[Int], x: Int) -> Bool",
+  "python": "def contains(xs: list[int], x: int) -> bool",
+  "cases": [
+    {
+      "args": [
+        [],
+        1
+      ],
+      "expect": false
+    },
+    {
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        2
+      ],
+      "expect": true
+    },
+    {
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        4
+      ],
+      "expect": false
+    },
+    {
+      "args": [
+        [
+          5
+        ],
+        5
+      ],
+      "expect": true
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "fn": "factorial",
+  "statement": "Return n factorial. n is never negative.",
+  "sello": "factorial(n: Int) -> Int",
+  "python": "def factorial(n: int) -> int",
+  "cases": [
+    {
+      "args": [
+        0
+      ],
+      "expect": 1
+    },
+    {
+      "args": [
+        1
+      ],
+      "expect": 1
+    },
+    {
+      "args": [
+        5
+      ],
+      "expect": 120
+    },
+    {
+      "args": [
+        10
+      ],
+      "expect": 3628800
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "fn": "safe_div",
+  "statement": "Divide a by b using integer division rounding down. If b is 0 there is no result.",
+  "sello": "safe_div(a: Int, b: Int) -> Option[Int]",
+  "python": "def safe_div(a: int, b: int) -> int | None",
+  "cases": [
+    {
+      "args": [
+        7,
+        2
+      ],
+      "expect": {
+        "some": 3
+      }
+    },
+    {
+      "args": [
+        1,
+        0
+      ],
+      "expect": null
+    },
+    {
+      "args": [
+        -7,
+        2
+      ],
+      "expect": {
+        "some": -4
+      }
+    },
+    {
+      "args": [
+        0,
+        5
+      ],
+      "expect": {
+        "some": 0
+      }
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "fn": "sum_list",
+  "statement": "Return the sum of all integers in the list. The empty list sums to 0.",
+  "sello": "sum_list(xs: List[Int]) -> Int",
+  "python": "def sum_list(xs: list[int]) -> int",
+  "cases": [
+    {
+      "args": [
+        []
+      ],
+      "expect": 0
+    },
+    {
+      "args": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "expect": 6
+    },
+    {
+      "args": [
+        [
+          -1,
+          1
+        ]
+      ],
+      "expect": 0
+    },
+    {
+      "args": [
+        [
+          42
+        ]
+      ],
+      "expect": 42
+    }
+  ]
+}

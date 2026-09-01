@@ -36,8 +36,10 @@ Rules:
 
 ## 3. Expressions
 
-Literals · `if c then a else b` · arithmetic `+ - * / %` · comparison `== != < <= > >=` ·
-`and or not` · function call `f(x, y)` · `match` on `Option` and `List`:
+Literals (`42`, `true`, `"text"`, `[1, 2]`, `Some(3)`, `None`) · `if c then a else b` ·
+Int arithmetic `+ - * / %` (`/` is integer division rounding down, like Python `//`) ·
+`++` concatenates two `List` or two `Text` · comparison `== != < <= > >=` (`<` family on
+Int only) · `and or not` · function call `f(x, y)` · `match` on `Option` and `List`:
 
 ```
 match xs {
@@ -46,14 +48,20 @@ match xs {
 }
 ```
 
-No loops. Recursion only. No mutation. No global state.
+Patterns: `[]`, `[h, ..t]`, `None`, `Some(x)`, `_`, or a name that binds the whole
+value. A match must cover every case (`E404`).
+
+No loops. Recursion only. No mutation. No global state. No variables: name things by
+making a function. `x / 0` is a runtime error (`E500`); rule it out with `requires`.
 
 ## 4. Contracts
 
-- `requires` is checked at every call site. Calling with arguments the compiler cannot
-  prove satisfy `requires` is error `E300`.
-- `ensures` is checked against the body. In v0 it is checked by running the examples
-  (verification level 1). Later levels: SMT solver (level 2), runtime guard (level 3).
+- `requires` is checked at every call, including calls made while running examples.
+  A call whose arguments violate `requires` is error `E300`.
+- `ensures` is checked on every return. A body that returns a value violating `ensures`
+  is error `E201`. `result` names the return value.
+- In v0 both are checked by execution (verification level 1). Later levels: SMT solver
+  (level 2), runtime guard (level 3).
 
 ## 5. The store
 
@@ -76,7 +84,20 @@ All errors are JSON: `{"code", "where", "what", "fix", "example"}`. Codes are st
 
 | Code | What | Fix |
 |---|---|---|
+| E000 | Syntax error | Follow the grammar above |
 | E100 | Missing contract clause | Add `requires`, `ensures`, `effects` or an `example` |
+| E101 | Unknown effect | Only `pure` exists in v0 |
 | E200 | Example failed | Body or example is wrong; the message shows expected vs got |
-| E300 | Precondition not satisfied at call site | Guard the call or strengthen the caller's `requires` |
+| E201 | Postcondition violated | Body returned a value that breaks `ensures` |
+| E300 | Precondition violated at a call | Guard the call with `if`, or strengthen the caller's `requires` |
 | E400 | Type mismatch | Message shows expected and actual types |
+| E401 | Unknown name | Only parameters, functions in this file, and `result` in `ensures` |
+| E402 | Duplicate definition | One definition per name |
+| E403 | Wrong number of arguments | Match the signature |
+| E404 | Non-exhaustive match | Cover `[]` and `[h, ..t]`, or `None` and `Some(x)`, or add `_ =>` |
+| E500 | Runtime error | Division by zero or recursion too deep; add a `requires` |
+
+## 7. Tooling
+
+`sello check FILE` parses, typechecks and runs every example. Output is JSON:
+`{"ok": true, ...}` or `{"ok": false, "error": {...}}`.

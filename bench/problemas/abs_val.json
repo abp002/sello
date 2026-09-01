@@ -1,0 +1,32 @@
+{
+  "fn": "abs_val",
+  "statement": "Return the absolute value of the integer.",
+  "sello": "abs_val(x: Int) -> Int",
+  "python": "def abs_val(x: int) -> int",
+  "cases": [
+    {
+      "args": [
+        0
+      ],
+      "expect": 0
+    },
+    {
+      "args": [
+        7
+      ],
+      "expect": 7
+    },
+    {
+      "args": [
+        -7
+      ],
+      "expect": 7
+    },
+    {
+      "args": [
+        -1
+      ],
+      "expect": 1
+    }
+  ]
+}

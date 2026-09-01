@@ -1,0 +1,71 @@
+# Funciones de referencia. `sello check ejemplos/basicos.sello`
+
+fn max(a: Int, b: Int) -> Int
+  requires true
+  ensures result >= a and result >= b
+  effects pure
+  example max(1, 2) == 2
+  example max(5, 5) == 5
+  example max(-3, -7) == -3
+{
+  if a >= b then a else b
+}
+
+fn factorial(n: Int) -> Int
+  requires n >= 0
+  ensures result >= 1
+  effects pure
+  example factorial(0) == 1
+  example factorial(5) == 120
+{
+  if n == 0 then 1 else n * factorial(n - 1)
+}
+
+fn sum(xs: List[Int]) -> Int
+  requires true
+  ensures true
+  effects pure
+  example sum([]) == 0
+  example sum([1, 2, 3]) == 6
+{
+  match xs {
+    [] => 0
+    [h, ..t] => h + sum(t)
+  }
+}
+
+fn safe_div(a: Int, b: Int) -> Option[Int]
+  requires true
+  ensures b != 0 or result == None
+  effects pure
+  example safe_div(7, 2) == Some(3)
+  example safe_div(1, 0) == None
+{
+  if b == 0 then None else Some(a / b)
+}
+
+fn first_or(xs: List[Int], d: Int) -> Int
+  requires true
+  ensures true
+  effects pure
+  example first_or([], 9) == 9
+  example first_or([4, 5], 9) == 4
+{
+  match head(xs) {
+    None => d
+    Some(x) => x
+  }
+}
+
+fn head(xs: List[Int]) -> Option[Int]
+  requires true
+  ensures true
+  effects pure
+  example head([]) == None
+  example head([1, 2]) == Some(1)
+{
+  match xs {
+    [] => None
+    [h, ..t] => Some(h)
+  }
+}

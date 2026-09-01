@@ -1,0 +1,38 @@
+{
+  "fn": "reverse_list",
+  "statement": "Return the list with its elements in reverse order.",
+  "sello": "reverse_list(xs: List[Int]) -> List[Int]",
+  "python": "def reverse_list(xs: list[int]) -> list[int]",
+  "cases": [
+    {
+      "args": [
+        []
+      ],
+      "expect": []
+    },
+    {
+      "args": [
+        [
+          1
+        ]
+      ],
+      "expect": [
+        1
+      ]
+    },
+    {
+      "args": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "expect": [
+        3,
+        2,
+        1
+      ]
+    }
+  ]
+}

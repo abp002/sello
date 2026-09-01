@@ -1,0 +1,33 @@
+{
+  "fn": "length",
+  "statement": "Return how many elements the list has.",
+  "sello": "length(xs: List[Int]) -> Int",
+  "python": "def length(xs: list[int]) -> int",
+  "cases": [
+    {
+      "args": [
+        []
+      ],
+      "expect": 0
+    },
+    {
+      "args": [
+        [
+          1
+        ]
+      ],
+      "expect": 1
+    },
+    {
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4
+        ]
+      ],
+      "expect": 4
+    }
+  ]
+}

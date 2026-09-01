@@ -1,0 +1,43 @@
+{
+  "fn": "max_of",
+  "statement": "Return the larger of the two integers.",
+  "sello": "max_of(a: Int, b: Int) -> Int",
+  "python": "def max_of(a: int, b: int) -> int",
+  "cases": [
+    {
+      "args": [
+        1,
+        2
+      ],
+      "expect": 2
+    },
+    {
+      "args": [
+        5,
+        5
+      ],
+      "expect": 5
+    },
+    {
+      "args": [
+        -3,
+        -7
+      ],
+      "expect": -3
+    },
+    {
+      "args": [
+        0,
+        -1
+      ],
+      "expect": 0
+    },
+    {
+      "args": [
+        100,
+        99
+      ],
+      "expect": 100
+    }
+  ]
+}
