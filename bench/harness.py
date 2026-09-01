@@ -257,11 +257,12 @@ def main() -> int:
     ap.add_argument("--model", default="sonnet")
     ap.add_argument("--lang", choices=["sello", "python", "both"], default="both")
     ap.add_argument("--only", help="nombre de un problema")
+    ap.add_argument("--dir", default="problemas", help="batería: problemas | dificiles")
     ap.add_argument("--attempts", type=int, default=5)
     ap.add_argument("--workers", type=int, default=4)
     args = ap.parse_args()
 
-    probs = [json.loads(f.read_text()) for f in sorted(PROBLEMAS.glob("*.json"))]
+    probs = [json.loads(f.read_text()) for f in sorted((AQUI / args.dir).glob("*.json"))]
     if args.only:
         probs = [p for p in probs if p["fn"] == args.only]
     langs = ["sello", "python"] if args.lang == "both" else [args.lang]
@@ -273,11 +274,12 @@ def main() -> int:
         rows = list(ex.map(lambda j: run_one(j[0], j[1], args.model, args.attempts), jobs))
 
     RESULTADOS.mkdir(exist_ok=True)
-    base = RESULTADOS / f"{when}-{args.model}" if not args.only else RESULTADOS / f"humo-{when}-{args.model}"
+    tag = f"{when}-{args.model}" + ("" if args.dir == "problemas" else f"-{args.dir}")
+    base = RESULTADOS / (tag if not args.only else f"humo-{tag}")
     with open(base.with_suffix(".jsonl"), "w") as f:
         for r in rows:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
-    md = resumen(rows, args.model, when)
+    md = resumen(rows, args.model, f"{when} · batería `{args.dir}`")
     base.with_suffix(".md").write_text(md)
     print(md)
     print(f"detalle: {base.with_suffix('.jsonl')}", file=sys.stderr)

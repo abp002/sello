@@ -1,0 +1,93 @@
+{
+  "fn": "merge_sorted",
+  "statement": "Both lists are sorted in ascending order. Return one sorted list with all their elements, keeping duplicates.",
+  "sello": "merge_sorted(xs: List[Int], ys: List[Int]) -> List[Int]",
+  "python": "def merge_sorted(xs: list[int], ys: list[int]) -> list[int]",
+  "cases": [
+    {
+      "args": [
+        [],
+        []
+      ],
+      "expect": []
+    },
+    {
+      "args": [
+        [
+          1
+        ],
+        []
+      ],
+      "expect": [
+        1
+      ]
+    },
+    {
+      "args": [
+        [],
+        [
+          2
+        ]
+      ],
+      "expect": [
+        2
+      ]
+    },
+    {
+      "args": [
+        [
+          1,
+          3,
+          5
+        ],
+        [
+          2,
+          4
+        ]
+      ],
+      "expect": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ]
+    },
+    {
+      "args": [
+        [
+          1,
+          2
+        ],
+        [
+          1,
+          2
+        ]
+      ],
+      "expect": [
+        1,
+        1,
+        2,
+        2
+      ]
+    },
+    {
+      "args": [
+        [
+          5
+        ],
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "expect": [
+        1,
+        2,
+        3,
+        5
+      ]
+    }
+  ]
+}

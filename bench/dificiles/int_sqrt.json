@@ -1,0 +1,56 @@
+{
+  "fn": "int_sqrt",
+  "statement": "Return the largest integer whose square does not exceed n. n is never negative.",
+  "sello": "int_sqrt(n: Int) -> Int",
+  "python": "def int_sqrt(n: int) -> int",
+  "cases": [
+    {
+      "args": [
+        0
+      ],
+      "expect": 0
+    },
+    {
+      "args": [
+        1
+      ],
+      "expect": 1
+    },
+    {
+      "args": [
+        3
+      ],
+      "expect": 1
+    },
+    {
+      "args": [
+        4
+      ],
+      "expect": 2
+    },
+    {
+      "args": [
+        15
+      ],
+      "expect": 3
+    },
+    {
+      "args": [
+        16
+      ],
+      "expect": 4
+    },
+    {
+      "args": [
+        17
+      ],
+      "expect": 4
+    },
+    {
+      "args": [
+        1000000
+      ],
+      "expect": 1000
+    }
+  ]
+}

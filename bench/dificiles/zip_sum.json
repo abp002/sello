@@ -1,0 +1,65 @@
+{
+  "fn": "zip_sum",
+  "statement": "Add the two lists element by element. Stop at the end of the shorter list.",
+  "sello": "zip_sum(xs: List[Int], ys: List[Int]) -> List[Int]",
+  "python": "def zip_sum(xs: list[int], ys: list[int]) -> list[int]",
+  "cases": [
+    {
+      "args": [
+        [],
+        []
+      ],
+      "expect": []
+    },
+    {
+      "args": [
+        [
+          1
+        ],
+        []
+      ],
+      "expect": []
+    },
+    {
+      "args": [
+        [
+          1,
+          2
+        ],
+        [
+          10,
+          20
+        ]
+      ],
+      "expect": [
+        11,
+        22
+      ]
+    },
+    {
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        [
+          10
+        ]
+      ],
+      "expect": [
+        11
+      ]
+    },
+    {
+      "args": [
+        [],
+        [
+          5,
+          6
+        ]
+      ],
+      "expect": []
+    }
+  ]
+}

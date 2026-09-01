@@ -1,0 +1,70 @@
+{
+  "fn": "nth",
+  "statement": "Return the element at 0-based index i, if the index is within the list.",
+  "sello": "nth(xs: List[Int], i: Int) -> Option[Int]",
+  "python": "def nth(xs: list[int], i: int) -> int | None",
+  "cases": [
+    {
+      "args": [
+        [],
+        0
+      ],
+      "expect": null
+    },
+    {
+      "args": [
+        [
+          7
+        ],
+        0
+      ],
+      "expect": {
+        "some": 7
+      }
+    },
+    {
+      "args": [
+        [
+          7
+        ],
+        1
+      ],
+      "expect": null
+    },
+    {
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        2
+      ],
+      "expect": {
+        "some": 3
+      }
+    },
+    {
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        3
+      ],
+      "expect": null
+    },
+    {
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        -1
+      ],
+      "expect": null
+    }
+  ]
+}

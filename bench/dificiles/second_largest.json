@@ -1,0 +1,79 @@
+{
+  "fn": "second_largest",
+  "statement": "Return the second largest distinct value in the list. If there are fewer than two distinct values there is no answer.",
+  "sello": "second_largest(xs: List[Int]) -> Option[Int]",
+  "python": "def second_largest(xs: list[int]) -> int | None",
+  "cases": [
+    {
+      "args": [
+        []
+      ],
+      "expect": null
+    },
+    {
+      "args": [
+        [
+          4
+        ]
+      ],
+      "expect": null
+    },
+    {
+      "args": [
+        [
+          4,
+          4
+        ]
+      ],
+      "expect": null
+    },
+    {
+      "args": [
+        [
+          4,
+          9
+        ]
+      ],
+      "expect": {
+        "some": 4
+      }
+    },
+    {
+      "args": [
+        [
+          9,
+          4,
+          9
+        ]
+      ],
+      "expect": {
+        "some": 4
+      }
+    },
+    {
+      "args": [
+        [
+          1,
+          5,
+          3,
+          5,
+          2
+        ]
+      ],
+      "expect": {
+        "some": 3
+      }
+    },
+    {
+      "args": [
+        [
+          -1,
+          -2
+        ]
+      ],
+      "expect": {
+        "some": -2
+      }
+    }
+  ]
+}

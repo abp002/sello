@@ -1,0 +1,62 @@
+{
+  "fn": "count_inversions",
+  "statement": "Count the pairs of positions i < j where the element at i is greater than the element at j.",
+  "sello": "count_inversions(xs: List[Int]) -> Int",
+  "python": "def count_inversions(xs: list[int]) -> int",
+  "cases": [
+    {
+      "args": [
+        []
+      ],
+      "expect": 0
+    },
+    {
+      "args": [
+        [
+          1
+        ]
+      ],
+      "expect": 0
+    },
+    {
+      "args": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "expect": 0
+    },
+    {
+      "args": [
+        [
+          3,
+          2,
+          1
+        ]
+      ],
+      "expect": 3
+    },
+    {
+      "args": [
+        [
+          2,
+          2
+        ]
+      ],
+      "expect": 0
+    },
+    {
+      "args": [
+        [
+          3,
+          1,
+          2,
+          1
+        ]
+      ],
+      "expect": 4
+    }
+  ]
+}

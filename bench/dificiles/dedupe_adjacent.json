@@ -1,0 +1,66 @@
+{
+  "fn": "dedupe_adjacent",
+  "statement": "Remove consecutive duplicates: keep one copy of each run of equal neighbouring elements.",
+  "sello": "dedupe_adjacent(xs: List[Int]) -> List[Int]",
+  "python": "def dedupe_adjacent(xs: list[int]) -> list[int]",
+  "cases": [
+    {
+      "args": [
+        []
+      ],
+      "expect": []
+    },
+    {
+      "args": [
+        [
+          1
+        ]
+      ],
+      "expect": [
+        1
+      ]
+    },
+    {
+      "args": [
+        [
+          1,
+          1,
+          1
+        ]
+      ],
+      "expect": [
+        1
+      ]
+    },
+    {
+      "args": [
+        [
+          1,
+          1,
+          2,
+          2,
+          1
+        ]
+      ],
+      "expect": [
+        1,
+        2,
+        1
+      ]
+    },
+    {
+      "args": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "expect": [
+        1,
+        2,
+        3
+      ]
+    }
+  ]
+}

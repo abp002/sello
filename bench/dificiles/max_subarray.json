@@ -1,0 +1,80 @@
+{
+  "fn": "max_subarray",
+  "statement": "Return the largest sum of a non-empty contiguous sublist. The empty list has no answer.",
+  "sello": "max_subarray(xs: List[Int]) -> Option[Int]",
+  "python": "def max_subarray(xs: list[int]) -> int | None",
+  "cases": [
+    {
+      "args": [
+        []
+      ],
+      "expect": null
+    },
+    {
+      "args": [
+        [
+          -3
+        ]
+      ],
+      "expect": {
+        "some": -3
+      }
+    },
+    {
+      "args": [
+        [
+          1,
+          2,
+          3
+        ]
+      ],
+      "expect": {
+        "some": 6
+      }
+    },
+    {
+      "args": [
+        [
+          -2,
+          1,
+          -3,
+          4,
+          -1,
+          2,
+          1,
+          -5,
+          4
+        ]
+      ],
+      "expect": {
+        "some": 6
+      }
+    },
+    {
+      "args": [
+        [
+          -5,
+          -1,
+          -8
+        ]
+      ],
+      "expect": {
+        "some": -1
+      }
+    },
+    {
+      "args": [
+        [
+          2,
+          -1,
+          2,
+          -1,
+          2
+        ]
+      ],
+      "expect": {
+        "some": 4
+      }
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "fn": "rotate_left",
+  "statement": "Rotate the list to the left by k positions: the first k elements move to the end. k is never negative and may be larger than the length.",
+  "sello": "rotate_left(xs: List[Int], k: Int) -> List[Int]",
+  "python": "def rotate_left(xs: list[int], k: int) -> list[int]",
+  "cases": [
+    {
+      "args": [
+        [],
+        3
+      ],
+      "expect": []
+    },
+    {
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        0
+      ],
+      "expect": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        1
+      ],
+      "expect": [
+        2,
+        3,
+        1
+      ]
+    },
+    {
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        3
+      ],
+      "expect": [
+        1,
+        2,
+        3
+      ]
+    },
+    {
+      "args": [
+        [
+          1,
+          2,
+          3
+        ],
+        4
+      ],
+      "expect": [
+        2,
+        3,
+        1
+      ]
+    },
+    {
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4
+        ],
+        6
+      ],
+      "expect": [
+        3,
+        4,
+        1,
+        2
+      ]
+    }
+  ]
+}

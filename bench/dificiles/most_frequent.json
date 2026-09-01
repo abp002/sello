@@ -1,0 +1,75 @@
+{
+  "fn": "most_frequent",
+  "statement": "Return the value that appears most often. On a tie, the smallest such value. The empty list has no answer.",
+  "sello": "most_frequent(xs: List[Int]) -> Option[Int]",
+  "python": "def most_frequent(xs: list[int]) -> int | None",
+  "cases": [
+    {
+      "args": [
+        []
+      ],
+      "expect": null
+    },
+    {
+      "args": [
+        [
+          3
+        ]
+      ],
+      "expect": {
+        "some": 3
+      }
+    },
+    {
+      "args": [
+        [
+          1,
+          2,
+          2
+        ]
+      ],
+      "expect": {
+        "some": 2
+      }
+    },
+    {
+      "args": [
+        [
+          2,
+          1,
+          1,
+          2
+        ]
+      ],
+      "expect": {
+        "some": 1
+      }
+    },
+    {
+      "args": [
+        [
+          5,
+          -5,
+          5,
+          -5,
+          -5
+        ]
+      ],
+      "expect": {
+        "some": -5
+      }
+    },
+    {
+      "args": [
+        [
+          3,
+          1,
+          2
+        ]
+      ],
+      "expect": {
+        "some": 1
+      }
+    }
+  ]
+}
