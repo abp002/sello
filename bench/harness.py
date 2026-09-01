@@ -108,7 +108,8 @@ def ask(prompt: str, model: str) -> dict:
     return {"text": d.get("result", ""), "cost": d.get("total_cost_usd", 0.0),
             "tokens_in": u.get("input_tokens", 0) + u.get("cache_creation_input_tokens", 0)
             + u.get("cache_read_input_tokens", 0),
-            "tokens_out": u.get("output_tokens", 0), "ms": ms}
+            "tokens_out": u.get("output_tokens", 0),
+            "thinking": u.get("output_tokens_details", {}).get("thinking_tokens", 0), "ms": ms}
 
 
 def extract(text: str, lang: str) -> str:
@@ -200,7 +201,7 @@ def run_one(p: dict, lang: str, model: str, max_attempts: int) -> dict:
             err_code = m.group(1) if m else None
         attempts.append({"n": i, "ok": ok, "phase": phase, "sello_error": err_code,
                          "cost": a["cost"], "tokens_in": a["tokens_in"], "tokens_out": a["tokens_out"],
-                         "ms": a["ms"], "code": code, "feedback": feedback[:2000]})
+                         "thinking": a.get("thinking", 0), "ms": a["ms"], "code": code, "feedback": feedback[:2000]})
         print(f"  {p['fn']:<13} {lang:<6} intento {i}: {'OK' if ok else phase + (' ' + err_code if err_code else '')}",
               file=sys.stderr, flush=True)
         if ok:
@@ -211,6 +212,7 @@ def run_one(p: dict, lang: str, model: str, max_attempts: int) -> dict:
             "attempts": len(attempts), "cost": sum(x["cost"] for x in attempts),
             "tokens_in": sum(x["tokens_in"] for x in attempts),
             "tokens_out": sum(x["tokens_out"] for x in attempts),
+            "thinking": sum(x["thinking"] for x in attempts),
             "ms": sum(x["ms"] for x in attempts), "detail": attempts}
 
 
@@ -238,6 +240,7 @@ def resumen(rows: list[dict], model: str, when: str) -> str:
     stat("a la primera", lambda l: str(sum(1 for r in solved(l) if r['solved_at'] == 1)))
     stat("media de intentos (resueltos)", lambda l: f"{sum(r['solved_at'] for r in solved(l)) / max(1, len(solved(l))):.2f}")
     stat("tokens de salida", lambda l: str(sum(r['tokens_out'] for r in rs(l))))
+    stat("de ellos, razonamiento", lambda l: str(sum(r.get('thinking', 0) for r in rs(l))))
     stat("tokens de entrada", lambda l: str(sum(r['tokens_in'] for r in rs(l))))
     stat("coste USD", lambda l: f"{sum(r['cost'] for r in rs(l)):.3f}")
     stat("tiempo total (s)", lambda l: f"{sum(r['ms'] for r in rs(l)) / 1000:.0f}")
