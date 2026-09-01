@@ -12,6 +12,60 @@ from .compile import check_source, compile_source, run_examples
 from .errors import SelloError
 from .interp import fmt
 from .parser import parse_expr
+from .store import Store
+
+
+def _store(args: argparse.Namespace) -> Store:
+    return Store(args.store)
+
+
+def _guard(f):
+    def run(args: argparse.Namespace) -> int:
+        try:
+            return _out(f(args))
+        except SelloError as e:
+            return _out({"ok": False, "error": e.to_dict()}, 1)
+    return run
+
+
+@_guard
+def cmd_add(args):
+    return {"ok": True, "added": _store(args).add(Path(args.file).read_text())}
+
+
+@_guard
+def cmd_sig(args):
+    return {"ok": True, **_store(args).sig(args.name)}
+
+
+@_guard
+def cmd_view(args):
+    return {"ok": True, **_store(args).view(args.name)}
+
+
+@_guard
+def cmd_deps(args):
+    return {"ok": True, "name": args.name, "deps": _store(args).deps(args.name)}
+
+
+@_guard
+def cmd_users(args):
+    return {"ok": True, "name": args.name, "users": _store(args).users(args.name)}
+
+
+@_guard
+def cmd_names(args):
+    return {"ok": True, "names": _store(args).names()}
+
+
+@_guard
+def cmd_verify(args):
+    return {"ok": True, **_store(args).verify(args.name)}
+
+
+@_guard
+def cmd_eval(args):
+    return {"ok": True, "value": _store(args).eval(args.expr)}
 
 
 def _out(d: dict, code: int = 0) -> int:
@@ -74,6 +128,21 @@ def main(argv: list[str] | None = None) -> int:
     c = sub.add_parser("check", help="parse, typecheck and run examples"); c.add_argument("file"); c.set_defaults(f=cmd_check)
     r = sub.add_parser("run", help="evaluate an expression"); r.add_argument("file"); r.add_argument("expr"); r.set_defaults(f=cmd_run)
     t = sub.add_parser("test", help="run hidden cases"); t.add_argument("file"); t.add_argument("cases"); t.set_defaults(f=cmd_test)
+    for name, fn, extra, help_ in [
+        ("add", cmd_add, ["file"], "check a file and add its functions to the store"),
+        ("sig", cmd_sig, ["name"], "signature + contract + certificate, no body"),
+        ("view", cmd_view, ["name"], "canonical source of a function"),
+        ("deps", cmd_deps, ["name"], "functions this one calls"),
+        ("users", cmd_users, ["name"], "functions that call this one"),
+        ("names", cmd_names, [], "every name in the store"),
+        ("verify", cmd_verify, ["name"], "re-run verification and refresh the certificate"),
+        ("eval", cmd_eval, ["expr"], "evaluate an expression against the store"),
+    ]:
+        sp = sub.add_parser(name, help=help_)
+        for a in extra:
+            sp.add_argument(a)
+        sp.add_argument("--store", default=".sello/store.db")
+        sp.set_defaults(f=fn)
     args = p.parse_args(argv)
     return args.f(args)
 

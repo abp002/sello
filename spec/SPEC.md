@@ -67,18 +67,24 @@ making a function. `x / 0` is a runtime error (`E500`); rule it out with `requir
 
 ## 5. The store
 
-The compiler does not compile files. It parses, normalizes and hashes each function, then
-stores it with its contract and its **certificate**: which contracts were verified, at
-which level, and when. A function whose hash is already certified is never re-verified.
+The compiler does not compile files. `sello add FILE` parses, checks and hashes each
+function, runs its examples, and stores it with its contract and its **certificate**:
+which verification level passed, how many examples, when. Names are aliases: renaming a
+function or a parameter does not change its hash. A function whose hash already has a
+certificate is never re-verified. A caller's hash includes its callees' hashes, so
+changing a dependency re-verifies only what uses it.
 
-Reading is an API, not a file:
+Reading is an API, not a file. Every command prints JSON:
 
-| Query | Returns |
+| Command | Returns |
 |---|---|
-| `sig <name>` | signature + contract + certificate, no body |
-| `deps <name>` | hashes this function calls |
-| `users <name>` | hashes that call this function |
-| `verify <name>` | runs verification, updates the certificate |
+| `sello add FILE` | per function: name, hash, `cached`, certificate |
+| `sello sig NAME` | signature + `requires` + `ensures` + `effects` + certificate, **no body** |
+| `sello view NAME` | canonical source |
+| `sello deps NAME` / `sello users NAME` | what it calls / what calls it |
+| `sello names` | every name with its hash and signature |
+| `sello verify NAME` | re-runs verification and refreshes the certificate |
+| `sello eval EXPR` | evaluates an expression against the store |
 
 ## 6. Errors
 

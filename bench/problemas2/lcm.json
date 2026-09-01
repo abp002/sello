@@ -1,0 +1,38 @@
+{
+  "fn": "lcm",
+  "statement": "Return the least common multiple of a and b. Both are positive.",
+  "sello": "lcm(a: Int, b: Int) -> Int",
+  "uses": [
+    "gcd"
+  ],
+  "cases": [
+    {
+      "args": [
+        4,
+        6
+      ],
+      "expect": 12
+    },
+    {
+      "args": [
+        3,
+        7
+      ],
+      "expect": 21
+    },
+    {
+      "args": [
+        5,
+        5
+      ],
+      "expect": 5
+    },
+    {
+      "args": [
+        1,
+        9
+      ],
+      "expect": 9
+    }
+  ]
+}

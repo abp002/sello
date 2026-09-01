@@ -1,0 +1,50 @@
+{
+  "fn": "max_list",
+  "statement": "Return the largest element of the list. The empty list has none.",
+  "sello": "max_list(xs: List[Int]) -> Option[Int]",
+  "uses": [
+    "max_of"
+  ],
+  "cases": [
+    {
+      "args": [
+        []
+      ],
+      "expect": null
+    },
+    {
+      "args": [
+        [
+          3
+        ]
+      ],
+      "expect": {
+        "some": 3
+      }
+    },
+    {
+      "args": [
+        [
+          1,
+          9,
+          4
+        ]
+      ],
+      "expect": {
+        "some": 9
+      }
+    },
+    {
+      "args": [
+        [
+          -5,
+          -2,
+          -9
+        ]
+      ],
+      "expect": {
+        "some": -2
+      }
+    }
+  ]
+}

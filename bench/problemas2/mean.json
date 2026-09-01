@@ -1,0 +1,52 @@
+{
+  "fn": "mean",
+  "statement": "Return the integer mean of the list (sum divided by length, rounding down). The empty list has no mean.",
+  "sello": "mean(xs: List[Int]) -> Option[Int]",
+  "uses": [
+    "sum_list",
+    "length",
+    "safe_div"
+  ],
+  "cases": [
+    {
+      "args": [
+        []
+      ],
+      "expect": null
+    },
+    {
+      "args": [
+        [
+          4
+        ]
+      ],
+      "expect": {
+        "some": 4
+      }
+    },
+    {
+      "args": [
+        [
+          1,
+          2,
+          3,
+          4
+        ]
+      ],
+      "expect": {
+        "some": 2
+      }
+    },
+    {
+      "args": [
+        [
+          -7,
+          2
+        ]
+      ],
+      "expect": {
+        "some": -3
+      }
+    }
+  ]
+}

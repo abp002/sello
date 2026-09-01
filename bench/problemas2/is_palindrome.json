@@ -1,0 +1,43 @@
+{
+  "fn": "is_palindrome",
+  "statement": "Return true if the list reads the same forwards and backwards.",
+  "sello": "is_palindrome(xs: List[Int]) -> Bool",
+  "uses": [
+    "reverse_list"
+  ],
+  "cases": [
+    {
+      "args": [
+        []
+      ],
+      "expect": true
+    },
+    {
+      "args": [
+        [
+          1
+        ]
+      ],
+      "expect": true
+    },
+    {
+      "args": [
+        [
+          1,
+          2,
+          1
+        ]
+      ],
+      "expect": true
+    },
+    {
+      "args": [
+        [
+          1,
+          2
+        ]
+      ],
+      "expect": false
+    }
+  ]
+}

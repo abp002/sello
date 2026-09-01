@@ -49,3 +49,15 @@ def unparse_pat(p: Pattern) -> str:
     if isinstance(p, PWild):
         return p.name or "_"
     raise TypeError(f"patrón desconocido: {p!r}")
+
+
+def unparse_fn(fn) -> str:
+    """Formateador canónico: una función completa en texto Sello."""
+    ps = ", ".join(f"{p.name}: {p.type}" for p in fn.params)
+    lines = [f"fn {fn.name}({ps}) -> {fn.ret}"]
+    lines += [f"  requires {unparse(r)}" for r in fn.requires]
+    lines += [f"  ensures {unparse(e)}" for e in fn.ensures]
+    lines.append(f"  effects {fn.effects}")
+    lines += [f"  example {unparse(x)}" for x in fn.examples]
+    lines += ["{", f"  {unparse(fn.body)}", "}"]
+    return "\n".join(lines)

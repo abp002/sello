@@ -1,0 +1,35 @@
+{
+  "fn": "abs_sum",
+  "statement": "Return the sum of the absolute values of the elements.",
+  "sello": "abs_sum(xs: List[Int]) -> Int",
+  "uses": [
+    "abs_val",
+    "sum_list"
+  ],
+  "cases": [
+    {
+      "args": [
+        []
+      ],
+      "expect": 0
+    },
+    {
+      "args": [
+        [
+          1,
+          -2,
+          3
+        ]
+      ],
+      "expect": 6
+    },
+    {
+      "args": [
+        [
+          -4
+        ]
+      ],
+      "expect": 4
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "fn": "clamp_all",
+  "statement": "Return the list with every element limited to the range [lo, hi]. lo is never greater than hi.",
+  "sello": "clamp_all(xs: List[Int], lo: Int, hi: Int) -> List[Int]",
+  "uses": [
+    "clamp"
+  ],
+  "cases": [
+    {
+      "args": [
+        [],
+        0,
+        10
+      ],
+      "expect": []
+    },
+    {
+      "args": [
+        [
+          5,
+          -5,
+          15
+        ],
+        0,
+        10
+      ],
+      "expect": [
+        5,
+        0,
+        10
+      ]
+    },
+    {
+      "args": [
+        [
+          3
+        ],
+        3,
+        3
+      ],
+      "expect": [
+        3
+      ]
+    }
+  ]
+}
