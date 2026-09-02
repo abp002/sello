@@ -50,8 +50,11 @@ match xs {
 }
 ```
 
-Patterns: `[]`, `[h, ..t]`, `None`, `Some(x)`, `_`, or a name that binds the whole
-value. A match must cover every case (`E404`).
+Patterns: `[]`, `[h, ..t]` (either part may be `_`), `None`, `Some(x)`, `_`, or a name
+that binds the whole value. A match must cover every case (`E404`).
+
+There is no `implies`, `|`, `&&`, `!`, `let` or `where`. Write `not a or b`, `or`, `and`,
+`not`, and a helper function.
 
 No loops. Recursion only. No mutation. No global state. No variables: name things by
 making a function. `x / 0` is a runtime error (`E500`); rule it out with `requires`.

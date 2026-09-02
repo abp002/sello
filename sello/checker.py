@@ -154,8 +154,10 @@ class Checker:
                                      p.line, p.col, _name(fn))
                 elem = st.elem if isinstance(st, TList) else ANY
                 if isinstance(p, PCons):
-                    arm_env[p.head] = elem
-                    arm_env[p.tail] = TList(elem)
+                    if p.head != "_":
+                        arm_env[p.head] = elem
+                    if p.tail != "_":
+                        arm_env[p.tail] = TList(elem)
                     covered.add("cons")
                 else:
                     covered.add("empty")

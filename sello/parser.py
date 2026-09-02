@@ -245,6 +245,12 @@ class Parser:
         raise self.fail("expected an expression")
 
     # ---- patrones ----
+    def name_or_wild(self) -> str:
+        if self.at_sym("_"):
+            self.advance()
+            return "_"
+        return self.expect_name().value
+
     def pattern(self) -> Pattern:
         t = self.cur
         if self.at_sym("["):
@@ -252,10 +258,10 @@ class Parser:
             if self.at_sym("]"):
                 self.advance()
                 return PEmpty(line=t.line, col=t.col)
-            head = self.expect_name().value
+            head = self.name_or_wild()
             self.expect_sym(",")
             self.expect_sym("..")
-            tail = self.expect_name().value
+            tail = self.name_or_wild()
             self.expect_sym("]")
             return PCons(head, tail, line=t.line, col=t.col)
         if self.at_kw("None"):
@@ -273,7 +279,7 @@ class Parser:
         if self.at("NAME"):
             self.advance()
             return PWild(t.value, line=t.line, col=t.col)
-        raise self.fail("expected a pattern ([] , [h, ..t], None, Some(x), _ or a name)")
+        raise self.fail("expected a pattern ([], [h, ..t], [_, ..t], None, Some(x), _ or a name)")
 
 
 def parse(src: str) -> Program:

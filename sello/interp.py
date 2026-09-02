@@ -144,7 +144,9 @@ class Interpreter:
         if isinstance(p, PEmpty):
             return {} if isinstance(v, list) and not v else None
         if isinstance(p, PCons):
-            return {p.head: v[0], p.tail: v[1:]} if isinstance(v, list) and v else None
+            if not (isinstance(v, list) and v):
+                return None
+            return {k: x for k, x in ((p.head, v[0]), (p.tail, v[1:])) if k != "_"}
         if isinstance(p, PNone):
             return {} if v is NONE else None
         if isinstance(p, PSome):

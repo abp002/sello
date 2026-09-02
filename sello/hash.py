@@ -64,7 +64,7 @@ def _canon_arm(a: Arm, env: list[str], resolve) -> str:
     if isinstance(p, PEmpty):
         return f"([] {canon_expr(a.body, env, resolve)})"
     if isinstance(p, PCons):
-        return f"(:: {canon_expr(a.body, env + [p.head, p.tail], resolve)})"
+        return f"(:: {canon_expr(a.body, env + [p.head, p.tail], resolve)})"  # `_` ocupa hueco: no importa, nunca se referencia
     if isinstance(p, PNone):
         return f"(None {canon_expr(a.body, env, resolve)})"
     if isinstance(p, PSome):
