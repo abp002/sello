@@ -8,16 +8,16 @@ from sello.store import Store
 
 LIB = """
 fn head(xs: List[Int]) -> Option[Int]
-  requires true
-  ensures true
+  requires 1 == 1
+  ensures 1 == 1
   effects pure
   example head([]) == None
   example head([1, 2]) == Some(1)
 { match xs { [] => None  [h, ..t] => Some(h) } }
 
 fn first_or(xs: List[Int], d: Int) -> Int
-  requires true
-  ensures true
+  requires 1 == 1
+  ensures 1 == 1
   effects pure
   example first_or([], 9) == 9
   example first_or([4, 5], 9) == 4

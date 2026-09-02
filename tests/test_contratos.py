@@ -31,8 +31,8 @@ def test_precondicion_violada_desde_ejemplo_es_E300():
 def test_precondicion_violada_desde_otra_funcion_señala_al_llamador():
     src = FACT + """
 fn bad(n: Int) -> Int
-  requires true
-  ensures true
+  requires 1 == 1
+  ensures 1 == 1
   effects pure
   example bad(3) == 2
 { factorial(n - 5) }
@@ -77,7 +77,7 @@ def test_varias_clausulas_ensures_son_conjuncion():
 
 PRIMERO = """
 fn primero(xs: List[Int]) -> Option[Int]
-  requires true
+  requires 1 == 1
   ensures match result { None => xs == []  Some(m) => forall x in xs: x == m or count(xs, x) < count(xs, m) }
   effects pure
   example primero([]) == None
@@ -99,7 +99,7 @@ def test_forall_en_ensures_caza_el_empate_con_E201():
 
 
 def test_distinct_en_requires_rechaza_repetidos_con_E300():
-    src = PRIMERO.replace("requires true", "requires distinct(xs)").replace("[2, 2, 3]", "[2, 3, 3]")
+    src = PRIMERO.replace("requires 1 == 1", "requires distinct(xs)").replace("[2, 2, 3]", "[2, 3, 3]")
     e = fails_with(src, "E300")
     assert e.extra["call"] == "primero([2, 3, 3])"
 
@@ -107,7 +107,7 @@ def test_distinct_en_requires_rechaza_repetidos_con_E300():
 def test_len_y_sorted_en_ensures():
     src = """
 fn ordena2(a: Int, b: Int) -> List[Int]
-  requires true
+  requires 1 == 1
   ensures len(result) == 2
   ensures sorted(result)
   effects pure
@@ -130,3 +130,10 @@ fn algun_positivo(xs: List[Int]) -> Bool
 """
     assert check_source(src)["ok"]
     fails_with(src.replace("([0, 1])", "([])"), "E300")
+
+
+def test_clausula_true_literal_es_E102():
+    """Paso 2 de 'Un contrato trivial no certifica nada' (2026-09-02)."""
+    e = fails_with(FACT.replace("requires n >= 0", "requires true"), "E102")
+    assert "requires" in e.detail and e.function == "factorial"
+    fails_with(FACT.replace("ensures result >= 1", "ensures true"), "E102")

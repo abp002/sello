@@ -17,14 +17,14 @@ fn factorial(n: Int) -> Int
 EVEN_ODD = """
 fn is_even(n: Int) -> Bool
   requires n >= 0
-  ensures true
+  ensures 1 == 1
   effects pure
   example is_even(4) == true
 { if n == 0 then true else is_odd(n - 1) }
 
 fn is_odd(n: Int) -> Bool
   requires n >= 0
-  ensures true
+  ensures 1 == 1
   effects pure
   example is_odd(3) == true
 { if n == 0 then false else is_even(n - 1) }
@@ -51,7 +51,7 @@ def test_cambiar_el_cuerpo_o_el_contrato_cambia_el_hash():
 
 
 def test_cambiar_una_dependencia_cambia_al_llamador():
-    src = FACT + "\nfn twice(n: Int) -> Int\n  requires n >= 0\n  ensures true\n  effects pure\n  example twice(3) == 12\n{ 2 * factorial(n) }\n"
+    src = FACT + "\nfn twice(n: Int) -> Int\n  requires n >= 0\n  ensures 1 == 1\n  effects pure\n  example twice(3) == 12\n{ 2 * factorial(n) }\n"
     a = h(src)
     b = h(src.replace("ensures result >= 1", "ensures result >= 0"))
     assert a["twice"] != b["twice"]
@@ -67,7 +67,7 @@ def test_recursion_mutua_es_estable_y_sensible():
 
 
 def test_renombrar_la_variable_del_forall_no_cambia_el_hash_pero_exists_si():
-    base = "fn f(xs: List[Int]) -> Int\n  requires forall x in xs: x > 0\n  ensures true\n  effects pure\n  example f([1]) == 0\n{ 0 }"
+    base = "fn f(xs: List[Int]) -> Int\n  requires forall x in xs: x > 0\n  ensures 1 == 1\n  effects pure\n  example f([1]) == 0\n{ 0 }"
     h = hash_program(parse(base))["f"]
     assert hash_program(parse(base.replace("forall x in xs: x", "forall y in xs: y")))["f"] == h
     assert hash_program(parse(base.replace("forall", "exists")))["f"] != h

@@ -23,8 +23,8 @@ def test_precedencia_aritmetica_y_logica():
 def test_tipos_anidados_y_match():
     src = """
 fn f(xs: List[Option[Int]]) -> Int
-  requires true
-  ensures true
+  requires 1 == 1
+  ensures 1 == 1
   effects pure
   example f([]) == 0
 { match xs { [] => 0  [h, ..t] => 1 + f(t) } }
@@ -40,7 +40,7 @@ def test_error_de_sintaxis_lleva_posicion():
     from sello.errors import SelloError
     import pytest
     with pytest.raises(SelloError) as ei:
-        parse("fn f(a: Int) -> Int\n  requires true\n{ a + }")
+        parse("fn f(a: Int) -> Int\n  requires 1 == 1\n{ a + }")
     assert ei.value.code == "E000"
     assert ei.value.line == 3
 
@@ -49,7 +49,7 @@ def test_comodin_dentro_del_patron_de_lista():
     """Hallazgo de la batería difícil (2026-09-02): haiku escribe `[_, ..t]` y `[h, .._]`."""
     src = """
 fn tail_len(xs: List[Int]) -> Int
-  requires true
+  requires 1 == 1
   ensures result >= 0
   effects pure
   example tail_len([]) == 0
@@ -57,7 +57,7 @@ fn tail_len(xs: List[Int]) -> Int
 { match xs { [] => 0  [_, ..t] => length_of(t) } }
 
 fn length_of(xs: List[Int]) -> Int
-  requires true
+  requires 1 == 1
   ensures result >= 0
   effects pure
   example length_of([1, 2]) == 2
@@ -65,7 +65,7 @@ fn length_of(xs: List[Int]) -> Int
 
 fn rest(xs: List[Int]) -> List[Int]
   requires xs != []
-  ensures true
+  ensures 1 == 1
   effects pure
   example rest([1, 2]) == [2]
 { match xs { [] => []  [_, ..t] => t } }

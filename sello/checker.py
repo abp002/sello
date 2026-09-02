@@ -61,6 +61,10 @@ class Checker:
         env: Env = {p.name: p.type for p in fn.params}
 
         self.in_contract = True
+        for kw, clauses in (("requires", fn.requires), ("ensures", fn.ensures)):
+            for c in clauses:
+                if isinstance(c, BoolLit) and c.value:
+                    raise SelloError("E102", f"`{kw} true` in `{_name(fn)}`", c.line, c.col, _name(fn))
         for r in fn.requires:
             self.expect(r, env, BOOL, fn, "`requires` must be Bool")
         for en in fn.ensures:

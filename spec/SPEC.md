@@ -14,15 +14,15 @@ Code you write is stored by the hash of its syntax tree; names are aliases.
 A function is: a name, typed parameters, a return type, a contract, a body.
 
 ```
-fn max(a: Int, b: Int) -> Int
-  requires true
-  ensures result >= a and result >= b
+fn factorial(n: Int) -> Int
+  requires n >= 0
+  ensures result >= 1
   effects pure
-  example max(1, 2) == 2
-  example max(5, 5) == 5
-  example max(-3, -7) == -3
+  example factorial(0) == 1
+  example factorial(5) == 120
+  example factorial(3) == 6
 {
-  if a >= b then a else b
+  if n == 0 then 1 else n * factorial(n - 1)
 }
 ```
 
@@ -30,7 +30,7 @@ Rules:
 
 - `requires`, `ensures`, `effects` and at least one `example` are **mandatory**.
   Omitting any of them is error `E100`. `requires` and `ensures` may appear several
-  times; all of them must hold.
+  times; all of them must hold. A clause that is just `true` is error `E102`.
 - `result` names the return value inside `ensures`.
 - `effects` is `pure` in v0. Other effects (`io`, `random`) are reserved.
 - Examples are executed at compile time. A failing example is error `E200`.
@@ -87,16 +87,17 @@ A quantifier may follow `and`, `or` or `not`; its body extends to the end of the
 (or to the closing parenthesis). These names are reserved (`E402`).
 
 ```
-fn reversed(xs: List[Int]) -> List[Int]
-  requires true
-  ensures len(result) == len(xs)
-  ensures forall x in xs: count(result, x) == count(xs, x)
+fn drop(xs: List[Int], k: Int) -> List[Int]
+  requires k >= 0 and k <= len(xs)
+  ensures len(result) == len(xs) - k
+  ensures forall x in result: contains(xs, x)
   effects pure
-  example reversed([1, 2, 3]) == [3, 2, 1]
+  example drop([1, 2, 3], 1) == [2, 3]
+  example drop([1, 2, 3], 3) == []
 {
-  match xs {
+  if k == 0 then xs else match xs {
     [] => []
-    [h, ..t] => reversed(t) ++ [h]
+    [_, ..t] => drop(t, k - 1)
   }
 }
 ```
@@ -131,6 +132,7 @@ All errors are JSON: `{"code", "where", "what", "fix", "example"}`. Codes are st
 | E000 | Syntax error | Follow the grammar above |
 | E100 | Missing contract clause | Add `requires`, `ensures`, `effects` or an `example` |
 | E101 | Unknown effect | Only `pure` exists in v0 |
+| E102 | Trivial contract clause | `requires true` / `ensures true` certify nothing; state what you assume and what a wrong result would break |
 | E200 | Example failed | Body or example is wrong; the message shows expected vs got |
 | E201 | Postcondition violated | Body returned a value that breaks `ensures` |
 | E300 | Precondition violated at a call | Guard the call with `if`, or strengthen the caller's `requires` |

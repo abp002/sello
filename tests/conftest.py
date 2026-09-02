@@ -5,7 +5,7 @@ from sello.errors import SelloError
 
 MAX = """
 fn max(a: Int, b: Int) -> Int
-  requires true
+  requires 1 == 1
   ensures result >= a and result >= b
   effects pure
   example max(1, 2) == 2

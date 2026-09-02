@@ -11,13 +11,13 @@ import json
 from dataclasses import dataclass, field
 
 _EJEMPLO_FN = (
-    "fn max(a: Int, b: Int) -> Int\n"
-    "  requires true\n"
-    "  ensures result >= a and result >= b\n"
+    "fn factorial(n: Int) -> Int\n"
+    "  requires n >= 0\n"
+    "  ensures result >= 1\n"
     "  effects pure\n"
-    "  example max(1, 2) == 2\n"
+    "  example factorial(5) == 120\n"
     "{\n"
-    "  if a >= b then a else b\n"
+    "  if n == 0 then 1 else n * factorial(n - 1)\n"
     "}"
 )
 
@@ -37,6 +37,11 @@ CATALOGO: dict[str, tuple[str, str, str]] = {
         "Unknown effect",
         "In v0 the only effect is `pure`. Write `effects pure`.",
         "  effects pure",
+    ),
+    "E102": (
+        "Trivial contract clause",
+        "`requires true` and `ensures true` certify nothing. State what the task lets you assume about the arguments, and a property that a wrong result would break.",
+        "  requires n >= 0\n  ensures result >= 1",
     ),
     "E200": (
         "Example failed",
