@@ -55,6 +55,9 @@ viven en el vault de notas del autor, no en el repo. Aquí hay código, spec y e
 3. **Solver**: Z3 sobre los contratos decidibles (nivel 2), guardas en tiempo de ejecución
    para el resto (nivel 3). Servidor MCP para que los agentes consulten el almacén.
 4. **Benchmark**: contra el conjunto público de vericoding.
+5. **El almacén como dataset**: afinar un modelo abierto con código Sello generado y
+   filtrado por el compilador. Solo con Z3 hecho y la sintaxis congelada. Objetivo: que el
+   coste de razonamiento baje de 10x a 1x manteniendo aciertos.
 
 Cada fase termina con una medición y una entrada en la bitácora. Si una fase no mejora la
 métrica, se documenta por qué antes de seguir.
