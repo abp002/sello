@@ -80,8 +80,8 @@ Inside `requires` and `ensures` **only** (using them in a body or an example is 
 | `forall x in xs: P` | `Bool` | `P` holds for every element `x` of `xs` (true for `[]`) |
 | `exists x in xs: P` | `Bool` | `P` holds for some element `x` of `xs` (false for `[]`) |
 
-A quantifier body extends to the end of the clause. To combine it with `and`, write
-another clause or wrap it in parentheses. These names are reserved (`E402`).
+A quantifier may follow `and`, `or` or `not`; its body extends to the end of the clause
+(or to the closing parenthesis). These names are reserved (`E402`).
 
 ```
 fn reversed(xs: List[Int]) -> List[Int]

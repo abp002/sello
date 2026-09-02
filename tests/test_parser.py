@@ -81,3 +81,11 @@ def test_cuantificador_engloba_hasta_el_final_de_la_clausula():
     assert unparse(e) == "forall x in xs: ((x == m) or (count(xs, x) < count(xs, m)))"
     anidado = parse_expr("exists x in xs: forall y in ys: x < y")
     assert isinstance(anidado.body, Quant) and anidado.body.kind == "forall"
+
+
+def test_cuantificador_como_operando_de_or():
+    """Medición 2026-09-02: haiku y sonnet escribieron `a or exists ...` y era E000."""
+    e = parse_expr("len(xs) == 0 or exists v in xs: result == Some(v) and v > 0")
+    assert isinstance(e, Binary) and e.op == "or" and isinstance(e.right, Quant)
+    assert isinstance(e.right.body, Binary) and e.right.body.op == "and"
+    assert unparse(parse_expr("not forall x in xs: x > 0")) == "not forall x in xs: (x > 0)"

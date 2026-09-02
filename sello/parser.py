@@ -142,15 +142,16 @@ class Parser:
             if not arms:
                 raise self.fail("match needs at least one arm", t)
             return Match(subject, arms, line=t.line, col=t.col)
-        if self.at_kw("forall") or self.at_kw("exists"):
-            t = self.advance()
-            var = self.expect_name().value
-            self.expect_kw("in")
-            subject = self.or_()
-            self.expect_sym(":")
-            body = self.expr()
-            return Quant(t.value, var, subject, body, line=t.line, col=t.col)
         return self.or_()
+
+    def quant(self) -> Expr:
+        t = self.advance()
+        var = self.expect_name().value
+        self.expect_kw("in")
+        subject = self.or_()
+        self.expect_sym(":")
+        body = self.expr()
+        return Quant(t.value, var, subject, body, line=t.line, col=t.col)
 
     def or_(self) -> Expr:
         left = self.and_()
@@ -170,6 +171,8 @@ class Parser:
         if self.at_kw("not"):
             t = self.advance()
             return Unary("not", self.not_(), line=t.line, col=t.col)
+        if self.at_kw("forall") or self.at_kw("exists"):
+            return self.quant()
         return self.cmp()
 
     def cmp(self) -> Expr:
