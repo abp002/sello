@@ -34,16 +34,21 @@ estructurado que dice qué decisión de diseño está fallando.
 
 ## Estado
 
-**Fase 2 hecha** (2 de septiembre de 2026): núcleo, almacén con certificados, API de
-consulta y dos mediciones. El porqué de cada decisión, la bitácora y el estado del arte
-viven en el vault de notas del autor, no en el repo. Aquí hay código, spec y este README.
+**Fase 2 hecha y métrica cambiada** (3 de septiembre de 2026): núcleo, almacén con
+certificados, API de consulta, y el *juez imperfecto* como métrica principal (errores
+silenciosos que llegan a producción, `bench/harness3.py`). Tres cambios medidos en un
+día llevaron a Sello de 7/5 silenciosos (haiku/sonnet) a 1/0, igualando a Python con
+asserts: vocabulario de listas en contratos, `requires` como sitio de lo que el enunciado
+permite suponer, y `E102` para el contrato trivial. El porqué de cada decisión, la
+bitácora y el estado del arte viven en el vault de notas del autor, no en el repo. Aquí
+hay código, spec y este README.
 
     uv sync --extra dev
     uv run sello check ejemplos/basicos.sello     # parse, tipos, ejemplos
     uv run sello add ejemplos/basicos.sello       # al almacén, con certificado
-    uv run sello sig safe_div                     # firma + contrato + certificado
-    uv run sello users head                       # quién la llama
-    uv run sello eval 'first_or([], factorial(4))'
+    uv run sello sig max_of                       # firma + contrato + certificado
+    uv run sello users contains_in                # quién la llama
+    uv run sello eval 'max_of([factorial(3), div(9, 2)])'
 
 ## Hoja de ruta
 
@@ -52,6 +57,8 @@ viven en el vault de notas del autor, no en el repo. Aquí hay código, spec y e
    ejemplos se ejecutan. Errores en JSON. Primera medición.~~
 2. ~~**Almacén**: hash del AST normalizado, nombres como alias, certificado por hash, API
    de consulta. Segunda medición: leer por API no baja los aciertos.~~
+   ~~**Juez imperfecto**: métrica de silenciosos; vocabulario de listas, `requires` como
+   dominio y `E102`. Sello pasa de 7/5 a 1/0 e iguala a Python con asserts.~~
 3. **Solver**: Z3 sobre los contratos decidibles (nivel 2), guardas en tiempo de ejecución
    para el resto (nivel 3). Servidor MCP para que los agentes consulten el almacén.
 4. **Benchmark**: contra el conjunto público de vericoding.
