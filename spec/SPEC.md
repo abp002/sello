@@ -61,10 +61,13 @@ making a function. `x / 0` is a runtime error (`E500`); rule it out with `requir
 
 ## 4. Contracts
 
-- `requires` is checked at every call, including calls made while running examples.
-  A call whose arguments violate `requires` is error `E300`.
-- `ensures` is checked on every return. A body that returns a value violating `ensures`
-  is error `E201`. `result` names the return value.
+- `requires` states everything the task lets you assume about the arguments (a value is
+  unique, the list has no repeats, `k` is within bounds). Whatever is not in `requires`
+  the body must handle. It is checked at every call, including calls made while running
+  examples. A call whose arguments violate `requires` is error `E300`.
+- `ensures` must reject wrong results: a clause that every return value satisfies
+  certifies nothing. It is checked on every return. A body that returns a value
+  violating `ensures` is error `E201`. `result` names the return value.
 - In v0 both are checked by execution (verification level 1). Later levels: SMT solver
   (level 2), runtime guard (level 3).
 
