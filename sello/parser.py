@@ -7,7 +7,7 @@ from .lexer import Token, lex
 from .nodes import (
     ANY, BOOL, INT, TEXT, Arm, Binary, BoolLit, Call, Expr, Fn, If, IntLit, ListLit,
     Match, Name, NoneLit, Param, Pattern, PCons, PEmpty, PNone, PSome, PWild, Program,
-    SomeExpr, TextLit, TList, TOption, Type, Unary,
+    Quant, SomeExpr, TextLit, TList, TOption, Type, Unary,
 )
 
 
@@ -142,6 +142,14 @@ class Parser:
             if not arms:
                 raise self.fail("match needs at least one arm", t)
             return Match(subject, arms, line=t.line, col=t.col)
+        if self.at_kw("forall") or self.at_kw("exists"):
+            t = self.advance()
+            var = self.expect_name().value
+            self.expect_kw("in")
+            subject = self.or_()
+            self.expect_sym(":")
+            body = self.expr()
+            return Quant(t.value, var, subject, body, line=t.line, col=t.col)
         return self.or_()
 
     def or_(self) -> Expr:

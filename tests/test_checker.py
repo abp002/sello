@@ -40,3 +40,31 @@ def test_concatenacion_solo_entre_secuencias_del_mismo_tipo():
     fails_with("fn f(a: Int) -> Int\n  requires true\n  ensures true\n  effects pure\n  example f(1) == 1\n{ a ++ 1 }", "E400")
     ok = "fn f(xs: List[Int]) -> List[Int]\n  requires true\n  ensures true\n  effects pure\n  example f([1]) == [1, 0]\n{ xs ++ [0] }"
     assert check_source(ok)["ok"]
+
+
+CABECERA = "fn f(xs: List[Int]) -> Int\n  requires true\n  ensures true\n  effects pure\n  example f([]) == 0\n"
+
+
+def test_vocabulario_de_listas_solo_en_contratos_es_E401():
+    e = fails_with(CABECERA + "{ len(xs) }", "E401")
+    assert "requires" in e.detail and "ensures" in e.detail
+    fails_with(CABECERA + "{ if forall x in xs: x > 0 then 1 else 0 }", "E401")
+
+
+def test_nombres_del_vocabulario_reservados_es_E402():
+    fails_with("fn len(xs: List[Int]) -> Int\n  requires true\n  ensures true\n  effects pure\n  example len([]) == 0\n{ 0 }", "E402")
+
+
+def test_vocabulario_tipa_sobre_el_elemento_de_la_lista():
+    e = fails_with(CABECERA.replace("requires true", 'requires count(xs, "a") == 0') + "{ 0 }", "E400")
+    assert e.extra == {"expected": "Int", "actual": "Text"}
+    fails_with(CABECERA.replace("requires true", "requires len(3) == 0") + "{ 0 }", "E400")
+    fails_with(CABECERA.replace("requires true", "requires len(xs, xs) == 0") + "{ 0 }", "E403")
+    fails_with(CABECERA.replace("requires true", "requires forall x in xs: x") + "{ 0 }", "E400")
+    ok = CABECERA.replace("ensures true", "ensures forall x in xs: result >= x or contains(xs, result)")
+    assert check_source(ok + "{ 0 }")["ok"]
+
+
+def test_sorted_solo_sobre_listas_de_int():
+    src = "fn f(ts: List[Text]) -> Int\n  requires sorted(ts)\n  ensures true\n  effects pure\n  example f([]) == 0\n{ 0 }"
+    fails_with(src, "E400")

@@ -60,12 +60,12 @@ CATALOGO: dict[str, tuple[str, str, str]] = {
     ),
     "E401": (
         "Unknown name",
-        "Use a parameter, a function defined in this file, or `result` inside `ensures`.",
+        "Use a parameter, a function defined in this file, or `result` inside `ensures`. `len`, `count`, `contains`, `distinct`, `sorted`, `forall` and `exists` exist only inside `requires` and `ensures`.",
         "fn f(x: Int) -> Int ... { x + 1 }",
     ),
     "E402": (
         "Duplicate definition",
-        "Each function name is defined once per file. Rename or remove one.",
+        "Each function name is defined once per file. `len`, `count`, `contains`, `distinct` and `sorted` are reserved. Rename or remove one.",
         "",
     ),
     "E403": (

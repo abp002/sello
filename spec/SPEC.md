@@ -68,6 +68,36 @@ making a function. `x / 0` is a runtime error (`E500`); rule it out with `requir
 - In v0 both are checked by execution (verification level 1). Later levels: SMT solver
   (level 2), runtime guard (level 3).
 
+Inside `requires` and `ensures` **only** (using them in a body or an example is `E401`):
+
+| Form | Type | Meaning |
+|---|---|---|
+| `len(xs)` | `Int` | length of `xs` |
+| `count(xs, x)` | `Int` | how many elements of `xs` equal `x` |
+| `contains(xs, x)` | `Bool` | `count(xs, x) > 0` |
+| `distinct(xs)` | `Bool` | no value appears twice in `xs` |
+| `sorted(xs)` | `Bool` | `xs` is non-decreasing (`List[Int]` only) |
+| `forall x in xs: P` | `Bool` | `P` holds for every element `x` of `xs` (true for `[]`) |
+| `exists x in xs: P` | `Bool` | `P` holds for some element `x` of `xs` (false for `[]`) |
+
+A quantifier body extends to the end of the clause. To combine it with `and`, write
+another clause or wrap it in parentheses. These names are reserved (`E402`).
+
+```
+fn reversed(xs: List[Int]) -> List[Int]
+  requires true
+  ensures len(result) == len(xs)
+  ensures forall x in xs: count(result, x) == count(xs, x)
+  effects pure
+  example reversed([1, 2, 3]) == [3, 2, 1]
+{
+  match xs {
+    [] => []
+    [h, ..t] => reversed(t) ++ [h]
+  }
+}
+```
+
 ## 5. The store
 
 The compiler does not compile files. `sello add FILE` parses, checks and hashes each
@@ -102,8 +132,8 @@ All errors are JSON: `{"code", "where", "what", "fix", "example"}`. Codes are st
 | E201 | Postcondition violated | Body returned a value that breaks `ensures` |
 | E300 | Precondition violated at a call | Guard the call with `if`, or strengthen the caller's `requires` |
 | E400 | Type mismatch | Message shows expected and actual types |
-| E401 | Unknown name | Only parameters, functions in this file, and `result` in `ensures` |
-| E402 | Duplicate definition | One definition per name |
+| E401 | Unknown name | Only parameters, functions in this file, `result` in `ensures`, and the contract words above inside `requires`/`ensures` |
+| E402 | Duplicate definition | One definition per name; `len`, `count`, `contains`, `distinct`, `sorted` are reserved |
 | E403 | Wrong number of arguments | Match the signature |
 | E404 | Non-exhaustive match | Cover `[]` and `[h, ..t]`, or `None` and `Some(x)`, or add `_ =>` |
 | E500 | Runtime error | Division by zero or recursion too deep; add a `requires` |

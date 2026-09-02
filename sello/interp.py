@@ -4,10 +4,11 @@ from __future__ import annotations
 
 import sys
 
+from . import builtins
 from .errors import SelloError
 from .nodes import (
     Binary, BoolLit, Call, Expr, Fn, If, IntLit, ListLit, Match, Name, NoneLit, PCons,
-    PEmpty, PNone, PSome, PWild, Program, SomeExpr, TextLit, Unary,
+    PEmpty, PNone, PSome, PWild, Program, Quant, SomeExpr, TextLit, Unary,
 )
 from .pretty import unparse
 
@@ -102,6 +103,8 @@ class Interpreter:
             return env[e.id]
         if isinstance(e, Call):
             args = [self.eval(a, env, fn) for a in e.args]
+            if e.name in builtins.NAMES:
+                return builtins.run(e.name, args)
             return self.call(e.name, args, e.line, e.col, fn)
         if isinstance(e, Unary):
             v = self.eval(e.operand, env, fn)
@@ -137,6 +140,10 @@ class Interpreter:
                 if bound is not None:
                     return self.eval(arm.body, {**env, **bound}, fn)
             raise SelloError("E500", f"no arm matches {fmt(subject)} in `{unparse(e)}`", e.line, e.col, fn)
+        if isinstance(e, Quant):
+            xs = self.eval(e.subject, env, fn)
+            holds = (self.eval(e.body, {**env, e.var: x}, fn) for x in xs)  # type: ignore[union-attr]
+            return all(holds) if e.kind == "forall" else any(holds)
         raise TypeError(f"nodo desconocido: {e!r}")
 
     @staticmethod

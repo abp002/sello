@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+from .builtins import NAMES as BUILTINS
 from .errors import SelloError
 from .nodes import (
     ANY, BOOL, INT, TEXT, Binary, TText, BoolLit, Call, Expr, Fn, If, IntLit, ListLit, Match,
-    Name, NoneLit, PCons, PEmpty, PNone, PSome, PWild, Program, SomeExpr, TAny, TextLit,
+    Name, NoneLit, PCons, PEmpty, PNone, PSome, PWild, Program, Quant, SomeExpr, TAny, TextLit,
     TList, TOption, Type, Unary, unify,
 )
 from .pretty import unparse
@@ -26,9 +27,13 @@ class Checker:
     def __init__(self, program: Program) -> None:
         self.program = program
         self.fns: dict[str, Fn] = {}
+        self.in_contract = False  # dentro de `requires`/`ensures`: vocabulario de listas permitido
 
     def check(self) -> None:
         for fn in self.program.fns:
+            if _name(fn) in BUILTINS:
+                raise SelloError("E402", f"`{_name(fn)}` is a contract word; pick another name",
+                                 fn.line, fn.col, _name(fn))
             if _name(fn) in self.fns:
                 raise SelloError("E402", f"`{_name(fn)}` is defined twice", fn.line, fn.col, _name(fn))
             self.fns[_name(fn)] = fn
@@ -55,10 +60,12 @@ class Checker:
             seen.add(p.name)
         env: Env = {p.name: p.type for p in fn.params}
 
+        self.in_contract = True
         for r in fn.requires:
             self.expect(r, env, BOOL, fn, "`requires` must be Bool")
         for en in fn.ensures:
             self.expect(en, {**env, "result": fn.ret}, BOOL, fn, "`ensures` must be Bool")
+        self.in_contract = False
         for ex in fn.examples:
             self.expect(ex, {}, BOOL, fn, "`example` must be Bool (usually `call == expected`)")
         self.expect(fn.body, env, fn.ret, fn, f"body of `{_name(fn)}` must return {fn.ret}")
@@ -94,6 +101,8 @@ class Checker:
             hint = " (`result` is only valid inside `ensures`)" if e.id == "result" else ""
             raise SelloError("E401", f"`{e.id}`{hint}", e.line, e.col, _name(fn))
         if isinstance(e, Call):
+            if e.name in BUILTINS:
+                return self.type_of_builtin(e, env, fn)
             callee = self.fns.get(e.name)
             if callee is None:
                 raise SelloError("E401", f"function `{e.name}`", e.line, e.col, _name(fn))
@@ -139,7 +148,38 @@ class Checker:
             return self.expect(e.otherwise, env, t, fn, "`then` and `else` must share a type")
         if isinstance(e, Match):
             return self.type_of_match(e, env, fn)
+        if isinstance(e, Quant):
+            self.only_in_contract(e.kind, e, fn)
+            st = self.type_of(e.subject, env, fn)
+            if not isinstance(st, (TList, TAny)):
+                raise SelloError("E400", f"`{e.kind}` needs a List, got {st} in `{unparse(e.subject)}`",
+                                 e.line, e.col, _name(fn), {"expected": "List[T]", "actual": str(st)})
+            elem = st.elem if isinstance(st, TList) else ANY
+            self.expect(e.body, {**env, e.var: elem}, BOOL, fn, f"body of `{e.kind}` must be Bool")
+            return BOOL
         raise TypeError(f"nodo desconocido: {e!r}")
+
+    def only_in_contract(self, word: str, e: Expr, fn: Fn | None) -> None:
+        if not self.in_contract:
+            raise SelloError("E401", f"`{word}` is only valid inside `requires` and `ensures`",
+                             e.line, e.col, _name(fn))
+
+    def type_of_builtin(self, e: Call, env: Env, fn: Fn | None) -> Type:
+        self.only_in_contract(e.name, e, fn)
+        arity = BUILTINS[e.name]
+        if len(e.args) != arity:
+            raise SelloError("E403", f"`{e.name}` takes {arity}, got {len(e.args)}",
+                             e.line, e.col, _name(fn))
+        st = self.type_of(e.args[0], env, fn)
+        if not isinstance(st, (TList, TAny)):
+            raise SelloError("E400", f"`{e.name}` needs a List, got {st} in `{unparse(e)}`",
+                             e.line, e.col, _name(fn), {"expected": "List[T]", "actual": str(st)})
+        elem = st.elem if isinstance(st, TList) else ANY
+        if e.name in ("count", "contains"):
+            self.expect(e.args[1], env, elem, fn, f"second argument of `{e.name}` must match the list's elements")
+        if e.name == "sorted":
+            self.expect(e.args[0], env, TList(INT), fn, "`sorted` needs List[Int]")
+        return INT if e.name in ("len", "count") else BOOL
 
     def type_of_match(self, e: Match, env: Env, fn: Fn | None) -> Type:
         st = self.type_of(e.subject, env, fn)

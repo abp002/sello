@@ -1,6 +1,6 @@
 from conftest import MAX
 
-from sello.nodes import INT, Binary, If, Match, PCons, PEmpty, TList, TOption
+from sello.nodes import INT, Binary, If, Match, PCons, PEmpty, Quant, TList, TOption
 from sello.parser import parse, parse_expr
 from sello.pretty import unparse
 
@@ -72,3 +72,12 @@ fn rest(xs: List[Int]) -> List[Int]
 """
     from sello.compile import check_source
     assert check_source(src)["ok"]
+
+
+def test_cuantificador_engloba_hasta_el_final_de_la_clausula():
+    e = parse_expr("forall x in xs: x == m or count(xs, x) < count(xs, m)")
+    assert isinstance(e, Quant) and e.kind == "forall" and e.var == "x"
+    assert isinstance(e.body, Binary) and e.body.op == "or"
+    assert unparse(e) == "forall x in xs: ((x == m) or (count(xs, x) < count(xs, m)))"
+    anidado = parse_expr("exists x in xs: forall y in ys: x < y")
+    assert isinstance(anidado.body, Quant) and anidado.body.kind == "forall"

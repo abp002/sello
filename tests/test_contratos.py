@@ -71,3 +71,62 @@ def test_varias_clausulas_ensures_son_conjuncion():
     roto = CLAMP_DOBLE.replace("ensures result <= hi", "ensures result <= 4")
     e = fails_with(roto, "E201")
     assert "result <= 4" in e.detail
+
+
+# ---- vocabulario de listas (decisión 2026-09-02) ----
+
+PRIMERO = """
+fn primero(xs: List[Int]) -> Option[Int]
+  requires true
+  ensures match result { None => xs == []  Some(m) => forall x in xs: x == m or count(xs, x) < count(xs, m) }
+  effects pure
+  example primero([]) == None
+  example primero([2, 2, 3]) == Some(2)
+{
+  match xs {
+    [] => None
+    [h, ..t] => Some(h)
+  }
+}
+"""
+
+
+def test_forall_en_ensures_caza_el_empate_con_E201():
+    """El caso `most_frequent`: el juez débil acepta, el contrato caza el empate."""
+    assert check_source(PRIMERO)["ok"]
+    e = fails_with(PRIMERO.replace("example primero([2, 2, 3]) == Some(2)", "example primero([2, 3]) == Some(2)"), "E201")
+    assert e.extra["got"] == "Some(2)" and "forall" in e.detail
+
+
+def test_distinct_en_requires_rechaza_repetidos_con_E300():
+    src = PRIMERO.replace("requires true", "requires distinct(xs)").replace("[2, 2, 3]", "[2, 3, 3]")
+    e = fails_with(src, "E300")
+    assert e.extra["call"] == "primero([2, 3, 3])"
+
+
+def test_len_y_sorted_en_ensures():
+    src = """
+fn ordena2(a: Int, b: Int) -> List[Int]
+  requires true
+  ensures len(result) == 2
+  ensures sorted(result)
+  effects pure
+  example ordena2(3, 1) == [1, 3]
+{ if a <= b then [a, b] else [b, a] }
+"""
+    assert check_source(src)["ok"]
+    e = fails_with(src.replace("[b, a]", "[a, b]"), "E201")
+    assert "sorted" in e.detail
+
+
+def test_exists_sobre_lista_vacia_es_falso():
+    src = """
+fn algun_positivo(xs: List[Int]) -> Bool
+  requires exists x in xs: x > 0
+  ensures result
+  effects pure
+  example algun_positivo([0, 1]) == true
+{ true }
+"""
+    assert check_source(src)["ok"]
+    fails_with(src.replace("([0, 1])", "([])"), "E300")

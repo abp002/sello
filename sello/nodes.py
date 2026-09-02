@@ -176,6 +176,36 @@ class Match(Expr):
     arms: list[Arm]
 
 
+@dataclass
+class Quant(Expr):
+    """`forall x in xs: body` / `exists x in xs: body`. Solo en contratos."""
+    kind: str  # 'forall' | 'exists'
+    var: str
+    subject: Expr
+    body: Expr
+
+
+def children(e: Expr) -> list[Expr]:
+    """Subexpresiones directas, para recorridos que no distinguen nodos."""
+    if isinstance(e, SomeExpr):
+        return [e.inner]
+    if isinstance(e, ListLit):
+        return list(e.items)
+    if isinstance(e, Call):
+        return list(e.args)
+    if isinstance(e, Unary):
+        return [e.operand]
+    if isinstance(e, Binary):
+        return [e.left, e.right]
+    if isinstance(e, If):
+        return [e.cond, e.then, e.otherwise]
+    if isinstance(e, Match):
+        return [e.subject, *(a.body for a in e.arms)]
+    if isinstance(e, Quant):
+        return [e.subject, e.body]
+    return []
+
+
 # ---------- funciones ----------
 
 @dataclass

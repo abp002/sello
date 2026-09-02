@@ -7,9 +7,10 @@ from __future__ import annotations
 
 import hashlib
 
+from .builtins import NAMES as BUILTINS
 from .nodes import (
     Arm, Binary, BoolLit, Call, Expr, Fn, If, IntLit, ListLit, Match, Name, NoneLit,
-    PCons, PEmpty, PNone, PSome, PWild, Program, SomeExpr, TextLit, Unary,
+    PCons, PEmpty, PNone, PSome, PWild, Program, Quant, SomeExpr, TextLit, Unary, children,
 )
 
 Resolve = "callable[[str], str]"
@@ -45,7 +46,8 @@ def canon_expr(e: Expr, env: list[str], resolve) -> str:
         # índice de De Bruijn: distancia a la ligadura más reciente
         return f"${len(env) - 1 - env.index(e.id)}" if e.id in env else f"?{e.id}"
     if isinstance(e, Call):
-        return f"(call {resolve(e.name)} " + " ".join(canon_expr(a, env, resolve) for a in e.args) + ")"
+        ref = f"@{e.name}" if e.name in BUILTINS else resolve(e.name)
+        return f"(call {ref} " + " ".join(canon_expr(a, env, resolve) for a in e.args) + ")"
     if isinstance(e, Unary):
         return f"({e.op} {canon_expr(e.operand, env, resolve)})"
     if isinstance(e, Binary):
@@ -56,6 +58,9 @@ def canon_expr(e: Expr, env: list[str], resolve) -> str:
     if isinstance(e, Match):
         arms = " ".join(_canon_arm(a, env, resolve) for a in e.arms)
         return f"(match {canon_expr(e.subject, env, resolve)} {arms})"
+    if isinstance(e, Quant):
+        return (f"({e.kind} {canon_expr(e.subject, env, resolve)} "
+                f"{canon_expr(e.body, env + [e.var], resolve)})")
     raise TypeError(f"nodo desconocido: {e!r}")
 
 
@@ -92,25 +97,10 @@ def callees(fn: Fn) -> set[str]:
     out: set[str] = set()
 
     def walk(e: Expr) -> None:
-        if isinstance(e, Call):
+        if isinstance(e, Call) and e.name not in BUILTINS:
             out.add(e.name)
-            for a in e.args:
-                walk(a)
-        elif isinstance(e, (SomeExpr,)):
-            walk(e.inner)
-        elif isinstance(e, ListLit):
-            for x in e.items:
-                walk(x)
-        elif isinstance(e, Unary):
-            walk(e.operand)
-        elif isinstance(e, Binary):
-            walk(e.left); walk(e.right)
-        elif isinstance(e, If):
-            walk(e.cond); walk(e.then); walk(e.otherwise)
-        elif isinstance(e, Match):
-            walk(e.subject)
-            for a in e.arms:
-                walk(a.body)
+        for c in children(e):
+            walk(c)
 
     for e in [*fn.requires, *fn.ensures, *fn.examples, fn.body]:
         walk(e)

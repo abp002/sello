@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from .nodes import (
     Binary, BoolLit, Call, Expr, If, IntLit, ListLit, Match, Name, NoneLit,
-    PCons, PEmpty, PNone, PSome, PWild, Pattern, SomeExpr, TextLit, Unary,
+    PCons, PEmpty, PNone, PSome, PWild, Pattern, Quant, SomeExpr, TextLit, Unary,
 )
 
 
@@ -34,6 +34,8 @@ def unparse(e: Expr) -> str:
     if isinstance(e, Match):
         arms = " ".join(f"{unparse_pat(a.pattern)} => {unparse(a.body)}" for a in e.arms)
         return f"match {unparse(e.subject)} {{ {arms} }}"
+    if isinstance(e, Quant):
+        return f"{e.kind} {e.var} in {unparse(e.subject)}: {unparse(e.body)}"
     raise TypeError(f"nodo desconocido: {e!r}")
 
 

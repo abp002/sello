@@ -64,3 +64,11 @@ def test_recursion_mutua_es_estable_y_sensible():
     assert a["is_even"] != a["is_odd"]
     changed = h(EVEN_ODD.replace("if n == 0 then false", "if n == 1 then true"))
     assert changed["is_even"] != a["is_even"] and changed["is_odd"] != a["is_odd"]
+
+
+def test_renombrar_la_variable_del_forall_no_cambia_el_hash_pero_exists_si():
+    base = "fn f(xs: List[Int]) -> Int\n  requires forall x in xs: x > 0\n  ensures true\n  effects pure\n  example f([1]) == 0\n{ 0 }"
+    h = hash_program(parse(base))["f"]
+    assert hash_program(parse(base.replace("forall x in xs: x", "forall y in xs: y")))["f"] == h
+    assert hash_program(parse(base.replace("forall", "exists")))["f"] != h
+    assert hash_program(parse(base.replace("x > 0", "len(xs) > 0")))["f"] != h

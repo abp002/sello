@@ -36,26 +36,11 @@ def _now() -> str:
 
 
 def _rewrite_calls(e: Expr, mapping: dict[str, str]) -> None:
-    from .nodes import Binary, If, ListLit, Match, SomeExpr, Unary
+    from .nodes import children
     if isinstance(e, Call):
         e.name = mapping.get(e.name, e.name)
-        for a in e.args:
-            _rewrite_calls(a, mapping)
-    elif isinstance(e, SomeExpr):
-        _rewrite_calls(e.inner, mapping)
-    elif isinstance(e, ListLit):
-        for x in e.items:
-            _rewrite_calls(x, mapping)
-    elif isinstance(e, Unary):
-        _rewrite_calls(e.operand, mapping)
-    elif isinstance(e, Binary):
-        _rewrite_calls(e.left, mapping); _rewrite_calls(e.right, mapping)
-    elif isinstance(e, If):
-        _rewrite_calls(e.cond, mapping); _rewrite_calls(e.then, mapping); _rewrite_calls(e.otherwise, mapping)
-    elif isinstance(e, Match):
-        _rewrite_calls(e.subject, mapping)
-        for a in e.arms:
-            _rewrite_calls(a.body, mapping)
+    for c in children(e):
+        _rewrite_calls(c, mapping)
 
 
 def _rewrite_fn(fn: Fn, mapping: dict[str, str]) -> None:

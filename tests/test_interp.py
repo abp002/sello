@@ -58,3 +58,15 @@ def test_recursion_profunda_es_E500_no_crash():
     src = "fn f(n: Int) -> Int\n  requires true\n  ensures true\n  effects pure\n  example f(1) == 1\n{ f(n + 1) }"
     e = fails_with(src, "E500")
     assert "recursion" in e.detail
+
+
+def test_semantica_del_vocabulario_de_listas():
+    from sello.interp import Interpreter
+    from sello.nodes import Program
+    from sello.parser import parse_expr
+    ev = lambda s: Interpreter(Program([])).eval(parse_expr(s), {})
+    assert ev("len([])") == 0 and ev("count([1, 2, 1], 1)") == 2
+    assert ev("contains([1, 2], 2)") and not ev("contains([], 2)")
+    assert ev("distinct([1, 2, 3])") and not ev("distinct([1, 2, 1])")
+    assert ev("sorted([1, 1, 2])") and not ev("sorted([2, 1])") and ev("sorted([])")
+    assert ev("forall x in []: false") and not ev("exists x in []: true")
