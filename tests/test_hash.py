@@ -72,3 +72,23 @@ def test_renombrar_la_variable_del_forall_no_cambia_el_hash_pero_exists_si():
     assert hash_program(parse(base.replace("forall x in xs: x", "forall y in xs: y")))["f"] == h
     assert hash_program(parse(base.replace("forall", "exists")))["f"] != h
     assert hash_program(parse(base.replace("x > 0", "len(xs) > 0")))["f"] != h
+
+
+SOMBRA = """
+fn f(x: Int, ys: List[Int]) -> Int
+  requires x >= 0
+  ensures result >= 0
+  effects pure
+  example f(1, [5]) == 5
+{ match ys { [] => x  [x, ..t] => x } }
+"""
+
+
+def test_una_variable_sombreada_se_refiere_a_la_ligadura_mas_reciente():
+    """Regresión: `env.index` devolvía la primera ligadura, no la última. Dos programas
+    con distinto significado compartían hash y dos alfa-equivalentes no."""
+    sombra = h(SOMBRA)["f"]
+    alfa = h(SOMBRA.replace("[x, ..t] => x", "[z, ..t] => z"))["f"]
+    distinta = h(SOMBRA.replace("[x, ..t] => x", "[z, ..t] => x"))["f"]
+    assert sombra == alfa, "renombrar la variable del patrón no cambia el significado"
+    assert sombra != distinta, "devolver el parámetro en vez de la cabeza sí lo cambia"

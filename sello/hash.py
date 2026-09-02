@@ -43,8 +43,11 @@ def canon_expr(e: Expr, env: list[str], resolve) -> str:
     if isinstance(e, Name):
         if e.id == "result" and "result" not in env:
             return "$result"
-        # índice de De Bruijn: distancia a la ligadura más reciente
-        return f"${len(env) - 1 - env.index(e.id)}" if e.id in env else f"?{e.id}"
+        # índice de De Bruijn: distancia a la ligadura más reciente (la última en env,
+        # no la primera: un patrón puede sombrear un parámetro)
+        if e.id not in env:
+            return f"?{e.id}"
+        return f"${len(env) - 1 - max(i for i, v in enumerate(env) if v == e.id)}"
     if isinstance(e, Call):
         ref = f"@{e.name}" if e.name in BUILTINS else resolve(e.name)
         return f"(call {ref} " + " ".join(canon_expr(a, env, resolve) for a in e.args) + ")"
