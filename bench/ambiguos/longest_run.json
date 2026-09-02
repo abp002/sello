@@ -1,0 +1,359 @@
+{
+ "fn": "longest_run",
+ "statement": "Return the length of the longest run of equal consecutive elements. Must work for any non-empty list.",
+ "sello": "longest_run(xs: List[Int]) -> Int",
+ "python": "def longest_run(xs: list[int]) -> int",
+ "option": false,
+ "visible": [
+  {
+   "args": [
+    [
+     1,
+     1,
+     2,
+     2,
+     2,
+     3
+    ]
+   ],
+   "expect": 3,
+   "zone": "visible"
+  },
+  {
+   "args": [
+    [
+     7
+    ]
+   ],
+   "expect": 1,
+   "zone": "visible"
+  }
+ ],
+ "oracle": [
+  {
+   "args": [
+    []
+   ],
+   "expect": 0,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     1,
+     2,
+     2,
+     1,
+     3,
+     2,
+     3
+    ]
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     2
+    ]
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     2,
+     2,
+     2,
+     1,
+     1,
+     1
+    ]
+   ],
+   "expect": 3,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     2,
+     2,
+     3,
+     1,
+     2,
+     1
+    ]
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3
+    ]
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     3,
+     3,
+     3
+    ]
+   ],
+   "expect": 3,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     1
+    ]
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     2,
+     1,
+     1,
+     2,
+     3,
+     1
+    ]
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     3,
+     3,
+     2,
+     2,
+     2,
+     1
+    ]
+   ],
+   "expect": 3,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     3,
+     3,
+     1,
+     2
+    ]
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     2,
+     2,
+     2,
+     2
+    ]
+   ],
+   "expect": 4,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     1,
+     2,
+     1,
+     3,
+     1
+    ]
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     2,
+     3,
+     1
+    ]
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     3,
+     2
+    ]
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     2,
+     3,
+     2,
+     2,
+     2
+    ]
+   ],
+   "expect": 3,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1
+    ]
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     1,
+     1
+    ]
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     1,
+     1
+    ]
+   ],
+   "expect": 3,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     2
+    ]
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     3,
+     2,
+     2,
+     1,
+     1,
+     2
+    ]
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     3,
+     3,
+     3,
+     1,
+     3,
+     2
+    ]
+   ],
+   "expect": 3,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     3,
+     3,
+     2,
+     1,
+     1
+    ]
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     3,
+     2,
+     1
+    ]
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     2,
+     2,
+     3,
+     2,
+     2,
+     2,
+     3,
+     3
+    ]
+   ],
+   "expect": 3,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     2,
+     1,
+     1,
+     2,
+     3
+    ]
+   ],
+   "expect": 2,
+   "zone": "domain"
+  }
+ ]
+}

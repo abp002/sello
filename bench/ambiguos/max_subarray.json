@@ -1,0 +1,368 @@
+{
+ "fn": "max_subarray",
+ "statement": "Return the largest sum of a contiguous sublist. Must work for any list that has at least one element greater than zero.",
+ "sello": "max_subarray(xs: List[Int]) -> Int",
+ "python": "def max_subarray(xs: list[int]) -> int",
+ "option": false,
+ "visible": [
+  {
+   "args": [
+    [
+     1,
+     -2,
+     3,
+     4,
+     -1
+    ]
+   ],
+   "expect": 7,
+   "zone": "visible"
+  },
+  {
+   "args": [
+    [
+     2,
+     2,
+     -5,
+     1
+    ]
+   ],
+   "expect": 4,
+   "zone": "visible"
+  }
+ ],
+ "oracle": [
+  {
+   "args": [
+    []
+   ],
+   "expect": 0,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     -3,
+     -1,
+     -2
+    ]
+   ],
+   "expect": -1,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     -5
+    ]
+   ],
+   "expect": -5,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     0,
+     -1,
+     0
+    ]
+   ],
+   "expect": 0,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     6,
+     5,
+     -8,
+     7,
+     1,
+     -7
+    ]
+   ],
+   "expect": 11,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     7,
+     -1,
+     -7,
+     -3,
+     6
+    ]
+   ],
+   "expect": 7,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -3,
+     3
+    ]
+   ],
+   "expect": 3,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     7,
+     2
+    ]
+   ],
+   "expect": 9,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     7,
+     8,
+     -1,
+     -5
+    ]
+   ],
+   "expect": 15,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -9,
+     7,
+     6,
+     3
+    ]
+   ],
+   "expect": 16,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -9,
+     6,
+     2,
+     7,
+     0,
+     -3
+    ]
+   ],
+   "expect": 15,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     5
+    ]
+   ],
+   "expect": 5,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     0,
+     0,
+     -7,
+     -6,
+     -5,
+     9
+    ]
+   ],
+   "expect": 9,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3
+    ]
+   ],
+   "expect": 3,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -7,
+     -4,
+     -8,
+     7
+    ]
+   ],
+   "expect": 7,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -7,
+     -2,
+     8
+    ]
+   ],
+   "expect": 8,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     0,
+     -6,
+     1
+    ]
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     6,
+     -4,
+     -7,
+     -1,
+     5,
+     1,
+     -2
+    ]
+   ],
+   "expect": 6,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     0,
+     3
+    ]
+   ],
+   "expect": 3,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     5,
+     8,
+     0,
+     -5,
+     3,
+     -6
+    ]
+   ],
+   "expect": 13,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     9,
+     -9,
+     -9
+    ]
+   ],
+   "expect": 9,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -1,
+     -9,
+     5
+    ]
+   ],
+   "expect": 5,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     7
+    ]
+   ],
+   "expect": 7,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -1,
+     -8,
+     8,
+     4,
+     7,
+     -6
+    ]
+   ],
+   "expect": 19,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     4,
+     -9,
+     6
+    ]
+   ],
+   "expect": 6,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     -7,
+     5,
+     1,
+     4,
+     3,
+     9
+    ]
+   ],
+   "expect": 22,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     0,
+     8
+    ]
+   ],
+   "expect": 8,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -4,
+     -1,
+     4
+    ]
+   ],
+   "expect": 4,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     6,
+     3,
+     -8,
+     3
+    ]
+   ],
+   "expect": 9,
+   "zone": "domain"
+  }
+ ]
+}

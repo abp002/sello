@@ -1,0 +1,267 @@
+{
+ "fn": "power",
+ "statement": "Return base raised to exp. Must work for any base and any exp >= 1.",
+ "sello": "power(base: Int, exp: Int) -> Int",
+ "python": "def power(base: int, exp: int) -> int",
+ "option": false,
+ "visible": [
+  {
+   "args": [
+    2,
+    10
+   ],
+   "expect": 1024,
+   "zone": "visible"
+  },
+  {
+   "args": [
+    -3,
+    3
+   ],
+   "expect": -27,
+   "zone": "visible"
+  }
+ ],
+ "oracle": [
+  {
+   "args": [
+    0,
+    0
+   ],
+   "expect": 1,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    5,
+    0
+   ],
+   "expect": 1,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    2,
+    -1
+   ],
+   "expect": 0,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    -2,
+    -2
+   ],
+   "expect": 0,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    1,
+    -5
+   ],
+   "expect": 0,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    -5,
+    8
+   ],
+   "expect": 390625,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    0,
+    4
+   ],
+   "expect": 0,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    2,
+    4
+   ],
+   "expect": 16,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    -3,
+    7
+   ],
+   "expect": -2187,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    3,
+    1
+   ],
+   "expect": 3,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    2,
+    8
+   ],
+   "expect": 256,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    -4,
+    2
+   ],
+   "expect": 16,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    4,
+    3
+   ],
+   "expect": 64,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    -2,
+    7
+   ],
+   "expect": -128,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    -2,
+    8
+   ],
+   "expect": 256,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    -3,
+    5
+   ],
+   "expect": -243,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    -1,
+    6
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    -1,
+    1
+   ],
+   "expect": -1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    3,
+    7
+   ],
+   "expect": 2187,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    5,
+    7
+   ],
+   "expect": 78125,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    1,
+    7
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    3,
+    8
+   ],
+   "expect": 6561,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    -3,
+    4
+   ],
+   "expect": 81,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    0,
+    2
+   ],
+   "expect": 0,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    2,
+    1
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    4,
+    6
+   ],
+   "expect": 4096,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    -1,
+    4
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    -4,
+    8
+   ],
+   "expect": 65536,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    0,
+    3
+   ],
+   "expect": 0,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    -3,
+    1
+   ],
+   "expect": -3,
+   "zone": "domain"
+  }
+ ]
+}

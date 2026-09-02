@@ -1,0 +1,221 @@
+{
+ "fn": "int_sqrt",
+ "statement": "Return the largest integer whose square does not exceed n. Must work for any n >= 0.",
+ "sello": "int_sqrt(n: Int) -> Int",
+ "python": "def int_sqrt(n: int) -> int",
+ "option": false,
+ "visible": [
+  {
+   "args": [
+    16
+   ],
+   "expect": 4,
+   "zone": "visible"
+  },
+  {
+   "args": [
+    17
+   ],
+   "expect": 4,
+   "zone": "visible"
+  }
+ ],
+ "oracle": [
+  {
+   "args": [
+    -1
+   ],
+   "expect": 0,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    -4
+   ],
+   "expect": 0,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    -100
+   ],
+   "expect": 0,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    0
+   ],
+   "expect": 0,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    100
+   ],
+   "expect": 10,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    2
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    99
+   ],
+   "expect": 9,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    5467
+   ],
+   "expect": 73,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    3
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    1
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    24
+   ],
+   "expect": 4,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    8
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    25
+   ],
+   "expect": 5,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    4
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    9
+   ],
+   "expect": 3,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    8086
+   ],
+   "expect": 89,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    15
+   ],
+   "expect": 3,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    6716
+   ],
+   "expect": 81,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    7200
+   ],
+   "expect": 84,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    6672
+   ],
+   "expect": 81,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    9589
+   ],
+   "expect": 97,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    4776
+   ],
+   "expect": 69,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    9888
+   ],
+   "expect": 99,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    170
+   ],
+   "expect": 13,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    4735
+   ],
+   "expect": 68,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    8895
+   ],
+   "expect": 94,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    3431
+   ],
+   "expect": 58,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    6701
+   ],
+   "expect": 81,
+   "zone": "domain"
+  }
+ ]
+}

@@ -1,0 +1,389 @@
+{
+ "fn": "index_of",
+ "statement": "Return the 0-based position of the first occurrence of x in xs. Must work for any list that contains x at least once.",
+ "sello": "index_of(xs: List[Int], x: Int) -> Int",
+ "python": "def index_of(xs: list[int], x: int) -> int",
+ "option": false,
+ "visible": [
+  {
+   "args": [
+    [
+     4,
+     7,
+     9
+    ],
+    7
+   ],
+   "expect": 1,
+   "zone": "visible"
+  },
+  {
+   "args": [
+    [
+     3,
+     3,
+     3
+    ],
+    3
+   ],
+   "expect": 0,
+   "zone": "visible"
+  }
+ ],
+ "oracle": [
+  {
+   "args": [
+    [],
+    1
+   ],
+   "expect": -1,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     1,
+     2,
+     3
+    ],
+    4
+   ],
+   "expect": -1,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     5
+    ],
+    0
+   ],
+   "expect": -1,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     -5,
+     -2,
+     0,
+     9,
+     9,
+     5
+    ],
+    9
+   ],
+   "expect": 3,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     9,
+     -1
+    ],
+    9
+   ],
+   "expect": 0,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -1,
+     2,
+     5
+    ],
+    -1
+   ],
+   "expect": 0,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -9,
+     0,
+     -8,
+     -2,
+     6
+    ],
+    -8
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -5
+    ],
+    -5
+   ],
+   "expect": 0,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     0,
+     2
+    ],
+    2
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -8,
+     -7,
+     4,
+     -2,
+     6
+    ],
+    -2
+   ],
+   "expect": 3,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -1,
+     -2,
+     8,
+     -7
+    ],
+    -7
+   ],
+   "expect": 3,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     9,
+     -6,
+     -3,
+     9
+    ],
+    -6
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     7,
+     7,
+     -4,
+     2
+    ],
+    -4
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -6,
+     -1,
+     -1,
+     3,
+     8,
+     -3
+    ],
+    -3
+   ],
+   "expect": 5,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     9,
+     -5,
+     -8,
+     -6,
+     8
+    ],
+    9
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     5,
+     3,
+     -4,
+     8,
+     -4,
+     -7
+    ],
+    3
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -4,
+     -7,
+     5,
+     -7
+    ],
+    5
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -2
+    ],
+    -2
+   ],
+   "expect": 0,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     0,
+     2,
+     -9,
+     7,
+     -4,
+     -6,
+     -6
+    ],
+    7
+   ],
+   "expect": 3,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     7,
+     -7,
+     0,
+     -6,
+     9,
+     1
+    ],
+    9
+   ],
+   "expect": 4,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -9,
+     -7
+    ],
+    -7
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     9,
+     -1,
+     2,
+     8,
+     -2,
+     -8,
+     4
+    ],
+    -8
+   ],
+   "expect": 5,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -1,
+     -9
+    ],
+    -9
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     4,
+     4,
+     -3
+    ],
+    -3
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     0,
+     -4
+    ],
+    0
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -4,
+     -2,
+     8,
+     0
+    ],
+    -2
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     7,
+     9,
+     6,
+     7
+    ],
+    7
+   ],
+   "expect": 0,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     8
+    ],
+    8
+   ],
+   "expect": 1,
+   "zone": "domain"
+  }
+ ]
+}

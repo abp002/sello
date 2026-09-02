@@ -1,0 +1,418 @@
+{
+ "fn": "nth",
+ "statement": "Return the element at 0-based index i, or nothing if the index is past the end. Must work for any list and any i >= 0.",
+ "sello": "nth(xs: List[Int], i: Int) -> Option[Int]",
+ "python": "def nth(xs: list[int], i: int) -> int | None",
+ "option": true,
+ "visible": [
+  {
+   "args": [
+    [
+     5,
+     6,
+     7
+    ],
+    1
+   ],
+   "expect": {
+    "some": 6
+   },
+   "zone": "visible"
+  },
+  {
+   "args": [
+    [
+     5,
+     6,
+     7
+    ],
+    3
+   ],
+   "expect": null,
+   "zone": "visible"
+  }
+ ],
+ "oracle": [
+  {
+   "args": [
+    [
+     1,
+     2,
+     3
+    ],
+    -1
+   ],
+   "expect": null,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     1,
+     2,
+     3
+    ],
+    -3
+   ],
+   "expect": null,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     1,
+     2,
+     3
+    ],
+    -4
+   ],
+   "expect": null,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [],
+    -1
+   ],
+   "expect": null,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [],
+    0
+   ],
+   "expect": null,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [],
+    1
+   ],
+   "expect": null,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -7,
+     -8,
+     1,
+     -2,
+     9
+    ],
+    5
+   ],
+   "expect": null,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     5
+    ],
+    0
+   ],
+   "expect": {
+    "some": 5
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     4
+    ],
+    1
+   ],
+   "expect": null,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -1
+    ],
+    2
+   ],
+   "expect": null,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     0,
+     -2,
+     -1
+    ],
+    4
+   ],
+   "expect": null,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     7,
+     0,
+     -1,
+     9,
+     4
+    ],
+    4
+   ],
+   "expect": {
+    "some": 4
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     8,
+     7,
+     -9,
+     7
+    ],
+    2
+   ],
+   "expect": {
+    "some": -9
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -8,
+     9,
+     -5
+    ],
+    3
+   ],
+   "expect": null,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -4,
+     1,
+     -4
+    ],
+    4
+   ],
+   "expect": null,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -2,
+     5,
+     -8
+    ],
+    2
+   ],
+   "expect": {
+    "some": -8
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     2,
+     -4
+    ],
+    0
+   ],
+   "expect": {
+    "some": 2
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -8,
+     -4,
+     -1,
+     0
+    ],
+    3
+   ],
+   "expect": {
+    "some": 0
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     2,
+     0,
+     8,
+     3,
+     8,
+     -3,
+     8
+    ],
+    4
+   ],
+   "expect": {
+    "some": 8
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -5,
+     -4,
+     1,
+     -4,
+     5
+    ],
+    2
+   ],
+   "expect": {
+    "some": 1
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -4,
+     9,
+     -9
+    ],
+    2
+   ],
+   "expect": {
+    "some": -9
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     5,
+     -4
+    ],
+    1
+   ],
+   "expect": {
+    "some": -4
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -2,
+     1,
+     7,
+     9,
+     6,
+     -7,
+     5
+    ],
+    3
+   ],
+   "expect": {
+    "some": 9
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -6,
+     0
+    ],
+    3
+   ],
+   "expect": null,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     2,
+     9,
+     9,
+     0
+    ],
+    4
+   ],
+   "expect": null,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     5,
+     -8
+    ],
+    0
+   ],
+   "expect": {
+    "some": 5
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     0,
+     8,
+     9,
+     8,
+     2,
+     0,
+     -6
+    ],
+    5
+   ],
+   "expect": {
+    "some": 0
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     2,
+     -3,
+     4,
+     9,
+     8,
+     -9
+    ],
+    5
+   ],
+   "expect": {
+    "some": -9
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     5,
+     2,
+     -8,
+     4
+    ],
+    3
+   ],
+   "expect": {
+    "some": 4
+   },
+   "zone": "domain"
+  }
+ ]
+}

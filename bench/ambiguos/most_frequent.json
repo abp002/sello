@@ -1,0 +1,470 @@
+{
+ "fn": "most_frequent",
+ "statement": "Return the value that appears most often, or nothing for the empty list. Must work for any list in which one value appears strictly more often than the rest.",
+ "sello": "most_frequent(xs: List[Int]) -> Option[Int]",
+ "python": "def most_frequent(xs: list[int]) -> int | None",
+ "option": true,
+ "visible": [
+  {
+   "args": [
+    [
+     1,
+     2,
+     2,
+     3
+    ]
+   ],
+   "expect": {
+    "some": 2
+   },
+   "zone": "visible"
+  },
+  {
+   "args": [
+    []
+   ],
+   "expect": null,
+   "zone": "visible"
+  }
+ ],
+ "oracle": [
+  {
+   "args": [
+    [
+     1,
+     2
+    ]
+   ],
+   "expect": {
+    "some": 1
+   },
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     3,
+     1,
+     3,
+     1
+    ]
+   ],
+   "expect": {
+    "some": 1
+   },
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     9,
+     8,
+     7
+    ]
+   ],
+   "expect": {
+    "some": 7
+   },
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     2,
+     2,
+     1,
+     1,
+     0
+    ]
+   ],
+   "expect": {
+    "some": 1
+   },
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     1,
+     1,
+     2,
+     3,
+     3,
+     3,
+     3
+    ]
+   ],
+   "expect": {
+    "some": 3
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     4,
+     4,
+     4
+    ]
+   ],
+   "expect": {
+    "some": 4
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     4,
+     2,
+     4,
+     4
+    ]
+   ],
+   "expect": {
+    "some": 4
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     4,
+     4,
+     2,
+     2,
+     2
+    ]
+   ],
+   "expect": {
+    "some": 2
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     4,
+     2,
+     4,
+     4,
+     3,
+     3,
+     3,
+     3,
+     3
+    ]
+   ],
+   "expect": {
+    "some": 3
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     4,
+     4
+    ]
+   ],
+   "expect": {
+    "some": 4
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     4,
+     1,
+     4,
+     3,
+     4,
+     4,
+     4
+    ]
+   ],
+   "expect": {
+    "some": 4
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     3,
+     1,
+     1,
+     1
+    ]
+   ],
+   "expect": {
+    "some": 1
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     3,
+     4,
+     4,
+     4
+    ]
+   ],
+   "expect": {
+    "some": 4
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     2,
+     4,
+     1,
+     1
+    ]
+   ],
+   "expect": {
+    "some": 1
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     2,
+     1,
+     2,
+     4,
+     1,
+     1,
+     1
+    ]
+   ],
+   "expect": {
+    "some": 1
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     1,
+     1
+    ]
+   ],
+   "expect": {
+    "some": 1
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     4,
+     1,
+     3,
+     3,
+     3
+    ]
+   ],
+   "expect": {
+    "some": 3
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     4,
+     1,
+     3,
+     1,
+     1,
+     3,
+     3,
+     3,
+     3
+    ]
+   ],
+   "expect": {
+    "some": 3
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1
+    ]
+   ],
+   "expect": {
+    "some": 1
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     2
+    ]
+   ],
+   "expect": {
+    "some": 2
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     2,
+     4,
+     2,
+     1,
+     4,
+     4,
+     4
+    ]
+   ],
+   "expect": {
+    "some": 4
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     2,
+     2,
+     3,
+     2,
+     2,
+     2
+    ]
+   ],
+   "expect": {
+    "some": 2
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     4,
+     2,
+     1,
+     1,
+     4,
+     4,
+     4,
+     4
+    ]
+   ],
+   "expect": {
+    "some": 4
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     4,
+     2,
+     4,
+     3,
+     3,
+     3
+    ]
+   ],
+   "expect": {
+    "some": 3
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     3,
+     2,
+     4,
+     3,
+     3,
+     3,
+     3,
+     3
+    ]
+   ],
+   "expect": {
+    "some": 3
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     4,
+     3,
+     1,
+     1,
+     1
+    ]
+   ],
+   "expect": {
+    "some": 1
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     4,
+     4
+    ]
+   ],
+   "expect": {
+    "some": 4
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     1,
+     1
+    ]
+   ],
+   "expect": {
+    "some": 1
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     4,
+     4,
+     3,
+     4,
+     4,
+     4
+    ]
+   ],
+   "expect": {
+    "some": 4
+   },
+   "zone": "domain"
+  }
+ ]
+}
