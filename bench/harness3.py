@@ -159,8 +159,8 @@ def ejecutar_python(code: str, p: dict, casos: list[dict], timeout: int = 60) ->
             for c, x in zip(casos, d)]
 
 
-def ejecutar(cond: str, code: str, p: dict, casos: list[dict]) -> list[dict] | dict:
-    return (ejecutar_sello if cond == "sello" else ejecutar_python)(code, p, casos)
+def ejecutar(cond: str, code: str, p: dict, casos: list[dict], timeout: int = 60) -> list[dict] | dict:
+    return (ejecutar_sello if cond == "sello" else ejecutar_python)(code, p, casos, timeout)
 
 
 # ---------- juez débil ----------
