@@ -1,3 +1,5 @@
+import pytest
+
 from conftest import MAX
 
 from sello.nodes import INT, Binary, If, Match, PCons, PEmpty, Quant, TList, TOption
@@ -89,3 +91,21 @@ def test_cuantificador_como_operando_de_or():
     assert isinstance(e, Binary) and e.op == "or" and isinstance(e.right, Quant)
     assert isinstance(e.right.body, Binary) and e.right.body.op == "and"
     assert unparse(parse_expr("not forall x in xs: x > 0")) == "not forall x in xs: (x > 0)"
+
+
+# Regresión (2026-09-05): `if` y `match` como operando perdían los paréntesis al reimprimir.
+# `(if c then 1 else 2) > 3` salía como `if c then 1 else 2 > 3` (otro programa, E400) y
+# `a or (match r {...})` no volvía a parsear (E000). Los mutantes del cuerpo se construyen
+# reimprimiendo, así que 162 mutantes de la quinta corrida murieron por el reimpresor.
+@pytest.mark.parametrize("src", [
+    "(if c then 1 else 2) > 3",
+    "x + (if c then 1 else 2) * 2",
+    "a or (match r { None => false Some(v) => v > 1 })",
+    "not (match r { None => false Some(v) => v > 1 })",
+    "-(if c then 1 else 2)",
+    "if (if a then b else c) then 1 else 2",
+])
+def test_reimprimir_hace_ida_y_vuelta(src):
+    e = parse_expr(src)
+    otra_vez = parse_expr(unparse(e))
+    assert unparse(otra_vez) == unparse(e)

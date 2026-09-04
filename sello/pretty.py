@@ -26,9 +26,9 @@ def unparse(e: Expr) -> str:
     if isinstance(e, Call):
         return f"{e.name}(" + ", ".join(unparse(a) for a in e.args) + ")"
     if isinstance(e, Unary):
-        return f"not {unparse(e.operand)}" if e.op == "not" else f"-{unparse(e.operand)}"
+        return f"not {operando(e.operand)}" if e.op == "not" else f"-{operando(e.operand)}"
     if isinstance(e, Binary):
-        return f"({unparse(e.left)} {e.op} {unparse(e.right)})"
+        return f"({operando(e.left)} {e.op} {operando(e.right)})"
     if isinstance(e, If):
         return f"if {unparse(e.cond)} then {unparse(e.then)} else {unparse(e.otherwise)}"
     if isinstance(e, Match):
@@ -37,6 +37,12 @@ def unparse(e: Expr) -> str:
     if isinstance(e, Quant):
         return f"{e.kind} {e.var} in {unparse(e.subject)}: {unparse(e.body)}"
     raise TypeError(f"nodo desconocido: {e!r}")
+
+
+def operando(e: Expr) -> str:
+    """`if` y `match` solo se parsean al nivel de expresión: como operando van entre
+    paréntesis, o `(if c then 1 else 2) > 3` volvería como `if c then 1 else 2 > 3`."""
+    return f"({unparse(e)})" if isinstance(e, (If, Match)) else unparse(e)
 
 
 def unparse_pat(p: Pattern) -> str:
