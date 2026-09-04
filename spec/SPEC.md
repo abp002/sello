@@ -66,8 +66,12 @@ making a function. `x / 0` is a runtime error (`E500`); rule it out with `requir
   the body must handle. It is checked at every call, including calls made while running
   examples. A call whose arguments violate `requires` is error `E300`.
 - `ensures` must reject wrong results: a clause that every return value satisfies
-  certifies nothing. It is checked on every return. A body that returns a value
-  violating `ensures` is error `E201`. `result` names the return value.
+  certifies nothing. A bound alone (`result >= 1`, `result <= len(xs)`) does not reject
+  a wrong value inside the bound. State what `result` contains or how it relates to the
+  arguments: `contains(xs, result) and forall x in xs: x <= result`. When the words
+  below cannot say it, write a `Bool` helper `fn` and call it: `ensures is_sorted_desc(result)`.
+  It is checked on every return. A body that returns a value violating `ensures` is
+  error `E201`. `result` names the return value.
 - In v0 both are checked by execution (verification level 1). Later levels: SMT solver
   (level 2), runtime guard (level 3).
 
