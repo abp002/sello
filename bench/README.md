@@ -10,6 +10,7 @@ Aquí vive la métrica. Antes que el compilador.
 | `harness2.py` | `problemas2/` | ¿Leer solo `sig` (sin cuerpos) baja los aciertos? |
 | `harness3.py` | `ambiguos/` | **¿Cuánto error silencioso llega a producción tras pasar un juez débil?** La métrica principal desde el 2026-09-02. |
 | `mutantes.py` | soluciones de `resultados/juez-*.jsonl` | De los bugs de cuerpo que el juez débil deja pasar, ¿cuántos caza el contrato? Sin modelo. |
+| `cotas.py` | soluciones de `resultados/juez-*.jsonl` | ¿Cuántas funciones principales tienen un `ensures` que solo acota el resultado? Sin modelo. |
 
 ## El juez imperfecto (`harness3.py`)
 
@@ -32,6 +33,9 @@ también tokens de salida, razonamiento, coste y tiempo. Los resultados van a
 
 Cada modelo se llama con `claude -p` en modo limpio: sin herramientas, sin settings, sin
 MCP, con system prompt propio. Unos 300 tokens de sobrecarga por llamada.
+Si la sesión desde la que se lanza tiene `CLAUDE_CONFIG_DIR` apuntando a otra cuenta, el
+`claude -p` hijo sale con "Not logged in" y todo cae en `E000` con cero tokens: lanzar con
+`env -u CLAUDE_CONFIG_DIR` (pasó el 2026-09-05).
 
 ## Mutantes del cuerpo (`mutantes.py`)
 
@@ -50,3 +54,14 @@ que el ensures caza'. La regla de destinos está en `mutantes.py` y tiene test.
 
 Si un (problema, condición, modelo) está en varios ficheros manda el último: así `sello`
 sale de la cuarta corrida y `python`/`python_asserts` de la primera.
+
+## Ensures solo de cotas (`cotas.py`)
+
+Sin modelo. Sobre la función principal de cada solución aceptada: una cláusula es *cota*
+si es una comparación cuyos dos lados se componen solo de `result`, literales, parámetros,
+`len(...)` y aritmética; lo demás (`contains`, `forall`, `count`, un helper del fichero) es
+*contenido*. Lista también los helpers llamados desde `ensures` y las veces que un modelo
+cambió el `ensures` tras un `E201`. Prerregistrado en el vault: 'Un ensures de cotas no
+certifica nada'.
+
+    uv run python bench/cotas.py bench/resultados/juez-2026-09-05-0015-haiku.jsonl

@@ -343,6 +343,8 @@ def resumen(rows: list[dict], when: str) -> str:
             r = by.get((pr, *c))
             if r is None:
                 cells.append("-")
+            elif r.get("descartada"):
+                cells.append(f"descartada ({r['descartada']})")
             else:
                 k = r["recuento"]
                 cells.append(f"{k[SILENCIOSO]}/{k['llegan']} · {k[CAZADO]}")
@@ -354,7 +356,9 @@ def resumen(rows: list[dict], when: str) -> str:
     def suma(c, k): return sum(r["recuento"][k] for r in rs(c))
     def stat(label, f): out.append(f"| {label} | " + " | ".join(f(c) for c in cols) + " |")
 
-    stat("soluciones", lambda c: str(len(rs(c))))
+    stat("soluciones", lambda c: str(len([r for r in rs(c) if not r.get("descartada")])))
+    stat("descartadas (el original no pasa el juez tras reescribirlo)",
+         lambda c: str(len([r for r in rs(c) if r.get("descartada")])))
     stat("mutantes generados", lambda c: str(suma(c, "generados")))
     stat("no compilan (checker)", lambda c: _pct(suma(c, NO_COMPILA), suma(c, "generados")))
     stat("muertos por el juez débil", lambda c: _pct(suma(c, MUERTO), suma(c, "generados")))
@@ -398,8 +402,12 @@ def procesar(sol: dict, p: dict, pool: ThreadPoolExecutor) -> dict:
     canon, muts = mutar(cond, sol["code"])
     base = evaluar(cond, canon, p)
     if not base["juez_ok"]:
-        print(f"  aviso: el original de {sol['problem']} ({cond}, {sol['model']}) no pasa el juez débil "
-              f"tras reescribirlo: {base['señal']}", file=sys.stderr)
+        # Fallo de la herramienta (reimpresor o juez), no del programa: sus mutantes serían
+        # artefactos y contarían como "no compila". Se descarta la solución entera y se dice.
+        print(f"  DESCARTADA: el original de {sol['problem']} ({cond}, {sol['model']}) no pasa el juez "
+              f"débil tras reescribirlo: {base['señal']}", file=sys.stderr, flush=True)
+        return {**sol, "code": canon, "original": base, "descartada": base["señal"], "mutantes": [],
+                "recuento": contar([])}
     for m, r in zip(muts, pool.map(lambda m: evaluar(cond, m["code"], p), muts)):
         m.update(r)
     k = contar(muts)

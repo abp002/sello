@@ -43,6 +43,12 @@ permite suponer, y `E102` para el contrato trivial. El porqué de cada decisión
 bitácora y el estado del arte viven en el vault de notas del autor, no en el repo. Aquí
 hay código, spec y este README.
 
+**Mutantes del cuerpo y la fuerza del `ensures`** (5 de septiembre de 2026): un mutador
+sin modelo (`bench/mutantes.py`) mide cuántos bugs de cuerpo caza el contrato. Donde el
+`ensures` habla del contenido no hay silenciosos; donde solo acota un número, casi todo
+pasa. Tres frases en la spec sobre eso llevan a sonnet de 6/12 a 2/12 funciones con
+`ensures` de cotas y de 30 % a 0 % de mutantes silenciosos; haiku no cambia un contrato.
+
     uv sync --extra dev
     uv run sello check ejemplos/basicos.sello     # parse, tipos, ejemplos
     uv run sello add ejemplos/basicos.sello       # al almacén, con certificado

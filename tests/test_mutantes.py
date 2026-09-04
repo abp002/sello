@@ -151,3 +151,16 @@ def test_contar_solo_suma_llamadas_de_los_que_llegan():
     assert k[mu.MUERTO] == 2 and k["muerto_ejemplos"] == 1 and k["muerto_contrato"] == 1
     assert k["llamadas_wrong"] == 2 and k["llamadas_caught"] == 4   # la zona ambigua no cuenta
     assert k["silencioso_por_op"]["ramas"] == 1 and k["llegan_por_op"]["variable"] == 2
+
+
+def test_original_que_no_pasa_el_juez_se_descarta():
+    """Regresión (2026-09-05): el reimpresor rompía dos originales y sus 162 mutantes contaban
+    como 'no compila'. Un original que no pasa el juez débil tras reescribirlo se descarta entero."""
+    from concurrent.futures import ThreadPoolExecutor
+    p = {"fn": "factorial", "visible": [{"args": [3], "expect": 99, "zone": "domain"}], "oracle": []}
+    sol = {"problem": "factorial", "cond": "sello", "model": "x", "code": SELLO, "origen": "t"}
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        r = mu.procesar(sol, p, pool)
+    assert r["descartada"] == "wrong"
+    assert r["mutantes"] == [] and r["recuento"]["generados"] == 0
+    assert "descartada (wrong)" in mu.resumen([r], "t")
