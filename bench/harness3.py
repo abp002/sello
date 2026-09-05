@@ -7,9 +7,13 @@ enunciado. Cuando acepta, la solución pasa al oráculo (referencia + casos gene
 prerregistración en el vault: 'El juez imperfecto mide lo que llega a producción'.
 
 Condiciones: sello · python · python_asserts (Python con la instrucción de poner asserts).
+Aparte, `sello_contrato`: el contrato lo escribió otro (se toma de una corrida anterior con
+`--contratos`, ver `contrato.py`) y el modelo solo escribe el cuerpo. No entra en `all`.
 
     uv run python bench/harness3.py --model haiku
     uv run python bench/harness3.py --model haiku --only nth --cond sello   # humo
+    uv run python bench/harness3.py --model haiku --cond sello_contrato \
+        --contratos bench/resultados/juez-2026-09-05-0015-sonnet.jsonl
 """
 
 from __future__ import annotations
@@ -26,11 +30,18 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from harness import RESULTADOS, ROOT, SPEC, ask, extract, py_val, sello_lit  # noqa: E402
+import contrato as ct  # noqa: E402
 import juez  # noqa: E402
 
 AQUI = Path(__file__).resolve().parent
 PROBLEMAS = AQUI / "ambiguos"
 CONDS = ["sello", "python", "python_asserts"]
+CONTRATO = "sello_contrato"
+CONDS_TODAS = CONDS + [CONTRATO]
+
+
+def es_sello(cond: str) -> bool:
+    return cond.startswith("sello")
 
 
 # ---------- prompts ----------
@@ -50,8 +61,21 @@ def ejemplos(p: dict, lang: str) -> str:
     return "For example: " + "; ".join(out) + "."
 
 
-def prompt(p: dict, cond: str, prev: tuple[str, str] | None) -> str:
-    if cond == "sello":
+def prompt(p: dict, cond: str, prev: tuple[str, str] | None, contrato: ct.Contrato | None = None) -> str:
+    if cond == CONTRATO:
+        assert contrato is not None
+        head = (f"Below is the complete specification of Sello, a small programming language.\n\n"
+                f"{SPEC}\n\n---\n\n"
+                f"Task: complete the Sello program below so that it defines `{p['sello']}`. {p['statement']} "
+                f"{ejemplos(p, 'sello')}\n"
+                f"The contract is fixed and was written by someone else: the signature, `requires`, "
+                f"`ensures`, `effects` and `example` lines of `{p['fn']}`, and the helper functions "
+                f"shown, must appear unchanged in your program. Write the body of `{p['fn']}`. You may "
+                f"add helper functions of your own; every function needs its contract clauses. "
+                f"Tests will call `{p['fn']}`.\n\n```sello\n{contrato.texto}\n```\n\n"
+                f"Reply with one ```sello block containing the whole program.")
+        fence, tail = "sello", "the whole corrected program"
+    elif cond == "sello":
         head = (f"Below is the complete specification of Sello, a small programming language.\n\n"
                 f"{SPEC}\n\n---\n\n"
                 f"Task: write a Sello program that defines `{p['sello']}`. {p['statement']} "
@@ -160,20 +184,25 @@ def ejecutar_python(code: str, p: dict, casos: list[dict], timeout: int = 60) ->
 
 
 def ejecutar(cond: str, code: str, p: dict, casos: list[dict], timeout: int = 60) -> list[dict] | dict:
-    return (ejecutar_sello if cond == "sello" else ejecutar_python)(code, p, casos, timeout)
+    return (ejecutar_sello if es_sello(cond) else ejecutar_python)(code, p, casos, timeout)
 
 
 # ---------- juez débil ----------
 
-def juez_debil(cond: str, code: str, p: dict) -> tuple[bool, str, str]:
-    """(aceptado, feedback, fase). Compila y pasa los ejemplos visibles."""
+def juez_debil(cond: str, code: str, p: dict, contrato: ct.Contrato | None = None) -> tuple[bool, str, str]:
+    """(aceptado, feedback, fase). Compila y pasa los ejemplos visibles. Con contrato
+    congelado, antes de nada comprueba que el programa lo respeta (fase `contract`)."""
+    if contrato is not None:
+        v = ct.violacion(contrato, code)
+        if v:
+            return False, v, "contract"
     r = ejecutar(cond, code, p, p["visible"])
     if isinstance(r, dict):
         return False, json.dumps(r, ensure_ascii=False), "compile"
     fallos = [x for x in r if x["result"] != juez.OK]
     if not fallos:
         return True, "", "ok"
-    if cond == "sello":
+    if es_sello(cond):
         fb = json.dumps({"ok": False, "failed": [x["detail"] for x in fallos]}, ensure_ascii=False)
     else:
         fb = "\n".join(f"{x['call']}: expected {py_val(x['expect'])!r}, got {x['detail']['got']}" for x in fallos)
@@ -182,16 +211,20 @@ def juez_debil(cond: str, code: str, p: dict) -> tuple[bool, str, str]:
 
 # ---------- una corrida ----------
 
-def run_one(p: dict, cond: str, model: str, max_attempts: int) -> dict:
+def run_one(p: dict, cond: str, model: str, max_attempts: int, contratos: dict | None = None) -> dict:
     prev: tuple[str, str] | None = None
     attempts: list[dict] = []
     accepted_at: int | None = None
     code = ""
+    contrato: ct.Contrato | None = None
+    if cond == CONTRATO:
+        origen = contratos[p["fn"]]
+        contrato = ct.extraer(origen["code"], p["fn"])
     for i in range(1, max_attempts + 1):
-        a = ask(prompt(p, cond, prev), model)
-        code = extract(a["text"], "sello" if cond == "sello" else "python")
-        ok, feedback, phase = juez_debil(cond, code, p)
-        m = re.search(r'"code":\s*"(E\d{3})"', feedback) if (cond == "sello" and not ok) else None
+        a = ask(prompt(p, cond, prev, contrato), model)
+        code = extract(a["text"], "sello" if es_sello(cond) else "python")
+        ok, feedback, phase = juez_debil(cond, code, p, contrato)
+        m = re.search(r'"code":\s*"(E\d{3})"', feedback) if (es_sello(cond) and not ok) else None
         attempts.append({"n": i, "ok": ok, "phase": phase, "sello_error": m.group(1) if m else None,
                          "cost": a["cost"], "tokens_in": a["tokens_in"], "tokens_out": a["tokens_out"],
                          "thinking": a.get("thinking", 0), "ms": a["ms"], "code": code, "feedback": feedback[:2000]})
@@ -215,7 +248,13 @@ def run_one(p: dict, cond: str, model: str, max_attempts: int) -> dict:
               f"(dom {oracle['dom_silencioso']}, amb {oracle['amb_silencioso']}) · ruidosos dom {oracle['dom_ruidoso']} "
               f"· declarados amb {oracle['amb_declarado']} · cazados {oracle['cazados']}", file=sys.stderr, flush=True)
 
+    info_contrato = None
+    if contrato is not None:
+        info_contrato = {"de": origen["model"], "origen": origen["origen"], "principal": p["fn"],
+                         "fns": contrato.nombres, "texto": contrato.texto,
+                         "rechazos": sum(x["phase"] == "contract" for x in attempts)}
     return {"problem": p["fn"], "cond": cond, "model": model, "accepted_at": accepted_at,
+            "contrato": info_contrato,
             "attempts": len(attempts), "cost": sum(x["cost"] for x in attempts),
             "tokens_in": sum(x["tokens_in"] for x in attempts),
             "tokens_out": sum(x["tokens_out"] for x in attempts),
@@ -226,10 +265,23 @@ def run_one(p: dict, cond: str, model: str, max_attempts: int) -> dict:
             "detail": attempts}
 
 
+def cargar_contratos(path: Path) -> dict[str, dict]:
+    """Soluciones `sello` aceptadas de una corrida del juez, por problema. Los contratos se
+    extraen de ellas (`contrato.extraer`); el modelo que las escribió queda anotado."""
+    out: dict[str, dict] = {}
+    for line in path.read_text().splitlines():
+        r = json.loads(line)
+        if r["cond"] == "sello" and r.get("code") and r.get("accepted_at"):
+            out[r["problem"]] = {"code": r["code"], "model": r["model"], "origen": path.name}
+    return out
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--model", default="haiku")
-    ap.add_argument("--cond", choices=CONDS + ["all"], default="all")
+    ap.add_argument("--cond", choices=CONDS_TODAS + ["all"], default="all")
+    ap.add_argument("--contratos", type=Path,
+                    help=f"corrida del juez (jsonl) de la que tomar los contratos; obligatorio con --cond {CONTRATO}")
     ap.add_argument("--only", help="nombre de un problema")
     ap.add_argument("--attempts", type=int, default=5)
     ap.add_argument("--workers", type=int, default=4)
@@ -239,15 +291,23 @@ def main() -> int:
     if args.only:
         probs = [p for p in probs if p["fn"] == args.only]
     conds = CONDS if args.cond == "all" else [args.cond]
+    contratos = None
+    if CONTRATO in conds:
+        if not args.contratos:
+            ap.error(f"--cond {CONTRATO} necesita --contratos")
+        contratos = cargar_contratos(args.contratos)
+        faltan = [p["fn"] for p in probs if p["fn"] not in contratos]
+        if faltan:
+            ap.error(f"{args.contratos.name} no tiene solución `sello` aceptada para: {', '.join(faltan)}")
     jobs = [(p, c) for p in probs for c in conds]
     when = dt.datetime.now().strftime("%Y-%m-%d-%H%M")
     print(f"{len(jobs)} corridas, modelo {args.model}, hasta {args.attempts} intentos", file=sys.stderr)
 
     with ThreadPoolExecutor(max_workers=args.workers) as ex:
-        rows = list(ex.map(lambda j: run_one(j[0], j[1], args.model, args.attempts), jobs))
+        rows = list(ex.map(lambda j: run_one(j[0], j[1], args.model, args.attempts, contratos), jobs))
 
     RESULTADOS.mkdir(exist_ok=True)
-    tag = f"juez-{when}-{args.model}"
+    tag = f"juez-{when}-{args.model}" + ("-contrato" if conds == [CONTRATO] else "")
     base = RESULTADOS / (tag if not args.only else f"humo-{tag}")
     with open(base.with_suffix(".jsonl"), "w") as f:
         for r in rows:

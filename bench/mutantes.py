@@ -25,7 +25,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from harness import RESULTADOS  # noqa: E402
-from harness3 import CONDS, PROBLEMAS, ejecutar  # noqa: E402
+from harness3 import CONDS, CONDS_TODAS, PROBLEMAS, ejecutar, es_sello  # noqa: E402
 import juez  # noqa: E402
 
 from sello.nodes import (  # noqa: E402
@@ -187,7 +187,9 @@ def _sitios_sello(e: object, slot: Slot, scope: list[str], out: list[Sitio]) -> 
             _sitios_sello(arm.body, Slot(arm, "body"), scope + _ligadas(arm.pattern), out)
 
 
-def mutar_sello(src: str) -> tuple[str, list[dict]]:
+def mutar_sello(src: str, congelados: tuple[str, ...] = ()) -> tuple[str, list[dict]]:
+    """`congelados`: funciones que forman parte del contrato (escritas por otro); se
+    reimprimen pero no se mutan, porque un bug ahí sería un bug del contrato."""
     program = parse(src)
 
     def sitios(fn) -> list[Sitio]:
@@ -196,7 +198,7 @@ def mutar_sello(src: str) -> tuple[str, list[dict]]:
         return out
 
     return _generar(program, lambda p: "\n\n".join(unparse_fn(f) for f in p.fns) + "\n",
-                    program.fns, sitios, lambda fn: fn.name, unparse)
+                    [f for f in program.fns if f.name not in congelados], sitios, lambda fn: fn.name, unparse)
 
 
 # ---------- Python ----------
@@ -257,8 +259,8 @@ def mutar_python(src: str) -> tuple[str, list[dict]]:
     return _generar(tree, lambda t: ast.unparse(t) + "\n", fns, sitios, lambda fn: fn.name, ast.unparse)
 
 
-def mutar(cond: str, src: str) -> tuple[str, list[dict]]:
-    return (mutar_sello if cond == "sello" else mutar_python)(src)
+def mutar(cond: str, src: str, congelados: tuple[str, ...] = ()) -> tuple[str, list[dict]]:
+    return mutar_sello(src, congelados) if es_sello(cond) else mutar_python(src)
 
 
 # ---------- ejecución ----------
@@ -266,11 +268,11 @@ def mutar(cond: str, src: str) -> tuple[str, list[dict]]:
 def _señal(cond: str, r: list[dict] | dict) -> tuple[bool, str | None]:
     """Lo que dijo el juez débil: (aceptado, señal del primer fallo)."""
     if isinstance(r, dict):
-        return False, (r["error"].get("code", "E000") if cond == "sello" else "load")
+        return False, (r["error"].get("code", "E000") if es_sello(cond) else "load")
     for c in r:
         if c["result"] != juez.OK:
             d = c.get("detail") or {}
-            if cond == "sello":
+            if es_sello(cond):
                 return False, (d["error"].get("code", "E000") if "error" in d else "wrong")
             return False, d.get("status", "wrong")
     return True, None
@@ -325,7 +327,7 @@ def _pct(a: int, b: int) -> str:
 
 
 def resumen(rows: list[dict], when: str) -> str:
-    cols = sorted({(r["cond"], r["model"]) for r in rows}, key=lambda x: (CONDS.index(x[0]), x[1]))
+    cols = sorted({(r["cond"], r["model"]) for r in rows}, key=lambda x: (CONDS_TODAS.index(x[0]), x[1]))
     name = lambda c: f"{c[0]}·{c[1]}"  # noqa: E731
     probs = sorted({r["problem"] for r in rows})
     by = {(r["problem"], r["cond"], r["model"]): r for r in rows}
@@ -392,14 +394,15 @@ def cargar(paths: list[Path], conds: list[str], only: str | None) -> list[dict]:
         for line in path.read_text().splitlines():
             r = json.loads(line)
             if r["cond"] in conds and r.get("code") and r.get("accepted_at") and (not only or r["problem"] == only):
-                sel[(r["problem"], r["cond"], r["model"])] = {"problem": r["problem"], "cond": r["cond"],
-                                                             "model": r["model"], "code": r["code"], "origen": path.name}
+                sel[(r["problem"], r["cond"], r["model"])] = {
+                    "problem": r["problem"], "cond": r["cond"], "model": r["model"], "code": r["code"],
+                    "origen": path.name, "congelados": tuple((r.get("contrato") or {}).get("fns", ()))}
     return [sel[k] for k in sorted(sel)]
 
 
 def procesar(sol: dict, p: dict, pool: ThreadPoolExecutor) -> dict:
     cond = sol["cond"]
-    canon, muts = mutar(cond, sol["code"])
+    canon, muts = mutar(cond, sol["code"], sol.get("congelados", ()))
     base = evaluar(cond, canon, p)
     if not base["juez_ok"]:
         # Fallo de la herramienta (reimpresor o juez), no del programa: sus mutantes serían
@@ -421,7 +424,7 @@ def procesar(sol: dict, p: dict, pool: ThreadPoolExecutor) -> dict:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("jsonl", nargs="+", type=Path, help="corridas del juez de las que tomar las soluciones")
-    ap.add_argument("--cond", nargs="+", choices=CONDS, default=CONDS)
+    ap.add_argument("--cond", nargs="+", choices=CONDS_TODAS, default=CONDS_TODAS)
     ap.add_argument("--only", help="nombre de un problema")
     ap.add_argument("--workers", type=int, default=8)
     args = ap.parse_args()

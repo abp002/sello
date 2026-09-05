@@ -164,3 +164,14 @@ def test_original_que_no_pasa_el_juez_se_descarta():
     assert r["descartada"] == "wrong"
     assert r["mutantes"] == [] and r["recuento"]["generados"] == 0
     assert "descartada (wrong)" in mu.resumen([r], "t")
+
+
+def test_las_funciones_congeladas_se_reimprimen_pero_no_se_mutan():
+    # Con contrato escrito por otro, un bug en un helper del contrato sería un bug del
+    # contrato, y esta batería solo mide el cuerpo.
+    canon, muts = mu.mutar_sello(SELLO, congelados=("factorial",))
+    assert "fn factorial" in canon and "fn first_over" in canon
+    assert muts and all(m["fn"] == "first_over" for m in muts)
+    _, todos = mu.mutar_sello(SELLO)
+    assert len(todos) > len(muts)
+    assert mu.mutar("sello_contrato", SELLO, ("factorial",))[1] == muts

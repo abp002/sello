@@ -37,6 +37,19 @@ Si la sesión desde la que se lanza tiene `CLAUDE_CONFIG_DIR` apuntando a otra c
 `claude -p` hijo sale con "Not logged in" y todo cae en `E000` con cero tokens: lanzar con
 `env -u CLAUDE_CONFIG_DIR` (pasó el 2026-09-05).
 
+## El contrato escrito por otro (`sello_contrato`)
+
+Condición aparte de `harness3.py`, fuera de `all`. El contrato se toma de una corrida
+anterior (`--contratos`, normalmente sonnet): la función principal sin cuerpo y, completos,
+los helpers que sus cláusulas usan (`contrato.py`, cierre por código, con test). El modelo
+recibe ese texto congelado y escribe el cuerpo; si toca el contrato, el juez débil lo
+rechaza con fase `contract` y lo cuenta. En `mutantes.py` los helpers congelados no se
+mutan. Prerregistrado en el vault: 'El contrato escrito por otro caza lo que haiku deja
+pasar'.
+
+    uv run python bench/harness3.py --model haiku --cond sello_contrato \
+        --contratos bench/resultados/juez-2026-09-05-0015-sonnet.jsonl
+
 ## Mutantes del cuerpo (`mutantes.py`)
 
 Sin modelo. Toma las soluciones aceptadas de corridas del juez, mete un bug pequeño en el

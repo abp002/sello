@@ -104,7 +104,7 @@ def main() -> int:
         print(__doc__); return 2
     for f in files:
         rows = [json.loads(l) for l in f.read_text().splitlines() if l.strip()]
-        rows = [r for r in rows if r["cond"] == "sello"]
+        rows = [r for r in rows if r["cond"].startswith("sello")]
         print(f"\n## {f.name}\n")
         print("| problema | ensures principal | clase | helpers en ensures |")
         print("|---|---|---|---|")
