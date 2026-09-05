@@ -90,7 +90,7 @@ def test_cuantificador_como_operando_de_or():
     e = parse_expr("len(xs) == 0 or exists v in xs: result == Some(v) and v > 0")
     assert isinstance(e, Binary) and e.op == "or" and isinstance(e.right, Quant)
     assert isinstance(e.right.body, Binary) and e.right.body.op == "and"
-    assert unparse(parse_expr("not forall x in xs: x > 0")) == "not forall x in xs: (x > 0)"
+    assert unparse(parse_expr("not forall x in xs: x > 0")) == "not (forall x in xs: (x > 0))"
 
 
 # Regresión (2026-09-05): `if` y `match` como operando perdían los paréntesis al reimprimir.
@@ -104,6 +104,19 @@ def test_cuantificador_como_operando_de_or():
     "not (match r { None => false Some(v) => v > 1 })",
     "-(if c then 1 else 2)",
     "if (if a then b else c) then 1 else 2",
+    # 2026-09-05: el cuantificador también se parsea hasta el final; `(forall x in xs: x > 0) and
+    # result == 0` volvía como `forall x in xs: (x > 0) and (result == 0)`, y el almacén lo certificaba.
+    "(forall x in xs: x > 0) and result == 0",
+    "(exists v in xs: v == 1) or q",
+    "(not forall x in xs: x > 0) and q",
+    "p and (forall x in xs: x > 0) or q",
+    # 2026-09-05 (noche), encontrados por el test de propiedad: `not` liga más flojo que los
+    # operadores binarios, y un texto con salto de línea se imprimía con el salto literal.
+    "(not a) == b",
+    "-(not a)",
+    "not (not a)",
+    'f("a\\nb\\t\\"c\\\\")',
+    "forall x in (if c then xs else ys): x > 0",
 ])
 def test_reimprimir_hace_ida_y_vuelta(src):
     e = parse_expr(src)

@@ -14,7 +14,8 @@ def unparse(e: Expr) -> str:
     if isinstance(e, BoolLit):
         return "true" if e.value else "false"
     if isinstance(e, TextLit):
-        return '"' + e.value.replace("\\", "\\\\").replace('"', '\\"') + '"'
+        esc = e.value.replace("\\", "\\\\").replace('"', '\\"').replace("\n", "\\n").replace("\t", "\\t")
+        return '"' + esc + '"'
     if isinstance(e, NoneLit):
         return "None"
     if isinstance(e, SomeExpr):
@@ -35,14 +36,19 @@ def unparse(e: Expr) -> str:
         arms = " ".join(f"{unparse_pat(a.pattern)} => {unparse(a.body)}" for a in e.arms)
         return f"match {unparse(e.subject)} {{ {arms} }}"
     if isinstance(e, Quant):
-        return f"{e.kind} {e.var} in {unparse(e.subject)}: {unparse(e.body)}"
+        # El sujeto se parsea al nivel de `or`: un `if`, `match` o cuantificador ahí necesita paréntesis.
+        return f"{e.kind} {e.var} in {operando(e.subject)}: {unparse(e.body)}"
     raise TypeError(f"nodo desconocido: {e!r}")
 
 
 def operando(e: Expr) -> str:
-    """`if` y `match` solo se parsean al nivel de expresión: como operando van entre
-    paréntesis, o `(if c then 1 else 2) > 3` volvería como `if c then 1 else 2 > 3`."""
-    return f"({unparse(e)})" if isinstance(e, (If, Match)) else unparse(e)
+    """Lo que se parsea hasta el final de la expresión (`if`, `match`, cuantificadores) o
+    liga más flojo que cualquier operador binario (`not`) va entre paréntesis como operando,
+    o `(if c then 1 else 2) > 3` volvería como `if c then 1 else 2 > 3`,
+    `(forall x in xs: p) and q` como `forall x in xs: (p and q)` y `(not a) == b` como
+    `not (a == b)`. `-` liga más fuerte que todo y no lo necesita."""
+    suelto = isinstance(e, (If, Match, Quant)) or (isinstance(e, Unary) and e.op == "not")
+    return f"({unparse(e)})" if suelto else unparse(e)
 
 
 def unparse_pat(p: Pattern) -> str:

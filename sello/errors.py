@@ -88,6 +88,11 @@ CATALOGO: dict[str, tuple[str, str, str]] = {
         "The message says what happened (division by zero, recursion too deep). Add a `requires` that rules the input out.",
         "  requires b != 0",
     ),
+    "E501": (
+        "Internal error",
+        "Not caused by your code: the store refused to save something it could not reproduce faithfully. Report it.",
+        "",
+    ),
 }
 
 

@@ -90,3 +90,38 @@ def test_verify_detecta_un_certificado_que_miente(store):
     h = store.resolve("first_or")
     store.db.execute("UPDATE certificates SET ok = 0 WHERE hash = ?", (h,)); store.db.commit()
     assert store.verify("first_or")["certificate"]["ok"] is True
+
+
+# Regresión (2026-09-05): el reimpresor perdía los paréntesis de un `forall` operando, así que
+# el texto guardado era otro programa que el hasheado. `f([])` violaba el ensures en directo
+# (E201) pero, cargada desde el almacén, devolvía 1 con certificado ok.
+FORALL_OPERANDO = """
+fn f(xs: List[Int]) -> Int
+  requires len(xs) >= 0
+  ensures (forall x in xs: x > 0) and result == 0
+  effects pure
+  example f([1]) == 0
+{ if xs == [] then 1 else 0 }
+"""
+
+
+def test_el_texto_guardado_es_el_mismo_programa_que_el_hash(store):
+    from sello.hash import hash_program
+    from sello.parser import parse
+    [added] = store.add(FORALL_OPERANDO)
+    guardado = parse(store.view("f")["source"])
+    assert short(hash_program(guardado)["f"]) == added["hash"]
+    with pytest.raises(SelloError) as ei:
+        store.eval("f([])")
+    assert ei.value.code == "E201"
+
+
+def test_add_se_niega_si_el_texto_canonico_no_reproduce_la_funcion(store, monkeypatch):
+    """La guarda del almacén: si el reimpresor volviera a ser infiel, E501 y nada guardado."""
+    import sello.store as st
+    fiel = st.unparse_fn
+    monkeypatch.setattr(st, "unparse_fn", lambda fn: fiel(fn).replace("Some(h)", "None"))
+    with pytest.raises(SelloError) as ei:
+        store.add(LIB)
+    assert ei.value.code == "E501"
+    assert store.names() == []

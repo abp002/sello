@@ -142,6 +142,13 @@ class Store:
         program = parse(src)
         Checker(program).check()
         hashes = hash_program(program)
+        # Se guarda el texto reimpreso, no el original: tiene que ser el mismo programa que
+        # el hasheado, o el certificado acreditaría otra función (regresión 2026-09-05: un
+        # `forall` operando perdía los paréntesis y `f([])` pasaba a cumplir su ensures).
+        reimpreso = parse("\n\n".join(unparse_fn(f) for f in program.fns))
+        for name, h in hash_program(reimpreso).items():
+            if hashes[name] != h:
+                raise SelloError("E501", f"the canonical text of `{name}` reparses to a different function; nothing was stored")
         interp = Interpreter(program)
         out: list[dict] = []
         deps_of = {f.name: {n: hashes[n] for n in callees(f)} for f in program.fns}
