@@ -1,0 +1,16 @@
+{
+ "id": "DH0085",
+ "source": "humaneval",
+ "source_id": "humaneval_083",
+ "fn": "starts_one_ends",
+ "sello": "starts_one_ends(n: Int) -> Int",
+ "helpers": [
+  "power",
+  "CountStartsWith1",
+  "CountEndsWith1",
+  "CountStartsAndEndsWith1"
+ ],
+ "notas": [],
+ "esqueleto": "fn power(base: Int, exp: Int) -> Int\n  requires (exp >= 0)\n  ensures (result == (if (exp == 0) then 1 else (base * power(base, (exp - 1)))))\n  ensures ((not (base >= 0)) or (result >= 0))\n  ensures ((not (base > 0)) or (result > 0))\n  effects pure\n  example (power(0, 0) == 1)\n  example (power(0, 1) == 0)\n{\n  if (exp == 0) then 1 else (base * power(base, (exp - 1)))\n}\n\nfn CountStartsWith1(n: Int) -> Int\n  requires (n >= 1)\n  ensures (result == power(10, (n - 1)))\n  ensures (result == power(10, (n - 1)))\n  effects pure\n  example (CountStartsWith1(1) == 1)\n  example (CountStartsWith1(2) == 10)\n{\n  power(10, (n - 1))\n}\n\nfn CountEndsWith1(n: Int) -> Int\n  requires (n >= 1)\n  ensures (result == (if (n == 1) then 1 else (9 * power(10, (n - 2)))))\n  ensures ((not (n == 1)) or (result == 1))\n  ensures ((not (n >= 2)) or (result == (9 * power(10, (n - 2)))))\n  effects pure\n  example (CountEndsWith1(1) == 1)\n  example (CountEndsWith1(2) == 9)\n{\n  if (n == 1) then 1 else (9 * power(10, (n - 2)))\n}\n\nfn CountStartsAndEndsWith1(n: Int) -> Int\n  requires (n >= 1)\n  ensures (result == (if (n <= 2) then 1 else power(10, (n - 2))))\n  ensures ((not (n == 1)) or (result == 1))\n  ensures ((not (n == 2)) or (result == 1))\n  ensures ((not (n >= 3)) or (result == power(10, (n - 2))))\n  effects pure\n  example (CountStartsAndEndsWith1(1) == 1)\n  example (CountStartsAndEndsWith1(3) == 10)\n{\n  if (n <= 2) then 1 else power(10, (n - 2))\n}\n\nfn starts_one_ends(n: Int) -> Int\n  requires (n >= 1)\n  ensures (result == ((CountStartsWith1(n) + CountEndsWith1(n)) - CountStartsAndEndsWith1(n)))\n  ensures (result >= 0)\n  effects pure\n  example (starts_one_ends(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n\npredicate ValidInput(n: int) {\n  n >= 1\n}\n\nfunction power(base: int, exp: int): int\n  requires exp >= 0\n  ensures base >= 0 ==> power(base, exp) >= 0\n  ensures base > 0 ==> power(base, exp) > 0\n  decreases exp\n{\n  if exp == 0 then 1\n  else base * power(base, exp - 1)\n}\n\nfunction CountStartsWith1(n: int): int\n  requires n >= 1\n  ensures CountStartsWith1(n) == power(10, n - 1)\n{\n  power(10, n - 1)\n}\n\nfunction CountEndsWith1(n: int): int\n  requires n >= 1\n  ensures n == 1 ==> CountEndsWith1(n) == 1\n  ensures n >= 2 ==> CountEndsWith1(n) == 9 * power(10, n - 2)\n{\n  if n == 1 then 1\n  else 9 * power(10, n - 2)\n}\n\nfunction CountStartsAndEndsWith1(n: int): int\n  requires n >= 1\n  ensures n == 1 ==> CountStartsAndEndsWith1(n) == 1\n  ensures n == 2 ==> CountStartsAndEndsWith1(n) == 1\n  ensures n >= 3 ==> CountStartsAndEndsWith1(n) == power(10, n - 2)\n{\n  if n <= 2 then 1\n  else power(10, n - 2)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod starts_one_ends(n: int) returns (result: int)\n  requires ValidInput(n)\n  ensures result == CountStartsWith1(n) + CountEndsWith1(n) - CountStartsAndEndsWith1(n)\n  ensures result >= 0\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

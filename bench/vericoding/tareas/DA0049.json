@@ -1,0 +1,11 @@
+{
+ "id": "DA0049",
+ "source": "apps",
+ "source_id": "apps_test_198",
+ "fn": "solve",
+ "sello": "solve(n: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(n: Int) -> Int\n  requires (n > 0)\n  ensures (result == (if ((n % 2) == 1) then 0 else if ((n % 4) == 2) then (n / 4) else ((n / 4) - 1)))\n  ensures ((not ((n % 2) == 1)) or (result == 0))\n  ensures ((not (((n % 2) == 0) and ((n % 4) == 2))) or (result == (n / 4)))\n  ensures ((not (((n % 2) == 0) and ((n % 4) == 0))) or (result == ((n / 4) - 1)))\n  effects pure\n  example (solve(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidRectangleParts(a: int, b: int, n: int)\n{\n    a > 0 && b > 0 && a != b && 2 * a + 2 * b == n\n}\n\nfunction CountValidRectangles(n: int): int\n    requires n > 0\n{\n    if n % 2 == 1 then 0\n    else if n % 4 == 2 then n / 4\n    else n / 4 - 1\n}\n\npredicate ValidInput(n: int)\n{\n    n > 0\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int) returns (result: int)\n    requires ValidInput(n)\n    ensures result == CountValidRectangles(n)\n    ensures n % 2 == 1 ==> result == 0\n    ensures n % 2 == 0 && n % 4 == 2 ==> result == n / 4\n    ensures n % 2 == 0 && n % 4 == 0 ==> result == n / 4 - 1\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

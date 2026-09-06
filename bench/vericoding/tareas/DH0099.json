@@ -1,0 +1,13 @@
+{
+ "id": "DH0099",
+ "source": "humaneval",
+ "source_id": "humaneval_097",
+ "fn": "multiply",
+ "sello": "multiply(a: Int, b: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn multiply(a: Int, b: Int) -> Int\n  requires (a == a)\n  ensures (result == (((if (a >= 0) then a else -a) % 10) * ((if (b >= 0) then b else -b) % 10)))\n  ensures (result >= 0)\n  ensures (result <= 81)\n  effects pure\n  example (multiply(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n\nfunction UnitDigit(n: int): int\n{\n    (if n >= 0 then n else -n) % 10\n}\n\nfunction ProductOfUnitDigits(a: int, b: int): int\n{\n    UnitDigit(a) * UnitDigit(b)\n}\n\npredicate ValidResult(result: int)\n{\n    result >= 0 && result <= 81\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod multiply(a: int, b: int) returns (result: int)\n    ensures result == ProductOfUnitDigits(a, b)\n    ensures ValidResult(result)\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

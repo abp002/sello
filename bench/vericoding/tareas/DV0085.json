@@ -1,0 +1,13 @@
+{
+ "id": "DV0085",
+ "source": "verina",
+ "source_id": "verina_basic_5_task",
+ "fn": "multiply",
+ "sello": "multiply(a: Int, b: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn multiply(a: Int, b: Int) -> Int\n  requires (a == a)\n  ensures (result == (a * b))\n  effects pure\n  example (multiply(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod multiply(a: int, b: int) returns (result: int)\n    ensures result == a * b\n// </vc-spec>\n// <vc-code>\n{\n    // impl-start\n    assume {:axiom} false;\n    result := 0;\n    // impl-end\n}\n// </vc-code>\n"
+}

@@ -1,0 +1,11 @@
+{
+ "id": "DA0621",
+ "source": "apps",
+ "source_id": "apps_test_4554",
+ "fn": "solve",
+ "sello": "solve(W: Int, a: Int, b: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(W: Int, a: Int, b: Int) -> Int\n  requires (W >= 1)\n  requires (a >= 1)\n  requires (b >= 1)\n  ensures (result == (if ((if (a >= b) then (a - b) else (b - a)) <= W) then 0 else ((if (a >= b) then (a - b) else (b - a)) - W)))\n  ensures (result >= 0)\n  ensures (((if (a >= b) then (a - b) else (b - a)) <= W) == (result == 0))\n  effects pure\n  example (solve(0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(W: int, a: int, b: int)\n{\n    W >= 1 && a >= 1 && b >= 1\n}\n\nfunction AbsDiff(x: int, y: int): int\n{\n    if x >= y then x - y else y - x\n}\n\nfunction MinMoveDistance(W: int, a: int, b: int): int\n    requires ValidInput(W, a, b)\n{\n    var distance := AbsDiff(a, b);\n    if distance <= W then 0\n    else distance - W\n}\n\npredicate RectanglesConnect(W: int, a: int, b: int)\n    requires ValidInput(W, a, b)\n{\n    AbsDiff(a, b) <= W\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(W: int, a: int, b: int) returns (result: int)\n    requires ValidInput(W, a, b)\n    ensures result == MinMoveDistance(W, a, b)\n    ensures result >= 0\n    ensures RectanglesConnect(W, a, b) <==> result == 0\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

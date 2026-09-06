@@ -1,0 +1,15 @@
+{
+ "id": "DD0417",
+ "source": "dafnybench",
+ "source_id": "Program-Verification-Dataset_tmp_tmpgbdrlnu__Dafny_mathematical_objects_verification_examples_fast_exp_FastExp",
+ "fn": "FastExp",
+ "sello": "FastExp(b: Int, n: Int) -> Int",
+ "helpers": [
+  "exp"
+ ],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn exp(b: Int, n: Int) -> Int\n  requires (b >= 0)\n  requires (n >= 0)\n  ensures (result == (if (n == 0) then 1 else (b * exp(b, (n - 1)))))\n  ensures (result >= 0)\n  effects pure\n  example (exp(0, 0) == 1)\n  example (exp(0, 1) == 0)\n{\n  if (n == 0) then 1 else (b * exp(b, (n - 1)))\n}\n\nfn FastExp(b: Int, n: Int) -> Int\n  requires (b >= 0)\n  requires (n >= 0)\n  ensures (result == exp(b, n))\n  ensures (result >= 0)\n  effects pure\n  example (FastExp(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nfunction sum(s: seq<int>, i: nat): int\n    requires i <= |s|\n{\n    if i == 0 then 0 else sum(s, i-1) + s[i-1]\n}\n\nfunction exp(b: nat, n: nat): nat {\n  if n == 0 then 1\n  else b * exp(b, n-1)\n}\n\nfunction bits(n: nat): seq<bool>\n  decreases n\n{\n  if n == 0 then []\n  else [if (n % 2 == 0) then false else true] + bits(n/2)\n}\n\nfunction from_bits(s: seq<bool>): nat {\n  if s == [] then 0\n  else (if s[0] then 1 else 0) + 2 * from_bits(s[1..])\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod FastExp(b: nat, n: nat) returns (r: nat)\n  ensures r == exp(b, n)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

@@ -1,0 +1,11 @@
+{
+ "id": "DA0659",
+ "source": "apps",
+ "source_id": "apps_test_4692",
+ "fn": "solve",
+ "sello": "solve(M: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(M: Int) -> Int\n  requires (1 <= M)\n  requires (M <= 23)\n  ensures (result == (48 - M))\n  ensures (25 <= result)\n  ensures (result <= 47)\n  effects pure\n  example (solve(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(M: int)\n{\n    1 <= M <= 23\n}\n\nfunction HoursUntilNewYear(M: int): int\n    requires ValidInput(M)\n{\n    48 - M\n}\n\npredicate ValidOutput(M: int, result: int)\n    requires ValidInput(M)\n{\n    result == HoursUntilNewYear(M) && 25 <= result <= 47\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(M: int) returns (result: int)\n    requires ValidInput(M)\n    ensures ValidOutput(M, result)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

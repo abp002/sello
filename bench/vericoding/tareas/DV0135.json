@@ -1,0 +1,13 @@
+{
+ "id": "DV0135",
+ "source": "verina",
+ "source_id": "verina_basic_55_task",
+ "fn": "compare",
+ "sello": "compare(a: Int, b: Int) -> Bool",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn compare(a: Int, b: Int) -> Bool\n  requires (a == a)\n  ensures ((not (a == b)) or (result == true))\n  ensures ((not (a != b)) or (result == false))\n  effects pure\n  example (compare(0, 0) == true)\n{\n  true\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod compare(a: int, b: int) returns (result: bool)\n    ensures\n        (a == b ==> result == true) && (a != b ==> result == false)\n// </vc-spec>\n// <vc-code>\n{\n    // impl-start\n    assume {:axiom} false;\n    result := false;\n    // impl-end\n}\n// </vc-code>\n"
+}

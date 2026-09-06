@@ -1,0 +1,15 @@
+{
+ "id": "DD0634",
+ "source": "dafnybench",
+ "source_id": "dafny-programs_tmp_tmpcwodh6qh_src_expt_expt",
+ "fn": "expt",
+ "sello": "expt(b: Int, n: Int) -> Int",
+ "helpers": [
+  "Expt"
+ ],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn Expt(b: Int, n: Int) -> Int\n  requires (n >= 0)\n  requires (n >= 0)\n  ensures (result == (if (n == 0) then 1 else (b * Expt(b, (n - 1)))))\n  effects pure\n  example (Expt(0, 0) == 1)\n  example (Expt(0, 1) == 0)\n{\n  if (n == 0) then 1 else (b * Expt(b, (n - 1)))\n}\n\nfn expt(b: Int, n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == Expt(b, n))\n  effects pure\n  example (expt(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nghost function Expt(b: int, n: nat): int\n  requires n >= 0\n{\n  if n == 0 then 1 else b * Expt(b, n - 1)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod expt(b: int, n: nat) returns (res: int) \n  ensures res == Expt(b, n)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

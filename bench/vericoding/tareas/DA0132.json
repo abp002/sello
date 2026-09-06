@@ -1,0 +1,11 @@
+{
+ "id": "DA0132",
+ "source": "apps",
+ "source_id": "apps_test_657",
+ "fn": "solve",
+ "sello": "solve(a: Int, b: Int, x: Int, y: Int, z: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(a: Int, b: Int, x: Int, y: Int, z: Int) -> Int\n  requires (a >= 0)\n  requires (b >= 0)\n  requires (x >= 0)\n  requires (y >= 0)\n  requires (z >= 0)\n  ensures (result >= 0)\n  ensures (result == ((if (0 >= (((x * 2) + y) - a)) then 0 else (((x * 2) + y) - a)) + (if (0 >= ((y + (z * 3)) - b)) then 0 else ((y + (z * 3)) - b))))\n  effects pure\n  example (solve(0, 0, 0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nfunction max(a: int, b: int): int\n{\n    if a >= b then a else b\n}\n\npredicate ValidInput(a: int, b: int, x: int, y: int, z: int)\n{\n    a >= 0 && b >= 0 && x >= 0 && y >= 0 && z >= 0\n}\n\nfunction YellowCrystalsNeeded(x: int, y: int): int\n{\n    x * 2 + y\n}\n\nfunction BlueCrystalsNeeded(y: int, z: int): int\n{\n    y + z * 3\n}\n\nfunction MinAdditionalCrystals(a: int, b: int, x: int, y: int, z: int): int\n{\n    max(0, YellowCrystalsNeeded(x, y) - a) + max(0, BlueCrystalsNeeded(y, z) - b)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(a: int, b: int, x: int, y: int, z: int) returns (result: int)\n    requires ValidInput(a, b, x, y, z)\n    ensures result >= 0\n    ensures result == MinAdditionalCrystals(a, b, x, y, z)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

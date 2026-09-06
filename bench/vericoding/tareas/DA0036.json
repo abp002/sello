@@ -1,0 +1,13 @@
+{
+ "id": "DA0036",
+ "source": "apps",
+ "source_id": "apps_test_157",
+ "fn": "solve",
+ "sello": "solve(a: Int, b: Int, c: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "función supuesta: min"
+ ],
+ "esqueleto": "fn solve(a: Int, b: Int, c: Int) -> Int\n  requires (1 <= a)\n  requires (a <= 1000)\n  requires (1 <= b)\n  requires (b <= 1000)\n  requires (1 <= c)\n  requires (c <= 1000)\n  ensures (result == ((if (a <= (if ((b / 2) <= (c / 4)) then (b / 2) else (c / 4))) then a else if ((b / 2) <= (c / 4)) then (b / 2) else (c / 4)) * 7))\n  ensures (result >= 0)\n  effects pure\n  example (solve(0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(a: int, b: int, c: int)\n{\n    1 <= a <= 1000 && 1 <= b <= 1000 && 1 <= c <= 1000\n}\n\nfunction MaxRecipeUnits(a: int, b: int, c: int): int\n{\n    min(a, min(b / 2, c / 4))\n}\n\nfunction TotalFruitsUsed(units: int): int\n{\n    units * 7\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(a: int, b: int, c: int) returns (result: int)\n    requires ValidInput(a, b, c)\n    ensures result == TotalFruitsUsed(MaxRecipeUnits(a, b, c))\n    ensures result >= 0\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

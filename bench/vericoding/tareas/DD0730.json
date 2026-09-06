@@ -1,0 +1,11 @@
+{
+ "id": "DD0730",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_457_MinLengthSublist",
+ "fn": "MinLengthSublist",
+ "sello": "MinLengthSublist(s: List[List[Int]]) -> List[Int]",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn MinLengthSublist(s: List[List[Int]]) -> List[Int]\n  requires (len(s) > 0)\n  ensures contains(s, result)\n  ensures forall sublist in s: (len(result) <= len(sublist))\n  effects pure\n  example (MinLengthSublist([]) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod MinLengthSublist(s: seq<seq<int>>) returns (minSublist: seq<int>)\n    requires |s| > 0\n    ensures minSublist in s\n    ensures forall sublist :: sublist in s ==> |minSublist| <= |sublist|\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

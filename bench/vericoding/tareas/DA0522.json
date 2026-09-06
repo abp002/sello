@@ -1,0 +1,11 @@
+{
+ "id": "DA0522",
+ "source": "apps",
+ "source_id": "apps_test_4294",
+ "fn": "Solve",
+ "sello": "Solve(x: Int, a: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn Solve(x: Int, a: Int) -> Int\n  requires (0 <= x)\n  requires (x <= 9)\n  requires (0 <= a)\n  requires (a <= 9)\n  ensures (result == (if (x < a) then 0 else 10))\n  effects pure\n  example (Solve(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(x: int, a: int)\n{\n    0 <= x <= 9 && 0 <= a <= 9\n}\n\npredicate CorrectOutput(x: int, a: int, result: int)\n{\n    result == (if x < a then 0 else 10)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod Solve(x: int, a: int) returns (result: int)\n    requires ValidInput(x, a)\n    ensures CorrectOutput(x, a, result)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

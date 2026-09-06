@@ -1,0 +1,11 @@
+{
+ "id": "DD0682",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_234_CubeVolume",
+ "fn": "CubeVolume",
+ "sello": "CubeVolume(size: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn CubeVolume(size: Int) -> Int\n  requires (size > 0)\n  ensures (result == ((size * size) * size))\n  effects pure\n  example (CubeVolume(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod CubeVolume(size: int) returns (volume: int)\n    requires size > 0\n    ensures volume == size * size * size\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

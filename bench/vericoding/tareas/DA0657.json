@@ -1,0 +1,13 @@
+{
+ "id": "DA0657",
+ "source": "apps",
+ "source_id": "apps_test_4688",
+ "fn": "solve",
+ "sello": "solve(n: Int, k: Int) -> Int",
+ "helpers": [
+  "Power"
+ ],
+ "notas": [],
+ "esqueleto": "fn Power(base: Int, exp: Int) -> Int\n  requires (exp >= 0)\n  ensures (result == (if (exp == 0) then 1 else (base * Power(base, (exp - 1)))))\n  effects pure\n  example (Power(0, 0) == 1)\n  example (Power(0, 1) == 0)\n{\n  if (exp == 0) then 1 else (base * Power(base, (exp - 1)))\n}\n\nfn solve(n: Int, k: Int) -> Int\n  requires (1 <= n)\n  requires (n <= 1000)\n  requires (2 <= k)\n  requires (k <= 1000)\n  ensures (result == (k * Power((k - 1), (n - 1))))\n  ensures (result > 0)\n  effects pure\n  example (solve(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nfunction Power(base: int, exp: int): int\n  requires exp >= 0\n{\n  if exp == 0 then 1\n  else base * Power(base, exp - 1)\n}\n\npredicate ValidInput(n: int, k: int)\n{\n  1 <= n <= 1000 && 2 <= k <= 1000\n}\n\nfunction PaintingWays(n: int, k: int): int\n  requires ValidInput(n, k)\n{\n  k * Power(k - 1, n - 1)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, k: int) returns (result: int)\n  requires ValidInput(n, k)\n  ensures result == PaintingWays(n, k)\n  ensures result > 0\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

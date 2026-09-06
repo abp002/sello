@@ -1,0 +1,11 @@
+{
+ "id": "DD0724",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_441_CubeSurfaceArea",
+ "fn": "CubeSurfaceArea",
+ "sello": "CubeSurfaceArea(size: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn CubeSurfaceArea(size: Int) -> Int\n  requires (size > 0)\n  ensures (result == ((6 * size) * size))\n  effects pure\n  example (CubeSurfaceArea(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod CubeSurfaceArea(size: int) returns (area: int)\n    requires size > 0\n    ensures area == 6 * size * size\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

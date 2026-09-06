@@ -1,0 +1,15 @@
+{
+ "id": "DD0635",
+ "source": "dafnybench",
+ "source_id": "dafny-programs_tmp_tmpcwodh6qh_src_factorial_factorial",
+ "fn": "factorial",
+ "sello": "factorial(n: Int) -> Int",
+ "helpers": [
+  "fact"
+ ],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn fact(n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == (if (n == 0) then 1 else (n * fact((n - 1)))))\n  ensures (result >= 1)\n  ensures (result >= 0)\n  effects pure\n  example (fact(0) == 1)\n  example (fact(2) == 2)\n{\n  if (n == 0) then 1 else (n * fact((n - 1)))\n}\n\nfn factorial(n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == fact(n))\n  ensures (result >= 0)\n  effects pure\n  example (factorial(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nfunction fact(n: nat): nat \n    ensures fact(n) >= 1\n{\n    if n == 0 then 1 else n * fact(n - 1)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod factorial(n: nat) returns (res: nat)\n    ensures res == fact(n)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

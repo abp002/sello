@@ -1,0 +1,13 @@
+{
+ "id": "DA0529",
+ "source": "apps",
+ "source_id": "apps_test_4305",
+ "fn": "solve",
+ "sello": "solve(H: Int, A: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn solve(H: Int, A: Int) -> Int\n  requires (H >= 1)\n  requires (A >= 1)\n  ensures (result >= 1)\n  ensures ((result * A) >= H)\n  ensures (((result - 1) * A) < H)\n  ensures (result == (((H + A) - 1) / A))\n  effects pure\n  example (solve(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(H: int, A: int)\n{\n    H >= 1 && A >= 1\n}\n\npredicate IsMinimumAttacks(attacks: int, H: int, A: int)\n{\n    attacks >= 1 &&\n    attacks * A >= H &&\n    (attacks - 1) * A < H\n}\n\nfunction CeilDiv(H: int, A: int): int\n    requires A > 0\n{\n    (H + A - 1) / A\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(H: int, A: int) returns (attacks: int)\n    requires ValidInput(H, A)\n    ensures IsMinimumAttacks(attacks, H, A)\n    ensures attacks == CeilDiv(H, A)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

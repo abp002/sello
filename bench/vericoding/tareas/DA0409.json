@@ -1,0 +1,11 @@
+{
+ "id": "DA0409",
+ "source": "apps",
+ "source_id": "apps_test_2256",
+ "fn": "SolveRivalDistance",
+ "sello": "SolveRivalDistance(n: Int, x: Int, a: Int, b: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn SolveRivalDistance(n: Int, x: Int, a: Int, b: Int) -> Int\n  requires (2 <= n)\n  requires (n <= 100)\n  requires (0 <= x)\n  requires (x <= 100)\n  requires (1 <= a)\n  requires (a <= n)\n  requires (1 <= b)\n  requires (b <= n)\n  requires (a != b)\n  ensures (result == (if (((if (a >= b) then (a - b) else (b - a)) + x) <= (n - 1)) then ((if (a >= b) then (a - b) else (b - a)) + x) else (n - 1)))\n  ensures (0 <= result)\n  ensures (result <= (n - 1))\n  ensures (result >= 0)\n  effects pure\n  example (SolveRivalDistance(0, 0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, x: int, a: int, b: int)\n{\n    2 <= n <= 100 && 0 <= x <= 100 && 1 <= a <= n && 1 <= b <= n && a != b\n}\n\nfunction MaxDistance(n: int, x: int, a: int, b: int): int\n    requires ValidInput(n, x, a, b)\n{\n    var initialDistance := if a >= b then a - b else b - a;\n    var maxPossibleDistance := initialDistance + x;\n    var maxLineDistance := n - 1;\n    if maxPossibleDistance <= maxLineDistance then maxPossibleDistance else maxLineDistance\n}\n\npredicate ValidResult(n: int, x: int, a: int, b: int, result: int)\n    requires ValidInput(n, x, a, b)\n{\n    result == MaxDistance(n, x, a, b) && 0 <= result <= n - 1\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod SolveRivalDistance(n: int, x: int, a: int, b: int) returns (result: int)\n    requires ValidInput(n, x, a, b)\n    ensures ValidResult(n, x, a, b, result)\n    ensures result >= 0\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

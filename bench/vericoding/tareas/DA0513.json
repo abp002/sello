@@ -1,0 +1,13 @@
+{
+ "id": "DA0513",
+ "source": "apps",
+ "source_id": "apps_test_4258",
+ "fn": "solve",
+ "sello": "solve(A: Int, B: Int, T: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn solve(A: Int, B: Int, T: Int) -> Int\n  requires (1 <= A)\n  requires (A <= 20)\n  requires (1 <= B)\n  requires (B <= 20)\n  requires (1 <= T)\n  requires (T <= 20)\n  ensures (result == (B * (T / A)))\n  effects pure\n  example (solve(0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(A: int, B: int, T: int)\n{\n    1 <= A <= 20 && 1 <= B <= 20 && 1 <= T <= 20\n}\n\nfunction ProductionCount(A: int, T: int): int\n    requires A > 0\n{\n    T / A\n}\n\nfunction TotalBiscuits(A: int, B: int, T: int): int\n    requires A > 0\n{\n    B * ProductionCount(A, T)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(A: int, B: int, T: int) returns (result: int)\n    requires ValidInput(A, B, T)\n    ensures result == TotalBiscuits(A, B, T)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

@@ -1,0 +1,14 @@
+{
+ "id": "DV0087",
+ "source": "verina",
+ "source_id": "verina_basic_7_task",
+ "fn": "SumOfSquaresOfFirstNOddNumbers",
+ "sello": "SumOfSquaresOfFirstNOddNumbers(n: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "as int",
+  "nat"
+ ],
+ "esqueleto": "fn SumOfSquaresOfFirstNOddNumbers(n: Int) -> Int\n  requires (n >= 0)\n  requires (n >= 0)\n  ensures (result == (((n * ((2 * n) - 1)) * ((2 * n) + 1)) / 3))\n  ensures (result >= 0)\n  effects pure\n  example (SumOfSquaresOfFirstNOddNumbers(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod SumOfSquaresOfFirstNOddNumbers(n: nat) returns (result: nat)\n    requires n >= 0\n    ensures result as int == (n as int * (2 * n as int - 1) * (2 * n as int + 1)) / 3\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n    result := 0;\n}\n// </vc-code>\n"
+}

@@ -1,0 +1,11 @@
+{
+ "id": "DH0043",
+ "source": "humaneval",
+ "source_id": "humaneval_041",
+ "fn": "car_race_collision",
+ "sello": "car_race_collision(n: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn car_race_collision(n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == (n * n))\n  ensures (result >= 0)\n  effects pure\n  example (car_race_collision(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int)\n{\n    n >= 0\n}\n\nfunction CollisionCount(n: int): int\n    requires ValidInput(n)\n{\n    n * n\n}\n\npredicate ValidResult(n: int, result: int)\n    requires ValidInput(n)\n{\n    result == CollisionCount(n) && result >= 0\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod car_race_collision(n: int) returns (result: int)\n    requires ValidInput(n)\n    ensures ValidResult(n, result)\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

@@ -1,0 +1,11 @@
+{
+ "id": "DV0057",
+ "source": "verina",
+ "source_id": "verina_advanced_58_task",
+ "fn": "NthUglyNumber",
+ "sello": "NthUglyNumber(n: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn NthUglyNumber(n: Int) -> Int\n  requires (n > 0)\n  ensures (result > 0)\n  effects pure\n  example (NthUglyNumber(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate NthUglyNumberPrecond(n: nat)\n{\n    n > 0\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod NthUglyNumber(n: int) returns (result: int)\n    requires n > 0\n    ensures result > 0\n// </vc-spec>\n// <vc-code>\n{\n    // TODO: implement\n    result := 1;\n}\n// </vc-code>\n"
+}

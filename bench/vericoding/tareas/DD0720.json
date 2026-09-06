@@ -1,0 +1,11 @@
+{
+ "id": "DD0720",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_432_MedianLength",
+ "fn": "MedianLength",
+ "sello": "MedianLength(a: Int, b: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn MedianLength(a: Int, b: Int) -> Int\n  requires (a > 0)\n  requires (b > 0)\n  ensures (result == ((a + b) / 2))\n  effects pure\n  example (MedianLength(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod MedianLength(a: int, b: int) returns (median: int)\n    requires a > 0 && b > 0\n    ensures median == (a + b) / 2\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

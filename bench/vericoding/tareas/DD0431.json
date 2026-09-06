@@ -1,0 +1,13 @@
+{
+ "id": "DD0431",
+ "source": "dafnybench",
+ "source_id": "Programmverifikation-und-synthese_tmp_tmppurk6ime_PVS_Assignment_ex_06_Hoangkim_ex_06_hoangkim_gcdI",
+ "fn": "gcdI",
+ "sello": "gcdI(m: Int, n: Int) -> Int",
+ "helpers": [
+  "gcd"
+ ],
+ "notas": [],
+ "esqueleto": "fn gcd(x: Int, y: Int) -> Int\n  requires (x > 0)\n  requires (y > 0)\n  ensures (result == (if (x == y) then x else if (x > y) then gcd((x - y), y) else gcd(x, (y - x))))\n  effects pure\n  example (gcd(1, 1) == 1)\n  example (gcd(2, 2) == 2)\n{\n  if (x == y) then x else if (x > y) then gcd((x - y), y) else gcd(x, (y - x))\n}\n\nfn gcdI(m: Int, n: Int) -> Int\n  requires (m > 0)\n  requires (n > 0)\n  ensures (result == gcd(m, n))\n  effects pure\n  example (gcdI(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nghost function gcd(x: int, y: int): int\n    requires x > 0 && y > 0\n{\n    if x == y then x\n    else if x > y then gcd(x - y, y)\n    else gcd(x, y - x)\n}\n\nghost function gcd'(x: int, y: int): int\n    requires x > 0 && y > 0\n    decreases if x > y then x else y\n{\n    if x == y then x\n    else if x > y then gcd'(x - y, y)\n    else gcd(y, x)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod gcdI(m: int, n: int) returns (d: int)\nrequires  m > 0 && n > 0 \nensures d == gcd(m, n);\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

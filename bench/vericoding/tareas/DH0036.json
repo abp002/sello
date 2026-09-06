@@ -1,0 +1,15 @@
+{
+ "id": "DH0036",
+ "source": "humaneval",
+ "source_id": "humaneval_036_fizz_buzz__count7",
+ "fn": "count7",
+ "sello": "count7(x: Int) -> Int",
+ "helpers": [
+  "count7_r"
+ ],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn count7_r(x: Int) -> Int\n  requires (x >= 0)\n  ensures (result == (if (x < 10) then if ((x % 10) == 7) then 1 else 0 else ((if ((x % 10) == 7) then 1 else 0) + count7_r((x / 10)))))\n  ensures (result >= 0)\n  effects pure\n  example (count7_r(0) == 0)\n  example (count7_r(7) == 1)\n{\n  if (x < 10) then if ((x % 10) == 7) then 1 else 0 else ((if ((x % 10) == 7) then 1 else 0) + count7_r((x / 10)))\n}\n\nfn count7(x: Int) -> Int\n  requires (x >= 0)\n  ensures (result == count7_r(x))\n  ensures (result >= 0)\n  effects pure\n  example (count7(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nfunction count7_r(x: nat): nat {\n  var lst := if x % 10 == 7 then 1 else 0;\n  if x < 10 then lst else lst + count7_r(x / 10)\n}\n\nfunction sum(s: seq<int>) : int {\n  if |s| == 0 then 0 else s[0] + sum(s[1..])\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod count7(x: nat) returns (count: nat) \n\n  ensures count == count7_r(x)\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

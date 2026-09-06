@@ -1,0 +1,13 @@
+{
+ "id": "DA0017",
+ "source": "apps",
+ "source_id": "apps_test_76",
+ "fn": "solve",
+ "sello": "solve(n: Int, m: Int, a: Int, b: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn solve(n: Int, m: Int, a: Int, b: Int) -> Int\n  requires (n >= 1)\n  requires (m >= 1)\n  requires (a >= 1)\n  requires (b >= 1)\n  ensures (result == (if (((n % m) * b) < ((m - (n % m)) * a)) then ((n % m) * b) else ((m - (n % m)) * a)))\n  ensures (result >= 0)\n  effects pure\n  example (solve(0, 0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, m: int, a: int, b: int)\n{\n    n >= 1 && m >= 1 && a >= 1 && b >= 1\n}\n\nfunction MinCostToDivisible(n: int, m: int, a: int, b: int): int\n    requires ValidInput(n, m, a, b)\n{\n    var k := n % m;\n    if k * b < (m - k) * a then k * b else (m - k) * a\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, m: int, a: int, b: int) returns (result: int)\n    requires ValidInput(n, m, a, b)\n    ensures result == MinCostToDivisible(n, m, a, b)\n    ensures result >= 0\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

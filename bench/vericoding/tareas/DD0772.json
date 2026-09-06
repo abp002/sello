@@ -1,0 +1,11 @@
+{
+ "id": "DD0772",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_626_AreaOfLargestTriangleInSemicircle",
+ "fn": "AreaOfLargestTriangleInSemicircle",
+ "sello": "AreaOfLargestTriangleInSemicircle(radius: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn AreaOfLargestTriangleInSemicircle(radius: Int) -> Int\n  requires (radius > 0)\n  ensures (result == (radius * radius))\n  effects pure\n  example (AreaOfLargestTriangleInSemicircle(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod AreaOfLargestTriangleInSemicircle(radius: int) returns (area: int)\n    requires radius > 0\n    ensures area == radius * radius\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

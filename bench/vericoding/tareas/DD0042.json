@@ -1,0 +1,13 @@
+{
+ "id": "DD0042",
+ "source": "dafnybench",
+ "source_id": "Clover_abs_Abs",
+ "fn": "Abs",
+ "sello": "Abs(x: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn Abs(x: Int) -> Int\n  requires (x == x)\n  ensures ((not (x >= 0)) or (x == result))\n  ensures ((not (x < 0)) or ((x + result) == 0))\n  effects pure\n  example (Abs(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod Abs(x: int) returns (y: int)\n  ensures x>=0 ==> x==y\n  ensures x<0 ==> x+y==0\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

@@ -1,0 +1,13 @@
+{
+ "id": "DJ0135",
+ "source": "verified_cogen",
+ "source_id": "rustbench_arithmetic_weird",
+ "fn": "ArithmeticWeird",
+ "sello": "ArithmeticWeird() -> Int",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn ArithmeticWeird() -> Int\n  requires (1 == 1)\n  ensures (result < 10)\n  effects pure\n  example (ArithmeticWeird() == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod ArithmeticWeird() returns (result: int)\n    ensures result < 10\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n}\n// </vc-code>\n"
+}

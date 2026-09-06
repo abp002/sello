@@ -1,0 +1,11 @@
+{
+ "id": "DA0219",
+ "source": "apps",
+ "source_id": "apps_test_1045",
+ "fn": "solve",
+ "sello": "solve(n: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(n: Int) -> Int\n  requires (n >= 1)\n  ensures (result >= 1)\n  ensures (n >= 1)\n  ensures (result >= 1)\n  ensures ((((result * (result + 1)) * (result + 2)) / 6) <= n)\n  ensures (((((result + 1) * ((result + 1) + 1)) * ((result + 1) + 2)) / 6) > n)\n  effects pure\n  example (solve(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int) {\n    n >= 1\n}\n\nfunction CubesForLevel(level: int): int\n    requires level >= 1\n{\n    level * (level + 1) / 2\n}\n\nfunction TotalCubesForHeight(h: int): int\n    requires h >= 1\n{\n    h * (h + 1) * (h + 2) / 6\n}\n\npredicate ValidPyramidHeight(n: int, h: int) {\n    ValidInput(n) && h >= 1 && \n    TotalCubesForHeight(h) <= n &&\n    TotalCubesForHeight(h + 1) > n\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int) returns (result: int)\n    requires ValidInput(n)\n    ensures result >= 1\n    ensures ValidPyramidHeight(n, result)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

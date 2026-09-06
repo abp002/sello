@@ -1,0 +1,11 @@
+{
+ "id": "DA0644",
+ "source": "apps",
+ "source_id": "apps_test_4607",
+ "fn": "solve",
+ "sello": "solve(a: Int, b: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(a: Int, b: Int) -> Int\n  requires (1 <= a)\n  requires (a <= 12)\n  requires (1 <= b)\n  requires (b <= 31)\n  ensures (result == (if (a > b) then (a - 1) else a))\n  ensures ((not (a > b)) or (result == (a - 1)))\n  ensures ((not (a <= b)) or (result == a))\n  effects pure\n  example (solve(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(a: int, b: int)\n{\n    1 <= a <= 12 && 1 <= b <= 31\n}\n\nfunction TakahashiCount(a: int, b: int): int\n    requires ValidInput(a, b)\n{\n    if a > b then a - 1 else a\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(a: int, b: int) returns (result: int)\n    requires ValidInput(a, b)\n    ensures result == TakahashiCount(a, b)\n    ensures a > b ==> result == a - 1\n    ensures a <= b ==> result == a\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

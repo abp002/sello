@@ -1,0 +1,11 @@
+{
+ "id": "DA0133",
+ "source": "apps",
+ "source_id": "apps_test_666",
+ "fn": "solve",
+ "sello": "solve(n: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(n: Int) -> Int\n  requires (n >= 1)\n  ensures (result >= 1)\n  ensures (result <= n)\n  effects pure\n  example (solve(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nfunction TriangularNumber(m: int): int\n    requires m >= 0\n{\n    m * (m + 1) / 2\n}\n\npredicate ValidInput(n: int)\n{\n    n >= 1\n}\n\npredicate ValidResult(n: int, result: int)\n    requires ValidInput(n)\n{\n    result >= 1 && result <= n\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int) returns (result: int)\n    requires ValidInput(n)\n    ensures ValidResult(n, result)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

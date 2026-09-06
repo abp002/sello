@@ -1,0 +1,13 @@
+{
+ "id": "DA0043",
+ "source": "apps",
+ "source_id": "apps_test_176",
+ "fn": "solve",
+ "sello": "solve(k: Int, a: Int, b: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn solve(k: Int, a: Int, b: Int) -> Int\n  requires (k > 0)\n  requires (a <= b)\n  ensures (result >= 0)\n  ensures (result == ((if (b >= 0) then (b / k) else (((b - k) + 1) / k)) - (if ((a - 1) >= 0) then ((a - 1) / k) else ((((a - 1) - k) + 1) / k))))\n  effects pure\n  example (solve(0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(k: int, a: int, b: int)\n{\n  k > 0 && a <= b\n}\n\nfunction FloorDiv(a: int, b: int): int\n  requires b > 0\n{\n  if a >= 0 then a / b\n  else (a - b + 1) / b\n}\n\nfunction CountDivisiblesInRange(k: int, a: int, b: int): int\n  requires k > 0\n  requires a <= b\n{\n  FloorDiv(b, k) - FloorDiv(a - 1, k)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(k: int, a: int, b: int) returns (result: int)\n  requires ValidInput(k, a, b)\n  ensures result >= 0\n  ensures result == CountDivisiblesInRange(k, a, b)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

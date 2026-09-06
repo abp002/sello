@@ -1,0 +1,13 @@
+{
+ "id": "DV0008",
+ "source": "verina",
+ "source_id": "verina_advanced_9_task",
+ "fn": "CountSumDivisibleBy",
+ "sello": "CountSumDivisibleBy(n: Int, d: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn CountSumDivisibleBy(n: Int, d: Int) -> Int\n  requires (n >= 0)\n  requires (d >= 0)\n  requires (d > 0)\n  ensures (result <= n)\n  ensures (result >= 0)\n  effects pure\n  example (CountSumDivisibleBy(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nfunction SumOfDigits(x: nat): nat\n    decreases x\n{\n    if x == 0 then 0 else (x % 10) + SumOfDigits(x / 10)\n}\n\npredicate IsSumDivisibleBy(x: nat, d: nat)\n    requires d > 0\n{\n    (SumOfDigits(x) % d) == 0\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod CountSumDivisibleBy(n: nat, d: nat) returns (result: nat)\n    requires d > 0\n    ensures result <= n\n// </vc-spec>\n// <vc-code>\n{\n    // TODO: implement\n    result := 0;\n}\n// </vc-code>\n"
+}

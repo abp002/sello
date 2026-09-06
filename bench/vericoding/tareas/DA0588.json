@@ -1,0 +1,16 @@
+{
+ "id": "DA0588",
+ "source": "apps",
+ "source_id": "apps_test_4470",
+ "fn": "Solve",
+ "sello": "Solve(n: Int) -> Int",
+ "helpers": [
+  "ReduceByFactors235",
+  "MinMovesToOne"
+ ],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn ReduceByFactors235(n: Int) -> Int\n  requires (n >= 0)\n  requires (n > 0)\n  ensures (result == (if (n == 1) then 1 else if ((n % 2) == 0) then ReduceByFactors235((n / 2)) else if ((n % 3) == 0) then ReduceByFactors235((n / 3)) else if ((n % 5) == 0) then ReduceByFactors235((n / 5)) else n))\n  ensures (result >= 0)\n  effects pure\n  example (ReduceByFactors235(1) == 1)\n  example (ReduceByFactors235(7) == 7)\n{\n  if (n == 1) then 1 else if ((n % 2) == 0) then ReduceByFactors235((n / 2)) else if ((n % 3) == 0) then ReduceByFactors235((n / 3)) else if ((n % 5) == 0) then ReduceByFactors235((n / 5)) else n\n}\n\nfn MinMovesToOne(n: Int) -> Int\n  requires (n >= 0)\n  requires (n > 0)\n  requires (ReduceByFactors235(n) == 1)\n  ensures (result == (if (n == 1) then 0 else if ((n % 2) == 0) then (1 + MinMovesToOne((n / 2))) else if ((n % 3) == 0) then (2 + MinMovesToOne((n / 3))) else if ((n % 5) == 0) then (3 + MinMovesToOne((n / 5))) else 0))\n  ensures (result >= 0)\n  effects pure\n  example (MinMovesToOne(1) == 0)\n  example (MinMovesToOne(2) == 1)\n{\n  if (n == 1) then 0 else if ((n % 2) == 0) then (1 + MinMovesToOne((n / 2))) else if ((n % 3) == 0) then (2 + MinMovesToOne((n / 3))) else if ((n % 5) == 0) then (3 + MinMovesToOne((n / 5))) else 0\n}\n\nfn Solve(n: Int) -> Int\n  requires (n >= 0)\n  requires (n > 0)\n  ensures (result >= -1)\n  ensures ((result == -1) == (not (ReduceByFactors235(n) == 1)))\n  ensures ((not (result >= 0)) or ((ReduceByFactors235(n) == 1) and (result == MinMovesToOne(n))))\n  effects pure\n  example (Solve(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: nat)\n{\n    n > 0\n}\n\npredicate CanReachOne(n: nat)\n    requires n > 0\n{\n    OnlyFactors235(n)\n}\n\npredicate OnlyFactors235(n: nat)\n    requires n > 0\n{\n    ReduceByFactors235(n) == 1\n}\n\nfunction ReduceByFactors235(n: nat): nat\n    requires n > 0\n    decreases n\n{\n    if n == 1 then 1\n    else if n % 2 == 0 then ReduceByFactors235(n / 2)\n    else if n % 3 == 0 then ReduceByFactors235(n / 3)\n    else if n % 5 == 0 then ReduceByFactors235(n / 5)\n    else n\n}\n\nfunction MinMovesToOne(n: nat): nat\n    requires n > 0\n    requires CanReachOne(n)\n    decreases n\n{\n    if n == 1 then 0\n    else if n % 2 == 0 then 1 + MinMovesToOne(n / 2)\n    else if n % 3 == 0 then 2 + MinMovesToOne(n / 3)\n    else if n % 5 == 0 then 3 + MinMovesToOne(n / 5)\n    else 0\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod Solve(n: nat) returns (result: int)\n    requires ValidInput(n)\n    ensures result >= -1\n    ensures result == -1 <==> !CanReachOne(n)\n    ensures result >= 0 ==> CanReachOne(n) && result == MinMovesToOne(n)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

@@ -1,0 +1,13 @@
+{
+ "id": "DA0366",
+ "source": "apps",
+ "source_id": "apps_test_1909",
+ "fn": "solve",
+ "sello": "solve(n: Int, k: Int, powers: List[Int]) -> Int",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn solve(n: Int, k: Int, powers: List[Int]) -> Int\n  requires (n > 0)\n  requires (k > 0)\n  requires (k <= n)\n  requires ((n % k) == 0)\n  requires (len(powers) == n)\n  ensures (1 <= result)\n  ensures (result <= k)\n  effects pure\n  example (solve(0, 0, []) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, k: int, powers: seq<int>)\n{\n    n > 0 && k > 0 && k <= n && n % k == 0 && |powers| == n\n}\n\npredicate IsOptimalStartingTask(result: int, n: int, k: int, powers: seq<int>)\n    requires ValidInput(n, k, powers)\n{\n    1 <= result <= k\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, k: int, powers: seq<int>) returns (result: int)\n    requires ValidInput(n, k, powers)\n    ensures IsOptimalStartingTask(result, n, k, powers)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

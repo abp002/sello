@@ -1,0 +1,11 @@
+{
+ "id": "DD0758",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_598_IsArmstrong",
+ "fn": "IsArmstrong",
+ "sello": "IsArmstrong(n: Int) -> Bool",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn IsArmstrong(n: Int) -> Bool\n  requires (100 <= n)\n  requires (n < 1000)\n  ensures (result == (n == (((((n / 100) * (n / 100)) * (n / 100)) + ((((n / 10) % 10) * ((n / 10) % 10)) * ((n / 10) % 10))) + (((n % 10) * (n % 10)) * (n % 10)))))\n  effects pure\n  example (IsArmstrong(0) == true)\n{\n  true\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod IsArmstrong(n: int) returns (result: bool)\n    requires 100 <= n < 1000\n    ensures result <==> (n == ((n / 100) * (n / 100) * (n / 100) + ((n / 10) % 10) * ((n / 10) % 10) * ((n / 10) % 10) + (n % 10) * (n % 10) * (n % 10)))\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

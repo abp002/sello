@@ -1,0 +1,11 @@
+{
+ "id": "DA0530",
+ "source": "apps",
+ "source_id": "apps_test_4306",
+ "fn": "solve",
+ "sello": "solve(a: Int, b: Int, c: Int, d: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(a: Int, b: Int, c: Int, d: Int) -> Int\n  requires (0 <= a)\n  requires (a < b)\n  requires (b <= 100)\n  requires (0 <= c)\n  requires (c < d)\n  requires (d <= 100)\n  ensures (result >= 0)\n  ensures (result == (if (((if (b < d) then b else d) - (if (a > c) then a else c)) > 0) then ((if (b < d) then b else d) - (if (a > c) then a else c)) else 0))\n  ensures (result <= 100)\n  effects pure\n  example (solve(0, 0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(a: int, b: int, c: int, d: int)\n{\n    0 <= a < b <= 100 && 0 <= c < d <= 100\n}\n\nfunction min(x: int, y: int): int\n{\n    if x < y then x else y\n}\n\nfunction max(x: int, y: int): int\n{\n    if x > y then x else y\n}\n\nfunction IntervalOverlapLength(a: int, b: int, c: int, d: int): int\n{\n    if min(b, d) - max(a, c) > 0 then min(b, d) - max(a, c) else 0\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(a: int, b: int, c: int, d: int) returns (result: int)\n    requires ValidInput(a, b, c, d)\n    ensures result >= 0\n    ensures result == IntervalOverlapLength(a, b, c, d)\n    ensures result <= 100\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

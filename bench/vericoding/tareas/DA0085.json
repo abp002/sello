@@ -1,0 +1,11 @@
+{
+ "id": "DA0085",
+ "source": "apps",
+ "source_id": "apps_test_462",
+ "fn": "FindMinimumTotalDistance",
+ "sello": "FindMinimumTotalDistance(x1: Int, x2: Int, x3: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn FindMinimumTotalDistance(x1: Int, x2: Int, x3: Int) -> Int\n  requires (1 <= x1)\n  requires (x1 <= 100)\n  requires (1 <= x2)\n  requires (x2 <= 100)\n  requires (1 <= x3)\n  requires (x3 <= 100)\n  requires (x1 != x2)\n  requires (x1 != x3)\n  requires (x2 != x3)\n  ensures (result == ((if ((x1 >= x2) and (x1 >= x3)) then x1 else if ((x2 >= x1) and (x2 >= x3)) then x2 else x3) - (if ((x1 <= x2) and (x1 <= x3)) then x1 else if ((x2 <= x1) and (x2 <= x3)) then x2 else x3)))\n  ensures (result >= 1)\n  ensures (result <= 99)\n  effects pure\n  example (FindMinimumTotalDistance(0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(x1: int, x2: int, x3: int) {\n    1 <= x1 <= 100 && 1 <= x2 <= 100 && 1 <= x3 <= 100 &&\n    x1 != x2 && x1 != x3 && x2 != x3\n}\n\nfunction MinTotalDistance(x1: int, x2: int, x3: int): int\n    requires ValidInput(x1, x2, x3)\n{\n    var max_pos := if x1 >= x2 && x1 >= x3 then x1\n                  else if x2 >= x1 && x2 >= x3 then x2\n                  else x3;\n    var min_pos := if x1 <= x2 && x1 <= x3 then x1\n                  else if x2 <= x1 && x2 <= x3 then x2\n                  else x3;\n    max_pos - min_pos\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod FindMinimumTotalDistance(x1: int, x2: int, x3: int) returns (result: int)\n    requires ValidInput(x1, x2, x3)\n    ensures result == MinTotalDistance(x1, x2, x3)\n    ensures result >= 1 && result <= 99\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

@@ -1,0 +1,11 @@
+{
+ "id": "DD0791",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_762_IsMonthWith30Days",
+ "fn": "IsMonthWith30Days",
+ "sello": "IsMonthWith30Days(month: Int) -> Bool",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn IsMonthWith30Days(month: Int) -> Bool\n  requires (1 <= month)\n  requires (month <= 12)\n  ensures (result == ((((month == 4) or (month == 6)) or (month == 9)) or (month == 11)))\n  effects pure\n  example (IsMonthWith30Days(0) == true)\n{\n  true\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod IsMonthWith30Days(month: int) returns (result: bool)\n    requires 1 <= month <= 12\n    ensures result <==> month == 4 || month == 6 || month == 9 || month == 11\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

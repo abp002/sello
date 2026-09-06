@@ -1,0 +1,16 @@
+{
+ "id": "DB0052",
+ "source": "bignum",
+ "source_id": "bignum_ModExp_int",
+ "fn": "ModExp_int",
+ "sello": "ModExp_int(x: Int, y: Int, n: Int, z: Int) -> Int",
+ "helpers": [
+  "Exp_int"
+ ],
+ "notas": [
+  "div",
+  "nat"
+ ],
+ "esqueleto": "fn Exp_int(x: Int, y: Int) -> Int\n  requires (x >= 0)\n  requires (y >= 0)\n  ensures (result == (if (y == 0) then 1 else (x * Exp_int(x, (y - 1)))))\n  ensures (result >= 0)\n  effects pure\n  example (Exp_int(0, 0) == 1)\n  example (Exp_int(0, 1) == 0)\n{\n  if (y == 0) then 1 else (x * Exp_int(x, (y - 1)))\n}\n\nfn ModExp_int(x: Int, y: Int, n: Int, z: Int) -> Int\n  requires (x >= 0)\n  requires (y >= 0)\n  requires (n >= 0)\n  requires (z >= 0)\n  requires (y < Exp_int(2, (n + 1)))\n  requires (z > 1)\n  ensures (result == (Exp_int(x, y) % z))\n  ensures (result >= 0)\n  effects pure\n  example (ModExp_int(0, 0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nghost function Exp_int(x: nat, y:nat): nat\n{\n  if y == 0 then 1 else x * Exp_int(x, y - 1)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod ModExp_int(x: nat, y:nat, n:nat, z: nat) returns (res:nat)\n  requires y < Exp_int(2,n+1)\n  requires z > 1\n  ensures res == Exp_int(x,y) % z\n  decreases n\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

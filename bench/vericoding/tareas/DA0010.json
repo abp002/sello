@@ -1,0 +1,11 @@
+{
+ "id": "DA0010",
+ "source": "apps",
+ "source_id": "apps_test_56",
+ "fn": "solve",
+ "sello": "solve(n: Int, t: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(n: Int, t: Int) -> Int\n  requires (1 <= n)\n  requires (n <= 10)\n  requires (0 <= t)\n  requires (t <= 10000)\n  ensures (result >= 0)\n  ensures (result <= ((n * (n + 1)) / 2))\n  ensures ((not (t == 0)) or (result == 0))\n  ensures ((not ((n == 1) and (t >= 1))) or (result == 1))\n  ensures ((not ((n == 1) and (t == 0))) or (result == 0))\n  ensures ((not ((t >= 1) and (n > 1))) or (result >= 1))\n  effects pure\n  example (solve(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, t: int) {\n  1 <= n <= 10 && 0 <= t <= 10000\n}\n\nfunction TotalGlasses(n: int): int {\n  n * (n + 1) / 2\n}\n\npredicate ValidResult(result: int, n: int, t: int) {\n  result >= 0 && result <= TotalGlasses(n)\n}\n\npredicate CorrectForEdgeCases(result: int, n: int, t: int) {\n  (t == 0 ==> result == 0) &&\n  (n == 1 && t >= 1 ==> result == 1) &&\n  (n == 1 && t == 0 ==> result == 0) &&\n  (t >= 1 && n > 1 ==> result >= 1)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, t: int) returns (result: int)\n  requires ValidInput(n, t)\n  ensures ValidResult(result, n, t)\n  ensures CorrectForEdgeCases(result, n, t)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

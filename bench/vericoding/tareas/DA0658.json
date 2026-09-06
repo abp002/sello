@@ -1,0 +1,11 @@
+{
+ "id": "DA0658",
+ "source": "apps",
+ "source_id": "apps_test_4690",
+ "fn": "solve",
+ "sello": "solve(A: Int, B: Int, C: Int, D: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(A: Int, B: Int, C: Int, D: Int) -> Int\n  requires (1 <= A)\n  requires (A <= 10000)\n  requires (1 <= B)\n  requires (B <= 10000)\n  requires (1 <= C)\n  requires (C <= 10000)\n  requires (1 <= D)\n  requires (D <= 10000)\n  ensures (result == (if ((A * B) >= (C * D)) then (A * B) else (C * D)))\n  ensures (result >= (A * B))\n  ensures (result >= (C * D))\n  ensures ((result == (A * B)) or (result == (C * D)))\n  effects pure\n  example (solve(0, 0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(A: int, B: int, C: int, D: int)\n{\n    1 <= A <= 10000 && 1 <= B <= 10000 && 1 <= C <= 10000 && 1 <= D <= 10000\n}\n\nfunction MaxArea(A: int, B: int, C: int, D: int): int\n{\n    if A * B >= C * D then A * B else C * D\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(A: int, B: int, C: int, D: int) returns (result: int)\n    requires ValidInput(A, B, C, D)\n    ensures result == MaxArea(A, B, C, D)\n    ensures result >= A * B && result >= C * D\n    ensures result == A * B || result == C * D\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

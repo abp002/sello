@@ -1,0 +1,15 @@
+{
+ "id": "DD0159",
+ "source": "dafnybench",
+ "source_id": "DafnyProjects_tmp_tmp2acw_s4s_CombNK_Comb",
+ "fn": "Comb",
+ "sello": "Comb(n: Int, k: Int) -> Int",
+ "helpers": [
+  "comb"
+ ],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn comb(n: Int, k: Int) -> Int\n  requires (n >= 0)\n  requires (k >= 0)\n  requires (0 <= k)\n  requires (k <= n)\n  ensures (result == (if ((k == 0) or (k == n)) then 1 else (comb((n - 1), k) + comb((n - 1), (k - 1)))))\n  ensures (result >= 0)\n  effects pure\n  example (comb(0, 0) == 1)\n  example (comb(2, 1) == 2)\n{\n  if ((k == 0) or (k == n)) then 1 else (comb((n - 1), k) + comb((n - 1), (k - 1)))\n}\n\nfn Comb(n: Int, k: Int) -> Int\n  requires (n >= 0)\n  requires (k >= 0)\n  requires (0 <= k)\n  requires (k <= n)\n  ensures (result == comb(n, k))\n  ensures (result >= 0)\n  effects pure\n  example (Comb(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nfunction comb(n: nat, k: nat): nat \n  requires 0 <= k <= n\n{\n  if k == 0 || k == n then 1 else comb(n-1, k) + comb(n-1, k-1)  \n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod Comb(n: nat, k: nat) returns (res: nat)\n  requires 0 <= k <= n\n  ensures res == comb(n, k)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

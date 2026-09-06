@@ -1,0 +1,11 @@
+{
+ "id": "DH0140",
+ "source": "humaneval",
+ "source_id": "humaneval_138",
+ "fn": "is_equal_to_sum_even",
+ "sello": "is_equal_to_sum_even(n: Int) -> Bool",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn is_equal_to_sum_even(n: Int) -> Bool\n  requires (n > 0)\n  ensures (result == (((n % 2) == 0) and (n >= 8)))\n  effects pure\n  example (is_equal_to_sum_even(0) == true)\n{\n  true\n}",
+ "dafny": "// <vc-preamble>\n\npredicate ValidInput(n: int)\n{\n    n > 0\n}\n\npredicate CanBeSumOfFourPositiveEvens(n: int)\n{\n    n % 2 == 0 && n >= 8\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod is_equal_to_sum_even(n: int) returns (result: bool)\n    requires ValidInput(n)\n    ensures result == CanBeSumOfFourPositiveEvens(n)\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

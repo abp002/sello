@@ -1,0 +1,11 @@
+{
+ "id": "DH0063",
+ "source": "humaneval",
+ "source_id": "humaneval_060",
+ "fn": "sum_to_n",
+ "sello": "sum_to_n(n: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn sum_to_n(n: Int) -> Int\n  requires (n >= 1)\n  ensures (result == ((n * (n + 1)) / 2))\n  effects pure\n  example (sum_to_n(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n\npredicate ValidInput(n: int)\n{\n    n >= 1\n}\n\nfunction SumFromOneToN(n: int): int\n    requires n >= 1\n{\n    n * (n + 1) / 2\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod sum_to_n(n: int) returns (result: int)\n    requires ValidInput(n)\n    ensures result == SumFromOneToN(n)\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

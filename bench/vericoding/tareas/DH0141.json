@@ -1,0 +1,16 @@
+{
+ "id": "DH0141",
+ "source": "humaneval",
+ "source_id": "humaneval_139",
+ "fn": "special_factorial",
+ "sello": "special_factorial(n: Int) -> Int",
+ "helpers": [
+  "factorial_func",
+  "special_factorial_func"
+ ],
+ "notas": [
+  "método del preámbulo ignorado"
+ ],
+ "esqueleto": "fn factorial_func(num: Int) -> Int\n  requires (num >= 0)\n  ensures (result == (if (num <= 1) then 1 else (num * factorial_func((num - 1)))))\n  effects pure\n  example (factorial_func(0) == 1)\n  example (factorial_func(2) == 2)\n{\n  if (num <= 1) then 1 else (num * factorial_func((num - 1)))\n}\n\nfn special_factorial_func(n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == (if (n <= 0) then 1 else (special_factorial_func((n - 1)) * factorial_func(n))))\n  effects pure\n  example (special_factorial_func(0) == 1)\n  example (special_factorial_func(2) == 2)\n{\n  if (n <= 0) then 1 else (special_factorial_func((n - 1)) * factorial_func(n))\n}\n\nfn special_factorial(n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == special_factorial_func(n))\n  ensures (result > 0)\n  effects pure\n  example (special_factorial(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n\nfunction factorial_func(num: int): int\n    requires num >= 0\n{\n    if num <= 1 then 1 else num * factorial_func(num - 1)\n}\n\nfunction special_factorial_func(n: int): int\n    requires n >= 0\n{\n    if n <= 0 then 1\n    else special_factorial_func(n - 1) * factorial_func(n)\n}\nmethod factorial(num: int) returns (result: int)\n    requires num >= 0\n    ensures result == factorial_func(num)\n    ensures result > 0\n{\n    if num <= 1 {\n        return 1;\n    }\n    result := 1;\n    var i := 2;\n    while i <= num\n        invariant 2 <= i <= num + 1\n        invariant result == factorial_func(i - 1)\n        invariant result > 0\n    {\n        result := result * i;\n        i := i + 1;\n    }\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod special_factorial(n: int) returns (result: int)\n    requires n >= 0\n    ensures result == special_factorial_func(n)\n    ensures result > 0\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

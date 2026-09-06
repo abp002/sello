@@ -1,0 +1,11 @@
+{
+ "id": "DA0533",
+ "source": "apps",
+ "source_id": "apps_test_4310",
+ "fn": "solve",
+ "sello": "solve(A1: Int, A2: Int, A3: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(A1: Int, A2: Int, A3: Int) -> Int\n  requires (1 <= A1)\n  requires (A1 <= 100)\n  requires (1 <= A2)\n  requires (A2 <= 100)\n  requires (1 <= A3)\n  requires (A3 <= 100)\n  ensures (result >= 0)\n  ensures (result == ((if ((A1 >= A2) and (A1 >= A3)) then A1 else if (A2 >= A3) then A2 else A3) - (if ((A1 <= A2) and (A1 <= A3)) then A1 else if (A2 <= A3) then A2 else A3)))\n  effects pure\n  example (solve(0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(A1: int, A2: int, A3: int)\n{\n    1 <= A1 <= 100 && 1 <= A2 <= 100 && 1 <= A3 <= 100\n}\n\nfunction MaxOfThree(A1: int, A2: int, A3: int): int\n{\n    if A1 >= A2 && A1 >= A3 then A1 else if A2 >= A3 then A2 else A3\n}\n\nfunction MinOfThree(A1: int, A2: int, A3: int): int\n{\n    if A1 <= A2 && A1 <= A3 then A1 else if A2 <= A3 then A2 else A3\n}\n\nfunction MinimumCost(A1: int, A2: int, A3: int): int\n{\n    MaxOfThree(A1, A2, A3) - MinOfThree(A1, A2, A3)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(A1: int, A2: int, A3: int) returns (result: int)\n    requires ValidInput(A1, A2, A3)\n    ensures result >= 0\n    ensures result == MinimumCost(A1, A2, A3)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

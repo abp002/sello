@@ -1,0 +1,11 @@
+{
+ "id": "DD0752",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_581_SquarePyramidSurfaceArea",
+ "fn": "SquarePyramidSurfaceArea",
+ "sello": "SquarePyramidSurfaceArea(baseEdge: Int, height: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn SquarePyramidSurfaceArea(baseEdge: Int, height: Int) -> Int\n  requires (baseEdge > 0)\n  requires (height > 0)\n  ensures (result == ((baseEdge * baseEdge) + ((2 * baseEdge) * height)))\n  effects pure\n  example (SquarePyramidSurfaceArea(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod SquarePyramidSurfaceArea(baseEdge: int, height: int) returns (area: int)\n    requires baseEdge > 0\n    requires height > 0\n    ensures area == baseEdge * baseEdge + 2 * baseEdge * height\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

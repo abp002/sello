@@ -1,0 +1,11 @@
+{
+ "id": "DA0278",
+ "source": "apps",
+ "source_id": "apps_test_1329",
+ "fn": "solve",
+ "sello": "solve(N: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(N: Int) -> Int\n  requires (1 <= N)\n  requires (N <= 100)\n  ensures (result >= 0)\n  effects pure\n  example (solve(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(N: int)\n{\n  1 <= N <= 100\n}\n\nfunction countDivisorsWith75Factors(N: int): int\n  requires ValidInput(N)\n{\n  0\n}\n\npredicate ValidOutput(result: int)\n{\n  result >= 0\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(N: int) returns (result: int)\n  requires ValidInput(N)\n  ensures ValidOutput(result)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

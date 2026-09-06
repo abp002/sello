@@ -1,0 +1,15 @@
+{
+ "id": "DD0830",
+ "source": "dafnybench",
+ "source_id": "dafny_misc_tmp_tmpg4vzlnm1_rosetta_code_factorial_IterativeFactorial",
+ "fn": "IterativeFactorial",
+ "sello": "IterativeFactorial(n: Int) -> Int",
+ "helpers": [
+  "Factorial"
+ ],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn Factorial(n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == (if (n == 0) then 1 else (n * Factorial((n - 1)))))\n  ensures (result >= 0)\n  effects pure\n  example (Factorial(0) == 1)\n  example (Factorial(2) == 2)\n{\n  if (n == 0) then 1 else (n * Factorial((n - 1)))\n}\n\nfn IterativeFactorial(n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == Factorial(n))\n  ensures (result >= 0)\n  effects pure\n  example (IterativeFactorial(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nfunction Factorial(n: nat): nat {\n  if n == 0 then 1 else n * Factorial(n - 1)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod IterativeFactorial(n: nat) returns (result: nat)\n  ensures result == Factorial(n)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

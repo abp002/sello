@@ -1,0 +1,13 @@
+{
+ "id": "DA0123",
+ "source": "apps",
+ "source_id": "apps_test_625",
+ "fn": "solve",
+ "sello": "solve(n: Int) -> Int",
+ "helpers": [
+  "AlternatingSum"
+ ],
+ "notas": [],
+ "esqueleto": "fn AlternatingSum(n: Int) -> Int\n  requires (n > 0)\n  ensures (result == (if (n == 1) then -1 else (AlternatingSum((n - 1)) + (if ((n % 2) == 0) then n else -n))))\n  effects pure\n  example (AlternatingSum(1) == -1)\n  example (AlternatingSum(2) == 1)\n{\n  if (n == 1) then -1 else (AlternatingSum((n - 1)) + (if ((n % 2) == 0) then n else -n))\n}\n\nfn solve(n: Int) -> Int\n  requires (n > 0)\n  ensures (result == AlternatingSum(n))\n  ensures ((not ((n % 2) == 0)) or (result == (n / 2)))\n  ensures ((not ((n % 2) != 0)) or (result == ((n / 2) - n)))\n  effects pure\n  example (solve(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nfunction AlternatingSum(n: int): int\n    requires n > 0\n{\n    if n == 1 then -1\n    else AlternatingSum(n-1) + (if n % 2 == 0 then n else -n)\n}\n\npredicate ValidInput(n: int) {\n    n > 0\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int) returns (result: int)\n    requires ValidInput(n)\n    ensures result == AlternatingSum(n)\n    ensures n % 2 == 0 ==> result == n / 2\n    ensures n % 2 != 0 ==> result == n / 2 - n\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

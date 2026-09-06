@@ -1,0 +1,11 @@
+{
+ "id": "DA0661",
+ "source": "apps",
+ "source_id": "apps_test_4697",
+ "fn": "solve",
+ "sello": "solve(n: Int, m: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(n: Int, m: Int) -> Int\n  requires (n >= 0)\n  requires (m >= 0)\n  ensures (result >= 0)\n  ensures (result == ((if (n < (m / 2)) then n else (m / 2)) + ((m - ((if (n < (m / 2)) then n else (m / 2)) * 2)) / 4)))\n  effects pure\n  example (solve(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, m: int)\n{\n    n >= 0 && m >= 0\n}\n\nfunction MaxSccGroups(n: int, m: int): int\n  requires ValidInput(n, m)\n{\n    var directGroups := if n < m / 2 then n else m / 2;\n    var remainingCPieces := m - directGroups * 2;\n    var additionalGroups := remainingCPieces / 4;\n    directGroups + additionalGroups\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, m: int) returns (result: int)\n  requires ValidInput(n, m)\n  ensures result >= 0\n  ensures result == MaxSccGroups(n, m)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

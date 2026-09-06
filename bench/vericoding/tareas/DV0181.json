@@ -1,0 +1,13 @@
+{
+ "id": "DV0181",
+ "source": "verina",
+ "source_id": "verina_basic_101_task",
+ "fn": "triple",
+ "sello": "triple(x: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn triple(x: Int) -> Int\n  requires (x == x)\n  ensures ((result / 3) == x)\n  ensures (((result / 3) * 3) == result)\n  effects pure\n  example (triple(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod triple(x: int) returns (result: int)\n    ensures\n        result / 3 == x &&\n        result / 3 * 3 == result\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n    result := 0;\n}\n// </vc-code>\n"
+}

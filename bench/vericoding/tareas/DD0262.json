@@ -1,0 +1,13 @@
+{
+ "id": "DD0262",
+ "source": "dafnybench",
+ "source_id": "Dafny_tmp_tmpmvs2dmry_examples2_Product",
+ "fn": "Product",
+ "sello": "Product(m: Int, n: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn Product(m: Int, n: Int) -> Int\n  requires (m >= 0)\n  requires (n >= 0)\n  ensures (result == (m * n))\n  ensures (result >= 0)\n  effects pure\n  example (Product(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nfunction gcd(m: nat, n: nat) : nat\nrequires m>0 && n>0;\ndecreases m+n\n{\n    if(m==n) then n \n    else if( m > n) then gcd(m-n,n)\n    else gcd(m, n-m)\n}\n\nfunction exp(x: real, n: nat) :real\ndecreases n;\n{\n    if(n == 0) then 1.0\n    else if (x==0.0) then 0.0\n    else if (n  ==0 && x == 0.0) then 1.0\n    else x*exp(x, n-1)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod Product(m: nat, n:nat) returns (res:nat)\nensures res == m*n;\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

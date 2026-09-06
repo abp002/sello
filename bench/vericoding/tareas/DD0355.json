@@ -1,0 +1,15 @@
+{
+ "id": "DD0355",
+ "source": "dafnybench",
+ "source_id": "Prog-Fun-Solutions_tmp_tmp7_gmnz5f_extra_mod2_mod2",
+ "fn": "mod2",
+ "sello": "mod2(n: Int) -> Int",
+ "helpers": [
+  "f2"
+ ],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn f2(n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == (if (n == 0) then 0 else ((5 * f2((n / 3))) + (n % 4))))\n  ensures (result >= 0)\n  effects pure\n  example (f2(0) == 0)\n  example (f2(1) == 1)\n{\n  if (n == 0) then 0 else ((5 * f2((n / 3))) + (n % 4))\n}\n\nfn mod2(n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == f2(n))\n  ensures (result >= 0)\n  effects pure\n  example (mod2(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nghost function f2(n: nat): nat {\n    if n == 0 then 0\n    else 5*f2(n/3) + n%4\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod mod2(n:nat) returns (a:nat) \nensures a == f2(n)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

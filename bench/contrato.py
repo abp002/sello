@@ -25,12 +25,14 @@ from sello.parser import parse  # noqa: E402
 from sello.pretty import unparse_fn  # noqa: E402
 
 HUECO = "  # write the body here"
+EJEMPLOS = "  # add at least one `example` line here"
 
 
 @dataclass
 class Contrato:
     principal: Fn
     helpers: list[Fn]  # en el orden del programa original
+    ejemplos_libres: bool = False  # los `example` de la principal los pone el modelo (fase 4: el benchmark no trae casos)
 
     @property
     def nombres(self) -> list[str]:
@@ -40,13 +42,19 @@ class Contrato:
     def texto(self) -> str:
         """Lo que ve el modelo que escribe el cuerpo: helpers completos y la principal sin cuerpo."""
         partes = [unparse_fn(f) for f in self.helpers]
-        partes.append(cabecera(self.principal) + "\n{\n" + HUECO + "\n}")
+        cab = cabecera(self.principal, self.ejemplos_libres)
+        if self.ejemplos_libres:
+            cab += "\n" + EJEMPLOS
+        partes.append(cab + "\n{\n" + HUECO + "\n}")
         return "\n\n".join(partes)
 
 
-def cabecera(fn: Fn) -> str:
-    """La función sin cuerpo, en formato canónico: todo hasta la llave."""
-    return unparse_fn(fn).rsplit("\n{\n", 1)[0]
+def cabecera(fn: Fn, sin_ejemplos: bool = False) -> str:
+    """La función sin cuerpo, en formato canónico: todo hasta la llave (sin los `example`, si se pide)."""
+    cab = unparse_fn(fn).rsplit("\n{\n", 1)[0]
+    if sin_ejemplos:
+        cab = "\n".join(l for l in cab.split("\n") if not l.startswith("  example "))
+    return cab
 
 
 def extraer(code: str, principal: str) -> Contrato:
@@ -84,10 +92,10 @@ def violacion(contrato: Contrato, code: str) -> str | None:
     p = contrato.principal.name
     if p not in por_nombre:
         return f"The contract is fixed: `{p}` is missing. Keep its signature and clauses exactly as given and write only its body."
-    if cabecera(por_nombre[p]) != cabecera(contrato.principal):
-        return (f"The contract is fixed: the signature, `requires`, `ensures`, `effects` or `example` "
-                f"lines of `{p}` were changed. Restore them exactly as given; change only the body "
-                f"(or add helper functions of your own).")
+    if cabecera(por_nombre[p], contrato.ejemplos_libres) != cabecera(contrato.principal, contrato.ejemplos_libres):
+        que = "`requires`, `ensures` or `effects`" if contrato.ejemplos_libres else "`requires`, `ensures`, `effects` or `example`"
+        return (f"The contract is fixed: the signature, {que} lines of `{p}` were changed. Restore them "
+                f"exactly as given; change only the body (or add helper functions of your own).")
     for h in contrato.helpers:
         if h.name not in por_nombre:
             return f"The contract is fixed: helper `{h.name}` is missing. Include it exactly as given."

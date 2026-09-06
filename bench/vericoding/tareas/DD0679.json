@@ -1,0 +1,13 @@
+{
+ "id": "DD0679",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_227_MinOfThree",
+ "fn": "MinOfThree",
+ "sello": "MinOfThree(a: Int, b: Int, c: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn MinOfThree(a: Int, b: Int, c: Int) -> Int\n  requires (a == a)\n  ensures (result <= a)\n  ensures (result <= b)\n  ensures (result <= c)\n  ensures (((result == a) or (result == b)) or (result == c))\n  effects pure\n  example (MinOfThree(0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod MinOfThree(a: int, b: int, c: int) returns (min: int)\n    ensures min <= a && min <= b && min <= c\n    ensures (min == a) || (min == b) || (min == c)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

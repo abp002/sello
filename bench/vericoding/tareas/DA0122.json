@@ -1,0 +1,13 @@
+{
+ "id": "DA0122",
+ "source": "apps",
+ "source_id": "apps_test_623",
+ "fn": "solve",
+ "sello": "solve(a1: Int, a2: Int) -> Int",
+ "helpers": [
+  "CountValidMinutes"
+ ],
+ "notas": [],
+ "esqueleto": "fn CountValidMinutes(a: Int, b: Int) -> Int\n  requires (a >= 0)\n  requires (b >= 0)\n  ensures (result == (if ((a <= 0) or (b <= 0)) then 0 else if ((a == 1) and (b == 1)) then 0 else ((if ((a > 1) or (b > 1)) then 1 else 0) + CountValidMinutes(if (a < b) then (a + 1) else (a - 2), if (a < b) then (b - 2) else (b + 1)))))\n  effects pure\n  example (CountValidMinutes(0, 0) == 0)\n  example (CountValidMinutes(1, 2) == 1)\n{\n  if ((a <= 0) or (b <= 0)) then 0 else if ((a == 1) and (b == 1)) then 0 else ((if ((a > 1) or (b > 1)) then 1 else 0) + CountValidMinutes(if (a < b) then (a + 1) else (a - 2), if (a < b) then (b - 2) else (b + 1)))\n}\n\nfn solve(a1: Int, a2: Int) -> Int\n  requires (a1 >= 1)\n  requires (a2 >= 1)\n  ensures (result >= 0)\n  ensures (result == CountValidMinutes(a1, a2))\n  ensures ((not ((a1 == 1) and (a2 == 1))) or (result == 0))\n  effects pure\n  example (solve(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nfunction CountValidMinutes(a: int, b: int): int\n    requires a >= 0 && b >= 0\n    decreases a + b\n{\n    if a <= 0 || b <= 0 then 0\n    else if a == 1 && b == 1 then 0\n    else (if a > 1 || b > 1 then 1 else 0) + \n         CountValidMinutes(if a < b then a + 1 else a - 2, if a < b then b - 2 else b + 1)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(a1: int, a2: int) returns (result: int)\n    requires a1 >= 1 && a2 >= 1\n    ensures result >= 0\n    ensures result == CountValidMinutes(a1, a2)\n    ensures (a1 == 1 && a2 == 1) ==> result == 0\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

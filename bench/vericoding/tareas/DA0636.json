@@ -1,0 +1,11 @@
+{
+ "id": "DA0636",
+ "source": "apps",
+ "source_id": "apps_test_4585",
+ "fn": "solve",
+ "sello": "solve(x: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(x: Int) -> Int\n  requires (x >= 1)\n  ensures (result >= 1)\n  ensures (((result * (result + 1)) / 2) >= x)\n  ensures ((result == 1) or ((((result - 1) * ((result - 1) + 1)) / 2) < x))\n  effects pure\n  example (solve(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(x: int)\n{\n  x >= 1\n}\n\nfunction TriangularNumber(n: int): int\n  requires n >= 0\n{\n  n * (n + 1) / 2\n}\n\npredicate IsMinimalTime(t: int, x: int)\n  requires x >= 1\n{\n  t >= 1 && \n  TriangularNumber(t) >= x &&\n  (t == 1 || TriangularNumber(t - 1) < x)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(x: int) returns (result: int)\n  requires ValidInput(x)\n  ensures IsMinimalTime(result, x)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

@@ -1,0 +1,11 @@
+{
+ "id": "DA0615",
+ "source": "apps",
+ "source_id": "apps_test_4545",
+ "fn": "CalculateBlackSquares",
+ "sello": "CalculateBlackSquares(N: Int, A: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn CalculateBlackSquares(N: Int, A: Int) -> Int\n  requires (1 <= N)\n  requires (N <= 100)\n  requires (0 <= A)\n  requires (A <= (N * N))\n  ensures (result == ((N * N) - A))\n  ensures (result >= 0)\n  effects pure\n  example (CalculateBlackSquares(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(N: int, A: int)\n{\n    1 <= N <= 100 && 0 <= A <= N * N\n}\n\nfunction BlackSquares(N: int, A: int): int\n    requires ValidInput(N, A)\n{\n    N * N - A\n}\n\npredicate ValidOutput(N: int, A: int, result: int)\n    requires ValidInput(N, A)\n{\n    result == BlackSquares(N, A) && result >= 0\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod CalculateBlackSquares(N: int, A: int) returns (blackSquares: int)\n    requires ValidInput(N, A)\n    ensures ValidOutput(N, A, blackSquares)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

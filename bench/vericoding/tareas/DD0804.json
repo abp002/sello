@@ -1,0 +1,13 @@
+{
+ "id": "DD0804",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_801_CountEqualNumbers",
+ "fn": "CountEqualNumbers",
+ "sello": "CountEqualNumbers(a: Int, b: Int, c: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn CountEqualNumbers(a: Int, b: Int, c: Int) -> Int\n  requires (a == a)\n  ensures (result >= 0)\n  ensures (result <= 3)\n  ensures ((result == 3) == ((a == b) and (b == c)))\n  ensures ((result == 2) == ((((a == b) and (b != c)) or ((a != b) and (b == c))) or ((a == c) and (b != c))))\n  ensures ((result == 1) == (((a != b) and (b != c)) and (a != c)))\n  effects pure\n  example (CountEqualNumbers(0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod CountEqualNumbers(a: int, b: int, c: int) returns (count: int)\n    ensures count >= 0 && count <= 3\n    ensures (count == 3) <==> (a == b && b == c)\n    ensures (count == 2) <==> ((a == b && b != c) || (a != b && b == c) || (a == c && b != c))\n    ensures (count == 1) <==> (a != b && b != c && a != c)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

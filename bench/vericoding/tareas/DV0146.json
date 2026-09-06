@@ -1,0 +1,13 @@
+{
+ "id": "DV0146",
+ "source": "verina",
+ "source_id": "verina_basic_66_task",
+ "fn": "ComputeIsEven",
+ "sello": "ComputeIsEven(x: Int) -> Bool",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn ComputeIsEven(x: Int) -> Bool\n  requires (x == x)\n  ensures ((result == true) == ((x % 2) == 0))\n  effects pure\n  example (ComputeIsEven(0) == true)\n{\n  true\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod ComputeIsEven(x: int) returns (result: bool)\n    ensures result == true <==> x % 2 == 0\n// </vc-spec>\n// <vc-code>\n{\n    // impl-start\n    assume {:axiom} false;\n    result := false;\n    // impl-end\n}\n// </vc-code>\n"
+}

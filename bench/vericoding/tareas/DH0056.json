@@ -1,0 +1,14 @@
+{
+ "id": "DH0056",
+ "source": "humaneval",
+ "source_id": "humaneval_053",
+ "fn": "add",
+ "sello": "add(x: Int, y: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "cláusula `true` eliminada",
+  "requires vacío"
+ ],
+ "esqueleto": "fn add(x: Int, y: Int) -> Int\n  requires (x == x)\n  ensures (result == (x + y))\n  effects pure\n  example (add(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n\npredicate ValidInput(x: int, y: int)\n{\n    true\n}\n\nfunction CorrectSum(x: int, y: int): int\n{\n    x + y\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod add(x: int, y: int) returns (result: int)\n    requires ValidInput(x, y)\n    ensures result == CorrectSum(x, y)\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

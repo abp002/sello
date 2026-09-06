@@ -1,0 +1,13 @@
+{
+ "id": "DA0075",
+ "source": "apps",
+ "source_id": "apps_test_307",
+ "fn": "solve",
+ "sello": "solve(k2: Int, k3: Int, k5: Int, k6: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "función supuesta: min"
+ ],
+ "esqueleto": "fn solve(k2: Int, k3: Int, k5: Int, k6: Int) -> Int\n  requires (k2 >= 0)\n  requires (k3 >= 0)\n  requires (k5 >= 0)\n  requires (k6 >= 0)\n  requires (k2 <= 5000000)\n  requires (k3 <= 5000000)\n  requires (k5 <= 5000000)\n  requires (k6 <= 5000000)\n  ensures (result >= 0)\n  ensures (result == ((256 * (if ((if (k2 <= k5) then k2 else k5) <= k6) then if (k2 <= k5) then k2 else k5 else k6)) + (32 * (if (k3 <= (k2 - (if ((if (k2 <= k5) then k2 else k5) <= k6) then if (k2 <= k5) then k2 else k5 else k6))) then k3 else (k2 - (if ((if (k2 <= k5) then k2 else k5) <= k6) then if (k2 <= k5) then k2 else k5 else k6))))))\n  effects pure\n  example (solve(0, 0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(k2: int, k3: int, k5: int, k6: int)\n{\n    k2 >= 0 && k3 >= 0 && k5 >= 0 && k6 >= 0 &&\n    k2 <= 5000000 && k3 <= 5000000 && k5 <= 5000000 && k6 <= 5000000\n}\n\nfunction OptimalSum(k2: int, k3: int, k5: int, k6: int): int\n    requires ValidInput(k2, k3, k5, k6)\n{\n    var count256 := min(min(k2, k5), k6);\n    var remaining_k2 := k2 - count256;\n    var count32 := min(k3, remaining_k2);\n    256 * count256 + 32 * count32\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(k2: int, k3: int, k5: int, k6: int) returns (result: int)\n    requires ValidInput(k2, k3, k5, k6)\n    ensures result >= 0\n    ensures result == OptimalSum(k2, k3, k5, k6)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

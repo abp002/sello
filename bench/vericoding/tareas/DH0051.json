@@ -1,0 +1,16 @@
+{
+ "id": "DH0051",
+ "source": "humaneval",
+ "source_id": "humaneval_049",
+ "fn": "modp",
+ "sello": "modp(n: Int, p: Int) -> Int",
+ "helpers": [
+  "power"
+ ],
+ "notas": [
+  "div",
+  "nat"
+ ],
+ "esqueleto": "fn power(base: Int, exp: Int) -> Int\n  requires (exp >= 0)\n  ensures (result == (if (exp == 0) then 1 else (base * power(base, (exp - 1)))))\n  effects pure\n  example (power(0, 0) == 1)\n  example (power(0, 1) == 0)\n{\n  if (exp == 0) then 1 else (base * power(base, (exp - 1)))\n}\n\nfn modp(n: Int, p: Int) -> Int\n  requires (n >= 0)\n  requires (p > 0)\n  ensures (result >= 0)\n  ensures (result < p)\n  ensures (result == (power(2, n) % p))\n  effects pure\n  example (modp(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n\nfunction power(base: int, exp: nat): int\n{\n    if exp == 0 then 1\n    else base * power(base, exp - 1)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod modp(n: int, p: int) returns (result: int)\n    requires n >= 0 && p > 0\n    ensures result >= 0 && result < p\n    ensures result == power(2, n) % p\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}
