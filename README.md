@@ -64,6 +64,17 @@ la tarde, dos hechos sobre secuencias que Z3 no deriva solo (la cola elemento a 
 `++` por tramos) suben a 49/89 y 27/48; los patrones de instanciación explícitos, medidos,
 no entran. `sello mcp` sirve la misma API por MCP.
 
+**Fase 4: el benchmark de vericoding** (6 de septiembre de 2026, tarde): las 2.334 specs Dafny
+sin `qa-issue` del [benchmark de vericoding](https://github.com/Beneficial-AI-Foundation/vericoding-benchmark)
+pasan por un traductor a contratos de Sello (`bench/vericoding/traducir.py`): los helpers no
+recursivos se inlinean, los recursivos quedan congelados con su definición en el `ensures`, y
+lo que Sello no tiene se cuenta. Caben tal cual 199 (9 %); lo que más bloquea, después de los
+tipos que no existen (`string`, `array`, `real`), es el cuantificador sobre un rango de enteros:
+es la única traba en 179 specs más, y con el índice `s[i]` serían 219. Sobre una muestra de 50,
+la condición `sello_contrato` (el contrato lo pone el benchmark, el modelo escribe el cuerpo y
+sus ejemplos, y el éxito es el certificado de nivel 2 de todo lo que la principal llama) está
+corriendo con haiku y con sonnet; los números van a la bitácora y a `bench/resultados/vericoding-*`.
+
     uv sync --extra dev
     uv run sello check ejemplos/basicos.sello     # parse, tipos, ejemplos, probador (nivel 2)
     uv run sello add ejemplos/basicos.sello       # al almacén, con certificado
@@ -88,7 +99,11 @@ no entran. `sello mcp` sirve la misma API por MCP.
    para que los agentes consulten el almacén.~~ Pendiente: otra codificación de las listas
    para lo que Z3 no decide (cuantificadores sobre secuencias), guardas en tiempo de ejecución
    para lo no probado (nivel 3).
-4. **Benchmark**: contra el conjunto público de vericoding.
+4. **Benchmark**: ~~contra el conjunto público de vericoding: traductor Dafny → Sello, 199 de
+   2.334 specs caben tal cual, primera corrida en condición `sello_contrato`.~~ Pendiente, y
+   solo si la medición lo justifica: cuantificadores sobre rangos de enteros e índices `s[i]`
+   en los contratos (desbloquearían 219 specs más), y una medida de terminación entre funciones
+   para la recursión mutua.
 5. **El almacén como dataset**: afinar un modelo abierto con código Sello generado y
    filtrado por el compilador. Solo con Z3 hecho y la sintaxis congelada. Objetivo: que el
    coste de razonamiento baje de 10x a 1x manteniendo aciertos.
