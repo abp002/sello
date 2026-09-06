@@ -71,9 +71,16 @@ recursivos se inlinean, los recursivos quedan congelados con su definición en e
 lo que Sello no tiene se cuenta. Caben tal cual 199 (9 %); lo que más bloquea, después de los
 tipos que no existen (`string`, `array`, `real`), es el cuantificador sobre un rango de enteros:
 es la única traba en 179 specs más, y con el índice `s[i]` serían 219. Sobre una muestra de 50,
-la condición `sello_contrato` (el contrato lo pone el benchmark, el modelo escribe el cuerpo y
-sus ejemplos, y el éxito es el certificado de nivel 2 de todo lo que la principal llama) está
-corriendo con haiku y con sonnet; los números van a la bitácora y a `bench/resultados/vericoding-*`.
+en la condición `sello_contrato` (el contrato lo pone el benchmark, el modelo escribe el cuerpo y
+sus ejemplos, y el éxito es el certificado de nivel 2 de todo lo que la principal llama), sonnet
+prueba 46/50 (92 %; 38 a la primera, 0,14 USD por tarea probada) y haiku ⟨HAIKU-README⟩. De las
+cuatro que sonnet no prueba, una es una spec insatisfacible del propio benchmark que el probador
+delata con un contraejemplo (`q(1, 4)` en DD0435) y las otras tres son límites del probador:
+división por un producto de variables, helpers recursivos congelados que hay que desplegar y
+`contains` sobre listas de listas. El artículo da un 82 % en Dafny con modelos de serie sobre
+todo el benchmark; aquí es el 9 % que cabe, así que lo que dice la comparación es que el cuello
+de botella de la fase 4 es la cobertura del traductor, no el modelo. Números en
+`bench/resultados/vericoding-*`.
 
     uv sync --extra dev
     uv run sello check ejemplos/basicos.sello     # parse, tipos, ejemplos, probador (nivel 2)
@@ -100,7 +107,8 @@ corriendo con haiku y con sonnet; los números van a la bitácora y a `bench/res
    para lo que Z3 no decide (cuantificadores sobre secuencias), guardas en tiempo de ejecución
    para lo no probado (nivel 3).
 4. **Benchmark**: ~~contra el conjunto público de vericoding: traductor Dafny → Sello, 199 de
-   2.334 specs caben tal cual, primera corrida en condición `sello_contrato`.~~ Pendiente, y
+   2.334 specs caben tal cual, primera corrida en condición `sello_contrato`: sonnet 46/50 y
+   haiku ⟨HAIKU-RUTA⟩ en nivel 2 sobre una muestra de 50.~~ Pendiente, y
    solo si la medición lo justifica: cuantificadores sobre rangos de enteros e índices `s[i]`
    en los contratos (desbloquearían 219 specs más), y una medida de terminación entre funciones
    para la recursión mutua.
