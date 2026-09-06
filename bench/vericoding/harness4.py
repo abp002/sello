@@ -24,6 +24,7 @@ import json
 import random
 import re
 import sys
+import time
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -41,6 +42,8 @@ from sello.hash import callees  # noqa: E402
 from sello.parser import parse  # noqa: E402
 
 COND = "sello_contrato"
+SIN_RESPUESTA = "sin_respuesta"
+ESPERAS = (20, 60)  # segundos antes de repetir una llamada que volvió sin respuesta
 
 
 # ---------- prompt ----------
@@ -107,6 +110,33 @@ def veredicto(r: dict, code: str, fn: str, congelados: set[str]) -> dict:
             "congelados_sin_probar": sorted(n for n in congelados if niveles.get(n, 1) != 2)}
 
 
+# ---------- llamadas sin respuesta ----------
+
+def llamar(texto: str, model: str) -> dict:
+    """`ask`, repetida tras una espera si el modelo no contesta (0 tokens de salida: límite de sesión,
+    `Not logged in`, red). Si sigue sin contestar, devuelve la última respuesta vacía."""
+    for espera in ESPERAS + (None,):
+        a = ask(texto, model)
+        if a["tokens_out"] > 0 or espera is None:
+            return a
+        print(f"  sin respuesta del modelo ({(a.get('error') or a['text'])[:80]!r}); reintento en {espera} s",
+              file=sys.stderr, flush=True)
+        time.sleep(espera)
+    return a
+
+
+def sin_respuesta(r: dict) -> bool:
+    """La tarea tuvo alguna llamada sin respuesta: no mide al modelo y queda fuera del recuento."""
+    return bool(r.get(SIN_RESPUESTA)) or any(a.get("tokens_out", 1) == 0 for a in r.get("detail", []))
+
+
+def reutilizables(previas: list[dict], model: str, ids: set[str]) -> dict[str, dict]:
+    """Filas de una corrida anterior que valen tal cual: mismo modelo y condición, dentro de la muestra
+    y con todas sus llamadas contestadas. Las demás se repiten."""
+    return {r["problem"]: r for r in previas
+            if r.get("model") == model and r.get("cond") == COND and r["problem"] in ids and not sin_respuesta(r)}
+
+
 # ---------- una corrida ----------
 
 def run_one(t: Tarea, model: str, max_attempts: int) -> dict:
@@ -117,7 +147,14 @@ def run_one(t: Tarea, model: str, max_attempts: int) -> dict:
     accepted_at = principal_at = proven_at = None
     code, ultimo = "", {}
     for i in range(1, max_attempts + 1):
-        a = ask(prompt(t, c, prev), model)
+        a = llamar(prompt(t, c, prev), model)
+        if a["tokens_out"] == 0:
+            attempts.append({"n": i, "fase": SIN_RESPUESTA, "sello_error": None, "sin_probar": None, "motivos": None,
+                             "cost": a["cost"], "tokens_in": a["tokens_in"], "tokens_out": 0, "thinking": 0,
+                             "ms": a["ms"], "code": "", "feedback": (a.get("error") or a["text"])[:2000]})
+            print(f"  {t.id} {t.fn:<24} intento {i}: sin respuesta del modelo; la tarea queda fuera del recuento",
+                  file=sys.stderr, flush=True)
+            break
         code = extract(a["text"], "sello")
         v = ct.violacion(c, code)
         vd: dict = {}
@@ -152,7 +189,8 @@ def run_one(t: Tarea, model: str, max_attempts: int) -> dict:
         prev = (code, feedback, fase)
     return {"problem": t.id, "fn": t.fn, "source": t.source, "cond": COND, "model": model,
             "accepted_at": accepted_at, "principal_proven_at": principal_at, "proven_at": proven_at,
-            "attempts": len(attempts), "cost": sum(x["cost"] for x in attempts),
+            "attempts": len(attempts), SIN_RESPUESTA: any(x["fase"] == SIN_RESPUESTA for x in attempts),
+            "cost": sum(x["cost"] for x in attempts),
             "tokens_in": sum(x["tokens_in"] for x in attempts), "tokens_out": sum(x["tokens_out"] for x in attempts),
             "thinking": sum(x["thinking"] for x in attempts), "ms": sum(x["ms"] for x in attempts),
             "code": code if accepted_at else None, "helpers": t.helpers,
@@ -167,15 +205,21 @@ def _pct(a: int, b: int) -> str:
     return f"{a}/{b} ({100 * a / b:.0f} %)" if b else "-"
 
 
-def resumen(rows: list[dict], model: str, when: str) -> str:
-    fuentes = [f for f in FUENTES if any(r["source"] == f for r in rows)]
+def resumen(rows: list[dict], model: str, when: str, nota: str = "") -> str:
+    fuera = [r for r in rows if sin_respuesta(r)]
+    rows = [r for r in rows if not sin_respuesta(r)]
+    fuentes = [f for f in FUENTES if any(r["source"] == f for r in rows + fuera)]
     out = [f"# Vericoding en Sello {when} · modelo `{model}` · condición `{COND}`", "",
            "El contrato lo escribe el benchmark (traducido de Dafny); el modelo escribe el cuerpo y sus ejemplos. "
            "Por tarea: `2 (k)` = probada (la principal y lo que llama en nivel 2) al intento k · `1 (k)` = compila y "
-           "pasa sus ejemplos al intento k pero no se prueba · `✗ (n)` = no compila en n intentos.", "",
+           "pasa sus ejemplos al intento k pero no se prueba · `✗ (n)` = no compila en n intentos · "
+           "`sin respuesta (k)` = el modelo no contestó al intento k (límite de sesión, red): fuera del recuento.", "",
+           *([nota, ""] if nota else []),
            "| tarea | fuente | fn | resultado | último motivo sin probar |", "|---|---|---|---|---|"]
-    for r in sorted(rows, key=lambda r: r["problem"]):
-        if r["proven_at"]:
+    for r in sorted(rows + fuera, key=lambda r: r["problem"]):
+        if sin_respuesta(r):
+            res = f"sin respuesta ({r['attempts']})"
+        elif r["proven_at"]:
             res = f"2 ({r['proven_at']})"
         elif r["accepted_at"]:
             res = f"1 ({r['accepted_at']})"
@@ -190,6 +234,9 @@ def resumen(rows: list[dict], model: str, when: str) -> str:
 
     def stat(label, f): out.append(f"| {label} | " + " | ".join(f(rs(c)) for c in cols) + " |")
     stat("tareas", lambda x: str(len(x)))
+    if fuera:
+        out.append("| fuera del recuento (sin respuesta) | "
+                   + " | ".join(str(sum(1 for r in fuera if c is None or r["source"] == c)) for c in cols) + " |")
     stat("**probadas (nivel 2)**", lambda x: f"**{_pct(sum(1 for r in x if r['proven_at']), len(x))}**")
     stat("· a la primera", lambda x: str(sum(1 for r in x if r["proven_at"] == 1)))
     stat("· media de intentos hasta probar", lambda x: f"{sum(r['proven_at'] for r in x if r['proven_at']) / max(1, sum(1 for r in x if r['proven_at'])):.2f}")
@@ -242,21 +289,37 @@ def main() -> int:
     ap.add_argument("--semilla", type=int, default=1)
     ap.add_argument("--attempts", type=int, default=5)
     ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--reusar", type=Path, help="jsonl de una corrida anterior del mismo modelo: se copian sus tareas "
+                    "contestadas y solo se repiten las que quedaron sin respuesta")
     args = ap.parse_args()
     tareas = cargar(args.only)
     if args.muestra and not args.only:
         tareas = sorted(random.Random(args.semilla).sample(tareas, min(args.muestra, len(tareas))), key=lambda t: t.id)
+    previas: dict[str, dict] = {}
+    if args.reusar:
+        filas = [json.loads(l) for l in args.reusar.read_text().splitlines() if l.strip()]
+        previas = reutilizables(filas, args.model, {t.id for t in tareas})
+    pendientes = [t for t in tareas if t.id not in previas]
     when = dt.datetime.now().strftime("%Y-%m-%d-%H%M")
-    print(f"{len(tareas)} tareas, modelo {args.model}, hasta {args.attempts} intentos", file=sys.stderr)
+    print(f"{len(tareas)} tareas, modelo {args.model}, hasta {args.attempts} intentos"
+          + (f"; {len(previas)} reutilizadas de {args.reusar.name}, {len(pendientes)} por correr" if args.reusar else ""),
+          file=sys.stderr)
     with ThreadPoolExecutor(max_workers=args.workers) as ex:
-        rows = list(ex.map(lambda t: run_one(t, args.model, args.attempts), tareas))
+        rows = list(ex.map(lambda t: run_one(t, args.model, args.attempts), pendientes))
+    rows += [{**previas[t.id], "reusado_de": args.reusar.name} for t in tareas if t.id in previas]
+    rows.sort(key=lambda r: r["problem"])
+    nota = ""
+    if args.reusar:
+        nota = (f"{len(previas)} tareas reutilizadas de `{args.reusar.name}` (todas sus llamadas contestaron); "
+                f"{len(pendientes)} repetidas ahora porque alguna llamada volvió sin respuesta"
+                + (": " + ", ".join(t.id for t in pendientes) if pendientes else "") + ".")
     RESULTADOS.mkdir(exist_ok=True)
     tag = f"vericoding-{when}-{args.model}" + (f"-muestra{args.muestra}-semilla{args.semilla}" if args.muestra and not args.only else "")
     base = RESULTADOS / (tag if not args.only else f"humo-{tag}")
     with open(base.with_suffix(".jsonl"), "w") as f:
         for r in rows:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
-    md = resumen(rows, args.model, when)
+    md = resumen(rows, args.model, when, nota)
     base.with_suffix(".md").write_text(md)
     print(md)
     print(f"detalle: {base.with_suffix('.jsonl')}", file=sys.stderr)

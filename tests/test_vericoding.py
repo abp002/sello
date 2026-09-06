@@ -80,3 +80,29 @@ def test_resumen_cuenta_probadas_aceptadas_y_motivos():
     assert "| aceptadas (nivel 1) | 2/2 (100 %) | 0/1 (0 %) | 2/3 (67 %) |" in md
     assert "- `unproven`: 3" in md and "- `E400`: 1" in md and "- `contract`: 1" in md
     assert "- timeout: 1" in md
+
+
+def test_sin_respuesta_queda_fuera_del_recuento_y_no_se_reutiliza():
+    base = {"source": "apps", "cond": "sello_contrato", "model": "haiku", "helpers": [], "congelados_sin_probar": [],
+            "notas": [], "cost": 0.01, "tokens_in": 10, "tokens_out": 5, "thinking": 0, "ms": 100, "ultimo_motivo": ""}
+    contestada = {**base, "problem": "DA0001", "fn": "solve", "accepted_at": 1, "principal_proven_at": 1, "proven_at": 1,
+                  "attempts": 1, "detail": [{"fase": "proven", "sello_error": None, "tokens_out": 5}]}
+    vacia = {**base, "problem": "DA0002", "fn": "f", "accepted_at": None, "principal_proven_at": None, "proven_at": None,
+             "attempts": 2, "sin_respuesta": True,
+             "detail": [{"fase": "compile", "sello_error": "E100", "tokens_out": 9},
+                        {"fase": "sin_respuesta", "sello_error": None, "tokens_out": 0}]}
+    # corrida anterior a la marca: el texto del límite de sesión pasó por el compilador como si fuera un programa
+    antigua = {**vacia, "problem": "DA0003", "sin_respuesta": False, "attempts": 5,
+               "detail": [{"fase": "compile", "sello_error": "E000", "tokens_out": 0}] * 5}
+    assert not H.sin_respuesta(contestada) and H.sin_respuesta(vacia) and H.sin_respuesta(antigua)
+    otra = {**contestada, "problem": "DA0004", "model": "sonnet"}
+    ids = {"DA0001", "DA0002", "DA0003", "DA0004"}
+    assert H.reutilizables([contestada, vacia, antigua, otra], "haiku", ids) == {"DA0001": contestada}
+    assert H.reutilizables([contestada], "haiku", {"DA0009"}) == {}
+    md = H.resumen([contestada, vacia, antigua], "haiku", "hoy", nota="1 reutilizada.")
+    assert "1 reutilizada." in md
+    assert "| DA0002 | apps | f | sin respuesta (2) |  |" in md
+    assert "| tareas | 1 | 1 |" in md
+    assert "| fuera del recuento (sin respuesta) | 2 | 2 |" in md
+    assert "| **probadas (nivel 2)** | **1/1 (100 %)** | **1/1 (100 %)** |" in md
+    assert "E000" not in md and "E100" not in md

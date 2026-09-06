@@ -119,9 +119,17 @@ como contratos de Sello. Tres piezas:
   el benchmark vuelve el error del verificador. Éxito («el verificador acepta»): la principal y todo
   lo que llama, transitivamente, en nivel 2; los helpers congelados se dan por buenos (su contrato
   es su definición) y se anota cuántos quedan en nivel 1. Segunda columna: nivel 1. Tiene test.
+  Una llamada que vuelve sin respuesta (0 tokens de salida: límite de sesión de la cuenta, `Not
+  logged in`, red) no es un intento del modelo: se repite dos veces con espera y, si sigue sin
+  contestar, la tarea queda `sin respuesta`, fuera del recuento. `--reusar <jsonl>` toma una
+  corrida anterior del mismo modelo, copia las tareas contestadas y repite solo las demás; el
+  resumen dice cuáles (pasó el 2026-09-06: el límite de sesión dejó 18 de 50 tareas de haiku sin
+  respuesta a media corrida).
 
     uv run python bench/vericoding/bajar.py
     uv run python bench/vericoding/traducir.py                       # cobertura + tareas/
     uv run python bench/vericoding/traducir.py DA0001 --ver          # una, con el contrato o los motivos
     uv run python bench/vericoding/harness4.py --model haiku --muestra 50 --semilla 1
     uv run python bench/vericoding/harness4.py --model haiku --only DA0003     # humo
+    uv run python bench/vericoding/harness4.py --model haiku --muestra 50 --semilla 1 \
+        --reusar bench/resultados/vericoding-2026-09-06-1459-haiku-muestra50-semilla1.jsonl   # repetir las sin respuesta
