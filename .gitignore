@@ -8,3 +8,4 @@ dist/
 .claude/settings.local.json
 bench/resultados/*.log
 .sello/
+.claude/worktrees/
