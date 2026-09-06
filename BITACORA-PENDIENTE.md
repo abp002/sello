@@ -305,7 +305,7 @@ tool porque es el prompt. Sin tests, como la CLI.
 
 ## 2026-09-06 (tarde, segunda sesión) · Fase 4: el benchmark de vericoding en Sello
 
-Rama `claude/sello-work-bgacgo`, commit `9076c2e` y siguientes. Sesión desde Claude Code
+Rama `claude/sello-work-bgacgo`, commits `9076c2e` a `⟨COMMIT⟩`. Sesión desde Claude Code
 remoto: hay `claude -p` (haiku y sonnet), `raw.githubusercontent.com` pasa el proxy (la API de
 GitHub y Hugging Face, no), 4 CPUs.
 
@@ -390,9 +390,50 @@ Sobre las 2.334 specs Dafny sin `qa-issue`, en 8 segundos:
 - El benchmark trae specs débiles que su `qa` no marcó: DA0003 solo dice `ensures result >= 0`
   (el `gcd` del preámbulo no se usa). Cuentan como tareas: son las del benchmark.
 
-### Qué se midió: la corrida
+### Qué se midió: la corrida (`bench/resultados/vericoding-2026-09-06-*-muestra50-semilla1.md`)
 
-(Pendiente: haiku y sonnet sobre la muestra de 50 con semilla 1 están corriendo.)
+Muestra de 50 tareas con semilla 1 (apps 21, dafnybench 18, verina 5, humaneval 4,
+verified_cogen 1, bignum 1; 16 con helpers congelados), hasta 5 intentos, 4 workers, `claude -p`.
+Éxito = la principal y todo lo que llama en nivel 2 (los helpers congelados no cuentan).
+
+| | sonnet | haiku |
+|---|---|---|
+| probadas (nivel 2) | **46/50 (92 %)** | ⟨HAIKU-N2⟩ |
+| · a la primera | 38 | ⟨HAIKU-PRIMERA⟩ |
+| · media de intentos hasta probar | 1,35 | ⟨HAIKU-INTENTOS⟩ |
+| principal en nivel 2 | 47/50 | ⟨HAIKU-PRINCIPAL⟩ |
+| aceptadas (nivel 1) | 49/50 | ⟨HAIKU-N1⟩ |
+| por fuente (nivel 2) | apps 19/21, dafnybench 16/18, humaneval 4/4, verina 5/5, verified_cogen 1/1, bignum 1/1 | ⟨HAIKU-FUENTES⟩ |
+| coste | 6,49 USD (0,14 por tarea probada) | ⟨HAIKU-COSTE⟩ |
+| por llamada (mediana) | 25 s, 2.300 tokens de salida (88 % razonamiento) | ⟨HAIKU-LLAMADA⟩ |
+
+- Sonnet: 82 llamadas en total. Rechazos por intento: `unproven` 26, `E201` 5 (las cinco de
+  DD0435), `E200` 3 (el ejemplo que escribió el propio modelo estaba mal en el primer intento:
+  DA0001, DA0099, DB0020; los tres se prueban después), `E401` 1, `E404` 1. Ni un `contract`
+  (nunca tocó el contrato congelado), ni un `E102`, ni un error de sintaxis. 13 de las 46
+  soluciones probadas añaden helpers propios.
+- Las 4 que sonnet no prueba no son fallos del modelo:
+  - **DD0435 (`q`): la spec del benchmark es insatisfacible** (`requires y - x > 2`, `ensures
+    x < z*z < y`: para `q(1, 4)` no hay entero `z`; el fichero trae además `method strange()
+    ensures 1==2`). El probador lo delató en los cinco intentos con `E201` y el contraejemplo
+    `q(1, 4)` («input found by the prover; the examples do not cover it»). El `qa` del benchmark
+    no la marca. Cuenta como tarea, como se decidió: es del benchmark.
+  - DA0023: `undecided` en un `ensures` con `(a - 1) / (m * k)` (división por un producto de
+    variables: aritmética no lineal, nota `div`). Los cinco intentos igual; haiku, lo mismo.
+  - DA0552 (`CountTriples`): `timeout`. El contrato son dos helpers recursivos congelados
+    (`ensures result == <definición>`) y probar la principal exige desplegarlos; sonnet probó
+    lemas auxiliares (`...NonNeg`) que también agotan el tiempo. Haiku la probó al quinto.
+  - DD0730 (`MinLengthSublist`): `undecided: ensures contains(s, result)` sobre `List[List[Int]]`,
+    tras un `E401` (`len` en el cuerpo: solo vale en el contrato) y un `E404`.
+- Helpers congelados que Z3 no prueba solos, iguales en los dos modelos: `CountValidMinutes`
+  (DA0122), `CountValidTriplesHelper` y `CountValidTriplesForZHelper` (DA0552), `gcd` (DD0429).
+- ⟨HAIKU-DETALLE⟩
+- Contra el artículo: el resumen da un 82 % de éxito en Dafny con modelos de serie sobre todo el
+  benchmark. Aquí es el 9 % que cabe en Sello (enteros, booleanos y listas, sin índices ni
+  cuantificadores sobre enteros), o sea el subconjunto fácil, y con un modelo. Lo que dice la
+  comparación es que el cuello de botella de la fase 4 es la cobertura del traductor, no el
+  modelo ni el probador: se cumple el criterio del prerregistro en este subconjunto y lo que
+  falta es meter lo que desbloquea 220 specs más.
 
 ### Qué falló
 
@@ -412,6 +453,20 @@ Sobre las 2.334 specs Dafny sin `qa-issue`, en 8 segundos:
 - Una llamada a haiku con este prompt tarda 45 s y gasta unos 4.600 tokens de razonamiento
   incluso en `Abs`; DA0008 (búsqueda binaria con helpers de recursión mutua) se comió 79.000
   tokens de razonamiento y 0,48 USD en 5 intentos sin salir del nivel 1.
+- **El límite de sesión de la cuenta a media corrida.** Hacia el final de la corrida de haiku,
+  `claude -p` empezó a devolver `You've hit your session limit · resets 6pm (UTC)` como
+  resultado, con 0 tokens. `extract` se lo pasó a `sello check`, que lo rechazó como `E000`
+  (error de sintaxis en la columna 4: el apóstrofo de «You've»), y el harness lo contó como un
+  intento fallido más: 85 intentos vacíos en 18 de las 50 tareas (15 con los cinco intentos y 3
+  con los últimos), todas `✗ (5)` en el resumen (`vericoding-2026-09-06-1459-haiku-...`, que se
+  conserva como registro). Sonnet no lo sufrió (0 llamadas sin respuesta). Arreglo en
+  `harness4.py`: una llamada con 0 tokens de salida se repite dos veces con espera y, si sigue
+  vacía, la tarea queda `sin respuesta` y fuera del recuento; `--reusar <jsonl>` copia las
+  tareas contestadas de la corrida anterior y repite solo las demás (test en
+  `tests/test_vericoding.py`). ⟨HAIKU-REPETICION⟩
+- Las dos corridas fueron a la vez, 4 workers cada una sobre 4 CPUs, y el reloj del probador es
+  de pared: los `timeout` (DA0029, DA0122, DA0552) pueden deberse en parte a la carga.
+  ⟨RECOMPROBACION⟩
 
 ### Decisiones tomadas (una nota por decisión)
 
@@ -453,6 +508,34 @@ siempre el caso en las specs (`/ 2`, `% 10`). Traducir la división euclídea ex
 ilegible el contrato. Con divisor no literal positivo, nota `div` (31 tareas) para poder
 filtrarlas si un resultado depende de ello.
 
+#### Una llamada sin respuesta del modelo no es un intento
+
+Si `claude -p` no contesta (0 tokens de salida: límite de sesión, `Not logged in`, red), la
+tarea no mide al modelo. El harness repite la llamada con espera; si sigue vacía, la tarea queda
+fuera del recuento con la marca `sin respuesta` y se repite después con `--reusar`, que copia
+tal cual las tareas contestadas de la corrida anterior. Los ficheros de la corrida rota se
+conservan y el resumen de la repetición dice qué tareas se copiaron y cuáles se repitieron.
+Contar la llamada vacía como intento fallido (lo que pasó el 2026-09-06) habría dado a haiku
+un 54 % en vez de ⟨HAIKU-PCT⟩.
+
+#### Una spec insatisfacible del benchmark cuenta como tarea
+
+DD0435 no tiene solución (`q(1, 4)`): ningún modelo puede probarla y el benchmark no la marca
+como `qa-issue`. Se queda en el denominador, como se decidió para las specs débiles, y se
+anota: el número comparable con el artículo es sobre las tareas del benchmark tal cual, y lo
+que sí es un resultado de Sello es que el probador delata la spec con un contraejemplo
+concreto en el primer intento.
+
 ### Prerregistro de la siguiente medición
 
-(Pendiente de los números de la corrida.)
+- El cuello de botella es la cobertura: con sonnet al 92 % en el 9 % que cabe, la siguiente
+  feature es el cuantificador acotado sobre enteros (`forall i in a..b: P`) con el índice `s[i]`
+  en los contratos, que según el traductor desbloquean 220 specs más (de 199 a unas 420).
+  Medición: repetir el mismo protocolo (muestra de 50 con semilla 1 sobre las specs nuevas,
+  `sello_contrato`, 5 intentos) con sonnet y haiku. Criterio: sonnet ≥ 80 % en nivel 2 y ≤ 1,5
+  intentos de media sobre las nuevas; si baja del 60 % con `undecided` en las cláusulas con
+  índice, el problema es la codificación de los cuantificadores sobre índices en Z3 (la teoría
+  de secuencias), no el modelo, y se mide antes de seguir. La feature entra solo si el nivel 2
+  sobre las specs nuevas se queda cerca del de las viejas sin subir los intentos.
+- Pendiente de decidir: correr las 199 completas con sonnet (unos 26 USD al coste de la muestra)
+  para tener el número sobre todo el subconjunto, no sobre 50.
