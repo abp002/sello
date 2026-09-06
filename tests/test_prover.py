@@ -269,3 +269,32 @@ def test_la_division_de_z3_redondea_como_python(a, b):
 @pytest.mark.parametrize("v, big", [(10, False), ([1, 2], False), (10 ** 7, True), ([Some(10 ** 7)], True), (list(range(65)), True)])
 def test_un_contraejemplo_enorme_no_se_ejecuta(v, big):
     assert pr.too_big(v) is big
+
+
+INSATISFACIBLE = """
+fn q(x: Int, y: Int) -> Int
+  requires x >= 0 and y >= 0 and y - x > 2
+  ensures x < result * result and result * result < y
+  effects pure
+  example q(0, 4) == 1
+{ find_value(x, y, 1) }
+
+fn find_value(x: Int, y: Int, r: Int) -> Int
+  requires r >= 1 and x >= 0 and y >= 0 and y - x > 2
+  ensures x < result * result and result * result < y
+  effects pure
+  example find_value(0, 4, 1) == 1
+{ if r * r > x and r * r < y then r else find_value(x, y, r + 1) }
+"""
+
+
+def test_una_spec_insatisfacible_en_un_punto_no_prueba_cualquier_cosa():
+    # Vericoding DD0435 (2026-09-06): para `(1, 4)` no hay entero entre 1 y 4 al cuadrado, así que
+    # el contrato de `find_value` como axioma `forall` era inconsistente y Z3 «probaba» todo,
+    # incluida la terminación de una recursión en la que `r` solo crece (`q(1, 4)` no termina).
+    # La hipótesis de inducción solo vale en cada llamada, bajo su camino, y la terminación se
+    # prueba sin ella.
+    v = verdict(INSATISFACIBLE, "find_value")
+    assert v.status == pr.UNKNOWN and v.reason.startswith("termination")
+    d = check_source(INSATISFACIBLE)
+    assert {f["name"]: f["level"] for f in d["functions"]} == {"q": 2, "find_value": 1}

@@ -145,7 +145,7 @@ def run_one(t: Tarea, model: str, max_attempts: int) -> dict:
     prev: tuple[str, str, str] | None = None
     attempts: list[dict] = []
     accepted_at = principal_at = proven_at = None
-    code, ultimo = "", {}
+    code, aceptado, ultimo = "", "", {}
     for i in range(1, max_attempts + 1):
         a = llamar(prompt(t, c, prev), model)
         if a["tokens_out"] == 0:
@@ -171,7 +171,7 @@ def run_one(t: Tarea, model: str, max_attempts: int) -> dict:
                 feedback = ""
             if fase in ("unproven", "proven"):
                 accepted_at = accepted_at or i
-                ultimo = vd
+                aceptado, ultimo = code, vd
                 if vd["principal"] == 2:
                     principal_at = principal_at or i
             if fase == "proven":
@@ -193,7 +193,7 @@ def run_one(t: Tarea, model: str, max_attempts: int) -> dict:
             "cost": sum(x["cost"] for x in attempts),
             "tokens_in": sum(x["tokens_in"] for x in attempts), "tokens_out": sum(x["tokens_out"] for x in attempts),
             "thinking": sum(x["thinking"] for x in attempts), "ms": sum(x["ms"] for x in attempts),
-            "code": code if accepted_at else None, "helpers": t.helpers,
+            "code": aceptado if accepted_at else None, "helpers": t.helpers,  # el último programa aceptado
             "congelados_sin_probar": ultimo.get("congelados_sin_probar", []), "notas": t.notas,
             "ultimo_motivo": (next(iter(ultimo["motivos"].values()), "") if ultimo and ultimo["fase"] == "unproven" else ""),
             "detail": attempts}

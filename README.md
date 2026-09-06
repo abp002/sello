@@ -62,7 +62,9 @@ a producción, entre ellos 11/19 de los silenciosos de haiku. También encontró
 `ejemplos/basicos.sello` violaba su `ensures` con divisor negativo desde el primer día. Por
 la tarde, dos hechos sobre secuencias que Z3 no deriva solo (la cola elemento a elemento y
 `++` por tramos) suben a 49/89 y 27/48; los patrones de instanciación explícitos, medidos,
-no entran. `sello mcp` sirve la misma API por MCP.
+no entran. `sello mcp` sirve la misma API por MCP. Por la noche, el bug de solidez que destapó el
+benchmark (fase 4) deja la hipótesis de inducción como una implicación por llamada, y la misma
+medición sube a 61/82 y 28/48, con dos bugs reales más (`most_frequent` de haiku).
 
 **Fase 4: el benchmark de vericoding** (6 de septiembre de 2026, tarde): las 2.334 specs Dafny
 sin `qa-issue` del [benchmark de vericoding](https://github.com/Beneficial-AI-Foundation/vericoding-benchmark)
@@ -73,14 +75,19 @@ tipos que no existen (`string`, `array`, `real`), es el cuantificador sobre un r
 es la única traba en 179 specs más, y con el índice `s[i]` serían 219. Sobre una muestra de 50,
 en la condición `sello_contrato` (el contrato lo pone el benchmark, el modelo escribe el cuerpo y
 sus ejemplos, y el éxito es el certificado de nivel 2 de todo lo que la principal llama), sonnet
-prueba 46/50 (92 %; 38 a la primera, 0,14 USD por tarea probada) y haiku ⟨HAIKU-README⟩. De las
-cuatro que sonnet no prueba, una es una spec insatisfacible del propio benchmark que el probador
-delata con un contraejemplo (`q(1, 4)` en DD0435) y las otras tres son límites del probador:
-división por un producto de variables, helpers recursivos congelados que hay que desplegar y
-`contains` sobre listas de listas. El artículo da un 82 % en Dafny con modelos de serie sobre
-todo el benchmark; aquí es el 9 % que cabe, así que lo que dice la comparación es que el cuello
-de botella de la fase 4 es la cobertura del traductor, no el modelo. Números en
-`bench/resultados/vericoding-*`.
+prueba 46/50 (92 %; 38 a la primera, 0,14 USD por tarea probada) y haiku 44/50 (88 %; 39 a la
+primera, 0,11 USD). Una de las
+de haiku era falsa: DD0435 es una spec insatisfacible del propio benchmark (`q(1, 4)` no tiene
+solución) que sonnet se estrelló cinco veces contra el contraejemplo del probador y que haiku
+«probó» con una recursión que no termina, porque el contrato de la propia función entraba en Z3
+como axioma `forall` y una spec falsa en un punto lo hace inconsistente en bloque. Arreglado (la
+hipótesis de inducción solo en cada llamada recursiva, bajo su camino, y la terminación probada
+sin ella) y recomprobados los 100 programas: sonnet 46/50 y haiku 43/50. Lo que queda sin probar
+son límites del probador (división por un producto de variables, helpers recursivos congelados
+que hay que desplegar, un `timeout` que oscila) y la spec falsa. El artículo da un 82 % en Dafny
+con modelos de serie sobre todo el benchmark; aquí es el 9 % que cabe, así que lo que dice la
+comparación es que el cuello de botella de la fase 4 es la cobertura del traductor, no el modelo.
+Números en `bench/resultados/vericoding-*`.
 
     uv sync --extra dev
     uv run sello check ejemplos/basicos.sello     # parse, tipos, ejemplos, probador (nivel 2)
@@ -102,13 +109,14 @@ de botella de la fase 4 es la cobertura del traductor, no el modelo. Números en
 3. **Solver**: ~~Z3 sobre los contratos (nivel 2): verificación modular, contraejemplos
    confirmados por el intérprete, medida de terminación. Primera medición: 52 % de las
    funciones probadas, 52 % de los mutantes que llegaban a producción muertos en compilación.
-   Hechos de cons y concat para la teoría de secuencias: 55 %.~~ ~~Servidor MCP (`sello mcp`)
+   Hechos de cons y concat para la teoría de secuencias: 55 %. La hipótesis de inducción como
+   implicación por llamada (bug de solidez destapado por vericoding): 74 % y 58 %.~~ ~~Servidor MCP (`sello mcp`)
    para que los agentes consulten el almacén.~~ Pendiente: otra codificación de las listas
    para lo que Z3 no decide (cuantificadores sobre secuencias), guardas en tiempo de ejecución
    para lo no probado (nivel 3).
 4. **Benchmark**: ~~contra el conjunto público de vericoding: traductor Dafny → Sello, 199 de
    2.334 specs caben tal cual, primera corrida en condición `sello_contrato`: sonnet 46/50 y
-   haiku ⟨HAIKU-RUTA⟩ en nivel 2 sobre una muestra de 50.~~ Pendiente, y
+   haiku 44/50 en nivel 2 sobre una muestra de 50.~~ Pendiente, y
    solo si la medición lo justifica: cuantificadores sobre rangos de enteros e índices `s[i]`
    en los contratos (desbloquearían 219 specs más), y una medida de terminación entre funciones
    para la recursión mutua.

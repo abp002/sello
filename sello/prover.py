@@ -6,6 +6,13 @@ una función no interpretada más el axioma «requires → ensures» (con su lla
 de instanciación), el cuerpo se traduce a un término, una llamada recursiva usa el propio
 contrato como hipótesis de inducción y hace falta una medida que decrezca en cada una.
 
+La hipótesis de inducción no es un axioma cuantificado: se asume solo para cada llamada
+recursiva del cuerpo, con sus argumentos y bajo el camino que lleva a ella, y la terminación
+se prueba sin ella. Con el contrato de la propia función como `forall`, una spec insatisfacible
+en un solo punto (`ensures x < result * result < y` con `requires y - x > 2`: nada sirve para
+`(1, 4)`) hacía inconsistente el conjunto de hipótesis y Z3 «probaba» cualquier cosa, incluida
+la terminación de una recursión que no termina (vericoding DD0435, 2026-09-06).
+
 Tres salidas:
 
   proven          todas las obligaciones son válidas y la recursión termina -> certificado de nivel 2
@@ -257,7 +264,9 @@ class Translator:
         self.n = shared.n if shared else 0
         self.obligations: list[Obligation] = []
         self.self_calls: list[tuple[list, list]] = []  # (camino, args) de cada llamada recursiva del cuerpo
+        self.hypotheses: list[z3.BoolRef] = []  # el contrato propio en cada llamada recursiva, bajo su camino
         self.facts: list[z3.BoolRef] = []  # identidades de la teoría que ayudan a instanciar
+        self.base: list[z3.BoolRef] = []  # lo que monta `_setup` menos las hipótesis: para la terminación
         self.binders: list[Binder] = []
         self.collect = True   # False mientras se traducen axiomas de otras funciones
         self.in_body = False
@@ -324,20 +333,26 @@ class Translator:
         f = self.uf(g)
         return f(*args) if g.params else f
 
-    def axiom(self, g: Fn) -> z3.BoolRef:
-        """`forall params: requires -> ensures[result := g(params)]`, instanciado solo cuando
-        aparece una llamada `g(...)`: es lo que un llamador puede asumir de `sello sig`."""
-        ps = [z3.Const(self.fresh(p.name), self.sort(p.type)) for p in g.params]
-        env = Env({p.name: c for p, c in zip(g.params, ps)}, {p.name: p.type for p in g.params})
-        res = self.apply(g, ps)
-        self.collect = False
+    def contract(self, g: Fn, args: list) -> z3.BoolRef:
+        """`requires -> ensures[result := g(args)]` para esos argumentos: lo que un llamador puede
+        asumir de `sello sig`."""
+        env = Env({p.name: a for p, a in zip(g.params, args)}, {p.name: p.type for p in g.params})
+        res = self.apply(g, args)
+        collect, self.collect = self.collect, False
         try:
             req = [self.expr(r, env, [], BOOL) for r in g.requires]
             ens = [self.expr(c, env.bind("result", res, g.ret), [], BOOL) for c in g.ensures]
         finally:
-            self.collect = True
-        body = z3.Implies(self.conj(req), self.conj(ens))
-        return z3.ForAll(ps, body, patterns=[res]) if ps else body
+            self.collect = collect
+        return z3.Implies(self.conj(req), self.conj(ens))
+
+    def axiom(self, g: Fn) -> z3.BoolRef:
+        """`forall params: requires -> ensures[result := g(params)]`, instanciado solo cuando
+        aparece una llamada `g(...)`. Nunca para la función que se prueba: su contrato solo vale
+        como hipótesis de inducción, en cada llamada recursiva (`call`)."""
+        ps = [z3.Const(self.fresh(p.name), self.sort(p.type)) for p in g.params]
+        body = self.contract(g, ps)
+        return z3.ForAll(ps, body, patterns=[self.apply(g, ps)]) if ps else body
 
     # ---- obligaciones ----
     def obligate(self, path: list, prop: z3.BoolRef, code: str, what: str) -> None:
@@ -435,6 +450,7 @@ class Translator:
             prev.append(prop)
         if g is self.fn and self.in_body and self.collect and not self.binders:
             self.self_calls.append((list(path), args))
+            self.hypotheses.append(z3.Implies(self.conj(path), self.contract(g, args)))
         return self.apply(g, args)
 
     def builtin(self, e: Call, env: Env, path: list) -> z3.ExprRef:
@@ -688,16 +704,17 @@ def _setup(tr: Translator, fn: Fn, env: Env) -> z3.Solver:
         prev.append(prop)
     # Solo los axiomas de las funciones que aparecen (y de las que aparecen en ellos): un
     # cuantificador de más cambia la estrategia de Z3 y `div` pasaba de 10 ms a unknown.
-    seen: set[str] = set()
+    seen: set[str] = {fn.name}  # el propio contrato no es un axioma: solo hipótesis en cada llamada
     while set(tr.ufs) - seen:
         name = sorted(set(tr.ufs) - seen)[0]
         seen.add(name)
         try:
-            s.add(tr.axiom(tr.fns[name]))
+            tr.base.append(tr.axiom(tr.fns[name]))
         except Unsupported:
             continue  # sin axioma la función queda libre: más débil, nunca falso
-    s.add(*req)
-    s.add(*tr.facts)
+    tr.base += req + tr.facts
+    s.add(*tr.base)
+    s.add(*tr.hypotheses)
     return s
 
 
@@ -744,7 +761,9 @@ def prove(program: Program, fn: Fn, interp: Interpreter | None = None,
         if _mutual(program, fn):
             return done(UNKNOWN, "mutual recursion: termination not checked")
         if tr.self_calls:
-            t = tr.terminates(s, params, budget)
+            st = z3.Solver(ctx=ctx)  # sin las hipótesis: la terminación se prueba por su cuenta
+            st.add(*tr.base)
+            t = tr.terminates(st, params, budget)
             if t is None:
                 return done(UNKNOWN, "timeout")
             if not t:
