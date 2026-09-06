@@ -1,4 +1,4 @@
-"""El pipeline: texto -> AST -> comprobación -> ejemplos ejecutados -> resumen."""
+"""El pipeline: texto -> AST -> comprobación -> ejemplos ejecutados -> probador -> resumen."""
 
 from __future__ import annotations
 
@@ -8,6 +8,7 @@ from .interp import Interpreter, fmt
 from .nodes import Binary, Program
 from .parser import parse
 from .pretty import unparse
+from .prover import PROVEN, Verdict, first_error, prove_program
 
 
 def compile_source(src: str) -> tuple[Program, Interpreter]:
@@ -38,15 +39,29 @@ def run_examples(program: Program, interp: Interpreter) -> int:
     return count
 
 
-def check_source(src: str) -> dict:
+def prove(program: Program) -> dict[str, Verdict]:
+    """Nivel 2 sobre todo el programa. Un contraejemplo real (ya ejecutado) se lanza."""
+    verdicts = prove_program(program)
+    e = first_error(verdicts)
+    if e is not None:
+        raise e
+    return verdicts
+
+
+def check_source(src: str, prover: bool = True) -> dict:
     """Todo el pipeline. Devuelve el resumen que imprime `sello check`."""
     program, interp = compile_source(src)
     n = run_examples(program, interp)
-    return {
+    verdicts = prove(program) if prover else {}
+    out: dict = {
         "ok": True,
         "functions": [
-            {"name": fn.name, "signature": signature(fn), "examples": len(fn.examples)}
+            {"name": fn.name, "signature": signature(fn), "examples": len(fn.examples),
+             **(verdicts[fn.name].to_dict() if fn.name in verdicts else {})}
             for fn in program.fns
         ],
         "examples": n,
     }
+    if prover:
+        out["proven"] = sum(1 for v in verdicts.values() if v.status == PROVEN)
+    return out

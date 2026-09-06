@@ -72,8 +72,13 @@ making a function. `x / 0` is a runtime error (`E500`); rule it out with `requir
   below cannot say it, write a `Bool` helper `fn` and call it: `ensures is_sorted_desc(result)`.
   It is checked on every return. A body that returns a value violating `ensures` is
   error `E201`. `result` names the return value.
-- In v0 both are checked by execution (verification level 1). Later levels: SMT solver
-  (level 2), runtime guard (level 3).
+- Both are checked by execution on every call (verification level 1). The compiler also
+  tries to **prove** every `ensures` from `requires` and from the contracts of the functions
+  the body calls, for all inputs (level 2, an SMT solver). When it finds an input that breaks
+  a contract it reports the usual `E201`, `E300` or `E500` for that input, with
+  `"found_by": "prover"` and the failing call in `"input"`. When it cannot decide, nothing is
+  rejected: the function simply stays at level 1. A recursive function is proven only if some
+  argument decreases at every recursive call.
 
 Inside `requires` and `ensures` **only** (using them in a body or an example is `E401`):
 
@@ -109,11 +114,12 @@ fn drop(xs: List[Int], k: Int) -> List[Int]
 ## 5. The store
 
 The compiler does not compile files. `sello add FILE` parses, checks and hashes each
-function, runs its examples, and stores it with its contract and its **certificate**:
-which verification level passed, how many examples, when. Names are aliases: renaming a
-function or a parameter does not change its hash. A function whose hash already has a
-certificate is never re-verified. A caller's hash includes its callees' hashes, so
-changing a dependency re-verifies only what uses it.
+function, runs its examples, tries to prove its contract, and stores it with its contract
+and its **certificate**: which verification level passed (2: proven for every input, given
+what the functions it calls promise; 1: the examples passed), how many examples, when.
+Names are aliases: renaming a function or a parameter does not change its hash. A function
+whose hash already has a certificate is never re-verified. A caller's hash includes its
+callees' hashes, so changing a dependency re-verifies only what uses it.
 
 Reading is an API, not a file. Every command prints JSON:
 
@@ -149,5 +155,7 @@ All errors are JSON: `{"code", "where", "what", "fix", "example"}`. Codes are st
 
 ## 7. Tooling
 
-`sello check FILE` parses, typechecks and runs every example. Output is JSON:
-`{"ok": true, ...}` or `{"ok": false, "error": {...}}`.
+`sello check FILE` parses, typechecks, runs every example and proves what it can. Output
+is JSON: `{"ok": true, "functions": [{"name", "signature", "examples", "level"}, ...],
+"proven": N}` or `{"ok": false, "error": {...}}`. A function at level 1 also carries
+`"unproven"`: why the prover could not decide.

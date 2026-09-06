@@ -28,7 +28,7 @@ estructurado que dice qué decisión de diseño está fallando.
 | Carpeta | Qué es |
 |---|---|
 | `spec/` | La especificación del lenguaje. En inglés, porque es el prompt que lee el modelo |
-| `sello/` | El compilador y el almacén, en Python |
+| `sello/` | El compilador, el probador (Z3) y el almacén, en Python |
 | `tests/` | Tests de la lógica: parser, hash, verificador |
 | `bench/` | El experimento: harness, problemas y resultados de cada medición |
 
@@ -49,8 +49,20 @@ sin modelo (`bench/mutantes.py`) mide cuántos bugs de cuerpo caza el contrato. 
 pasa. Tres frases en la spec sobre eso llevan a sonnet de 6/12 a 2/12 funciones con
 `ensures` de cotas y de 30 % a 0 % de mutantes silenciosos; haiku no cambia un contrato.
 
+**Nivel 2: el probador** (6 de septiembre de 2026): Z3 intenta demostrar cada `ensures` a
+partir de `requires` y de los contratos de las funciones llamadas (`sello/prover.py`:
+verificación modular al estilo Dafny, hipótesis de inducción y medida de terminación). Un
+contraejemplo solo se reporta si el intérprete lo reproduce, así que el probador nunca
+rechaza por su cuenta: adelanta a compilación errores que existían para alguna entrada.
+Primera medición sin modelo (`bench/probador.py`) sobre lo aceptado el 5 de septiembre:
+prueba 46/89 funciones (la principal en 18/36 soluciones), encuentra un bug real en una
+solución que el juez débil y 345 llamadas del oráculo dieron por buena (`int_sqrt` de haiku
+con contrato de sonnet: `search(0, 1, 1)`), y mata en compilación 25/48 mutantes que llegaban
+a producción, entre ellos 11/19 de los silenciosos de haiku. También encontró que `div` de
+`ejemplos/basicos.sello` violaba su `ensures` con divisor negativo desde el primer día.
+
     uv sync --extra dev
-    uv run sello check ejemplos/basicos.sello     # parse, tipos, ejemplos
+    uv run sello check ejemplos/basicos.sello     # parse, tipos, ejemplos, probador (nivel 2)
     uv run sello add ejemplos/basicos.sello       # al almacén, con certificado
     uv run sello sig max_of                       # firma + contrato + certificado
     uv run sello users contains_in                # quién la llama
@@ -65,8 +77,12 @@ pasa. Tres frases en la spec sobre eso llevan a sonnet de 6/12 a 2/12 funciones 
    de consulta. Segunda medición: leer por API no baja los aciertos.~~
    ~~**Juez imperfecto**: métrica de silenciosos; vocabulario de listas, `requires` como
    dominio y `E102`. Sello pasa de 7/5 a 1/0 e iguala a Python con asserts.~~
-3. **Solver**: Z3 sobre los contratos decidibles (nivel 2), guardas en tiempo de ejecución
-   para el resto (nivel 3). Servidor MCP para que los agentes consulten el almacén.
+3. **Solver**: ~~Z3 sobre los contratos (nivel 2): verificación modular, contraejemplos
+   confirmados por el intérprete, medida de terminación. Primera medición: 52 % de las
+   funciones probadas, 52 % de los mutantes que llegaban a producción muertos en compilación.~~
+   Pendiente: subir la tasa de pruebas sobre listas (cuantificadores sobre secuencias, donde
+   Z3 no decide), guardas en tiempo de ejecución para lo no probado (nivel 3), servidor MCP
+   para que los agentes consulten el almacén.
 4. **Benchmark**: contra el conjunto público de vericoding.
 5. **El almacén como dataset**: afinar un modelo abierto con código Sello generado y
    filtrado por el compilador. Solo con Z3 hecho y la sintaxis congelada. Objetivo: que el

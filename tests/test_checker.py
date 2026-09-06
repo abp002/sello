@@ -62,7 +62,7 @@ def test_vocabulario_tipa_sobre_el_elemento_de_la_lista():
     fails_with(CABECERA.replace("requires 1 == 1", "requires len(xs, xs) == 0") + "{ 0 }", "E403")
     fails_with(CABECERA.replace("requires 1 == 1", "requires forall x in xs: x") + "{ 0 }", "E400")
     ok = CABECERA.replace("ensures 1 == 1", "ensures forall x in xs: result >= x or contains(xs, result)")
-    assert check_source(ok + "{ 0 }")["ok"]
+    assert check_source(ok + "{ 0 }", prover=False)["ok"]  # tipa; el cuerpo es falso para [1] y el probador lo ve
 
 
 def test_sorted_solo_sobre_listas_de_int():

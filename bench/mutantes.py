@@ -47,8 +47,10 @@ LLEGAN = (SILENCIOSO, CAZADO, RUIDOSO)
 # un AST válido, así que un E000 sería un fallo del proceso, no del programa.
 ESTATICOS = {"E100", "E101", "E102", "E400", "E401", "E402", "E403", "E404"}
 
-# De qué muere un mutante que sí cargó y el juez débil rechazó.
-EJEMPLOS, CONTRATO, FRONTERA = "ejemplos", "contrato", "frontera"
+# De qué muere un mutante que sí cargó y el juez débil rechazó. El probador (nivel 2, desde
+# el 2026-09-06) mata en compilación con el mismo código de error que habría salido en
+# producción para esa entrada; la señal lleva `/prover` para contarlo aparte.
+EJEMPLOS, CONTRATO, FRONTERA, PROBADOR = "ejemplos", "contrato", "frontera", "probador"
 OPS = ("frontera", "aritmetica", "literal", "logica", "ramas", "argumentos", "variable")
 
 
@@ -67,6 +69,8 @@ def clasificar(juez_ok: bool, señal: str | None, dominio: list[str]) -> str:
 
 
 def causa_muerte(señal: str | None) -> str:
+    if señal and señal.endswith("/prover"):
+        return PROBADOR
     if señal in ("E200", "wrong"):
         return EJEMPLOS
     if señal in ("E201", "assert"):
@@ -268,7 +272,10 @@ def mutar(cond: str, src: str, congelados: tuple[str, ...] = ()) -> tuple[str, l
 def _señal(cond: str, r: list[dict] | dict) -> tuple[bool, str | None]:
     """Lo que dijo el juez débil: (aceptado, señal del primer fallo)."""
     if isinstance(r, dict):
-        return False, (r["error"].get("code", "E000") if es_sello(cond) else "load")
+        if not es_sello(cond):
+            return False, "load"
+        err = r["error"]
+        return False, err.get("code", "E000") + ("/prover" if err.get("found_by") == "prover" else "")
     for c in r:
         if c["result"] != juez.OK:
             d = c.get("detail") or {}
@@ -304,7 +311,7 @@ def evaluar(cond: str, code: str, p: dict) -> dict:
 
 def contar(muts: list[dict]) -> dict:
     c = {k: 0 for k in ("generados", *DESTINOS, "llegan", f"muerto_{EJEMPLOS}", f"muerto_{CONTRATO}",
-                        f"muerto_{FRONTERA}", "llamadas_wrong", "llamadas_caught")}
+                        f"muerto_{FRONTERA}", f"muerto_{PROBADOR}", "llamadas_wrong", "llamadas_caught")}
     c["silencioso_por_op"] = {op: 0 for op in OPS}
     c["llegan_por_op"] = {op: 0 for op in OPS}
     for m in muts:
@@ -367,6 +374,7 @@ def resumen(rows: list[dict], when: str) -> str:
     stat("· por ejemplos (E200 / caso visible)", lambda c: str(suma(c, f"muerto_{EJEMPLOS}")))
     stat("· por el contrato (E201 / assert)", lambda c: str(suma(c, f"muerto_{CONTRATO}")))
     stat("· en la frontera (E300 / E500 / excepción / timeout)", lambda c: str(suma(c, f"muerto_{FRONTERA}")))
+    stat("· por el probador (nivel 2, en compilación)", lambda c: str(sum(r["recuento"].get(f"muerto_{PROBADOR}", 0) for r in rs(c))))
     stat("equivalentes en el dominio", lambda c: str(suma(c, EQUIVALENTE)))
     stat("**llegan a producción**", lambda c: f"**{suma(c, 'llegan')}**")
     stat("**silenciosos / llegan**", lambda c: f"**{_pct(suma(c, SILENCIOSO), suma(c, 'llegan'))}**")
