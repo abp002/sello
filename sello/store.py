@@ -20,6 +20,7 @@ from .interp import Interpreter
 from .nodes import Call, Expr, Fn, Program
 from .parser import parse
 from .pretty import unparse, unparse_fn
+from .prover import PROVEN, Verdict, prove_program
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS functions (
@@ -152,6 +153,7 @@ class Store:
         interp = Interpreter(program)
         out: list[dict] = []
         deps_of = {f.name: {n: hashes[n] for n in callees(f)} for f in program.fns}
+        verdicts: dict[str, Verdict] | None = None  # el probador, solo si hace falta verificar algo
         for fn in program.fns:
             h = hashes[fn.name]
             self.db.execute(
@@ -164,19 +166,31 @@ class Store:
                 out.append({"name": fn.name, "hash": short(h), "cached": True, "certificate": cert})
                 self._alias(fn.name, h)
                 continue
+            if verdicts is None:
+                verdicts = prove_program(program)
             try:
-                n = run_examples(Program([fn]), interp)
-                self.db.execute("INSERT OR REPLACE INTO certificates VALUES (?,?,?,?,?,?)",
-                                (h, 1, 1, n, _now(), None))
+                self._certify(h, fn, interp, verdicts[fn.name])
                 self._alias(fn.name, h)
                 out.append({"name": fn.name, "hash": short(h), "cached": False, "certificate": self.certificate(h)})
-            except SelloError as e:
-                self.db.execute("INSERT OR REPLACE INTO certificates VALUES (?,?,?,?,?,?)",
-                                (h, 1, 0, 0, _now(), json.dumps(e.to_dict())))
+            except SelloError:
                 self.db.commit()
                 raise
         self.db.commit()
         return out
+
+    def _certify(self, h: str, fn: Fn, interp: Interpreter, verdict: Verdict) -> None:
+        """Ejemplos (nivel 1) y, si el probador la probó, nivel 2. Un fallo deja certificado
+        fallido con el error y se relanza."""
+        try:
+            n = run_examples(Program([fn]), interp)
+            if verdict.error is not None:
+                raise verdict.error
+        except SelloError as e:
+            self.db.execute("INSERT OR REPLACE INTO certificates VALUES (?,?,?,?,?,?)",
+                            (h, 1, 0, 0, _now(), json.dumps(e.to_dict())))
+            raise
+        level = 2 if verdict.status == PROVEN else 1
+        self.db.execute("INSERT OR REPLACE INTO certificates VALUES (?,?,?,?,?,?)", (h, level, 1, n, _now(), None))
 
     def _alias(self, name: str, h: str) -> None:
         self.db.execute("INSERT OR REPLACE INTO names VALUES (?,?,?)", (name, h, _now()))
@@ -188,10 +202,8 @@ class Store:
         Checker(program).check()
         target = next(f for f in program.fns if f.name == f"f_{short(h)}")
         try:
-            n = run_examples(Program([target]), Interpreter(program))
-            self.db.execute("INSERT OR REPLACE INTO certificates VALUES (?,?,?,?,?,?)", (h, 1, 1, n, _now(), None))
-        except SelloError as e:
-            self.db.execute("INSERT OR REPLACE INTO certificates VALUES (?,?,?,?,?,?)", (h, 1, 0, 0, _now(), json.dumps(e.to_dict())))
+            self._certify(h, target, Interpreter(program), prove_program(program)[target.name])
+        except SelloError:
             self.db.commit()
             raise
         self.db.commit()

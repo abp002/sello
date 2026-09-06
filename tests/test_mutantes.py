@@ -30,7 +30,7 @@ fn factorial(n: Int) -> Int
 fn first_over(xs: List[Int], d: Int) -> Int
   requires d >= 0
   ensures result >= d
-  ensures forall x in xs: x <= 100
+  ensures forall x in xs: x <= d or result > d
   effects pure
   example first_over([], 3) == 3
 { match xs { [] => d  [h, ..t] => if h > d then h else first_over(t, d) } }
@@ -77,8 +77,9 @@ def test_sello_genera_los_bugs_tipicos():
 
 
 def test_sello_solo_muta_el_cuerpo_nunca_el_forall_del_contrato():
-    _, muts = mu.mutar("sello", SELLO)
-    assert not any("100" in m["desc"] or "<= 100" in m["desc"] for m in muts)
+    canon, muts = mu.mutar("sello", SELLO)
+    assert muts and all(contrato(m["code"]) == contrato(canon) for m in muts)
+    assert not any("x <= d" in m["desc"] for m in muts)
 
 
 # ---------- Python ----------
@@ -175,3 +176,11 @@ def test_las_funciones_congeladas_se_reimprimen_pero_no_se_mutan():
     _, todos = mu.mutar_sello(SELLO)
     assert len(todos) > len(muts)
     assert mu.mutar("sello_contrato", SELLO, ("factorial",))[1] == muts
+
+
+def test_la_muerte_por_el_probador_se_cuenta_aparte():
+    ok, señal = mu._señal("sello", {"error": {"code": "E201", "found_by": "prover"}})
+    assert not ok and señal == "E201/prover"
+    assert mu.causa_muerte("E201/prover") == mu.PROBADOR and mu.causa_muerte("E201") == mu.CONTRATO
+    assert mu.clasificar(False, "E201/prover", []) == mu.MUERTO
+    assert mu._señal("sello", {"error": {"code": "E201"}}) == (False, "E201")

@@ -11,10 +11,12 @@ Aquí vive la métrica. Antes que el compilador.
 | `harness3.py` | `ambiguos/` | **¿Cuánto error silencioso llega a producción tras pasar un juez débil?** La métrica principal desde el 2026-09-02. |
 | `mutantes.py` | soluciones de `resultados/juez-*.jsonl` | De los bugs de cuerpo que el juez débil deja pasar, ¿cuántos caza el contrato? Sin modelo. |
 | `cotas.py` | soluciones de `resultados/juez-*.jsonl` | ¿Cuántas funciones principales tienen un `ensures` que solo acota el resultado? Sin modelo. |
+| `probador.py` | soluciones de `juez-*.jsonl` y mutantes de `mutantes-*.jsonl` | ¿Cuántas funciones prueba el nivel 2 (Z3) y cuántos mutantes que llegaban a producción mata en compilación? Sin modelo. |
 
 ## El juez imperfecto (`harness3.py`)
 
-El bucle solo ve el compilador y dos ejemplos visibles del enunciado. Lo aceptado pasa al
+El bucle solo ve el compilador (desde el 2026-09-06, con el probador de nivel 2 dentro) y
+dos ejemplos visibles del enunciado. Lo aceptado pasa al
 oráculo: referencia en Python y casos generados con semilla fija (`generar_ambiguos.py`,
 se ejecuta una vez y se commitea). Cada llamada del oráculo es *correcto*, *silencioso*
 (valor distinto sin señal), *rechazado* (E300/E500/excepción) o *cazado* (E201/assert), en
@@ -56,7 +58,7 @@ Sin modelo. Toma las soluciones aceptadas de corridas del juez, mete un bug pequ
 cuerpo de cada una (frontera `<`↔`<=`, aritmética, literal ±1, lógica, ramas, argumentos,
 variable por otra del ámbito; nunca en el contrato ni en un `assert`) y pasa cada mutante
 por el mismo juez débil y el mismo oráculo. Seis destinos: no compila, muerto por el juez
-débil (y de qué: ejemplos, contrato, frontera), equivalente, silencioso, cazado, ruidoso.
+débil (y de qué: ejemplos, contrato, frontera, probador), equivalente, silencioso, cazado, ruidoso.
 Solo clasifica el dominio. Prerregistrado en el vault: 'Los mutantes del cuerpo miden lo
 que el ensures caza'. La regla de destinos está en `mutantes.py` y tiene test.
 
@@ -78,3 +80,20 @@ cambió el `ensures` tras un `E201`. Prerregistrado en el vault: 'Un ensures de 
 certifica nada'.
 
     uv run python bench/cotas.py bench/resultados/juez-2026-09-05-0015-haiku.jsonl
+
+## El probador (`probador.py`)
+
+Sin modelo. Pasa por `sello check` (compilador, ejemplos y probador de nivel 2, cada uno en
+su proceso) las soluciones aceptadas de corridas del juez y los mutantes de corridas de
+mutantes, y responde dos preguntas: cuántas funciones quedan en nivel 2 y por qué no las
+demás (Z3 no decide, sin tiempo, sin medida de terminación, recursión mutua), y cuántos de
+los mutantes que llegaron a producción (y de los equivalentes en el dominio) mata el
+probador en compilación, con qué código. Una solución aceptada que el probador rechaza es
+un bug real que el juez débil y el oráculo dejaron pasar: se lista aparte.
+
+    uv run python bench/probador.py \
+        --soluciones bench/resultados/juez-2026-09-05-0015-haiku.jsonl \
+                     bench/resultados/juez-2026-09-05-0015-sonnet.jsonl \
+                     bench/resultados/juez-2026-09-05-1920-haiku-contrato.jsonl \
+        --mutantes bench/resultados/mutantes-2026-09-05-1931.jsonl
+    uv run python bench/probador.py --soluciones bench/resultados/juez-2026-09-05-0015-sonnet.jsonl --only nth   # humo

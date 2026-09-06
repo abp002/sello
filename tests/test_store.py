@@ -107,13 +107,19 @@ fn f(xs: List[Int]) -> Int
 
 def test_el_texto_guardado_es_el_mismo_programa_que_el_hash(store):
     from sello.hash import hash_program
+    from sello.interp import Interpreter
     from sello.parser import parse
-    [added] = store.add(FORALL_OPERANDO)
-    guardado = parse(store.view("f")["source"])
-    assert short(hash_program(guardado)["f"]) == added["hash"]
+    # Desde el 2026-09-06 el probador encuentra f([]) al añadir; la función se guarda sin alias
     with pytest.raises(SelloError) as ei:
-        store.eval("f([])")
+        store.add(FORALL_OPERANDO)
+    assert ei.value.code == "E201" and ei.value.extra["input"] == "f([])"
+    h = hash_program(parse(FORALL_OPERANDO))["f"]
+    guardado = parse(store.function(h)["source"])
+    assert hash_program(guardado)["f"] == h
+    with pytest.raises(SelloError) as ei:  # el texto guardado conserva los paréntesis: f([]) sigue violando el ensures
+        Interpreter(guardado).call("f", [[]])
     assert ei.value.code == "E201"
+    assert store.names() == []
 
 
 def test_add_se_niega_si_el_texto_canonico_no_reproduce_la_funcion(store, monkeypatch):
@@ -125,3 +131,58 @@ def test_add_se_niega_si_el_texto_canonico_no_reproduce_la_funcion(store, monkey
         store.add(LIB)
     assert ei.value.code == "E501"
     assert store.names() == []
+
+
+# ---- nivel 2 (2026-09-06) ----
+
+FACT = """
+fn factorial(n: Int) -> Int
+  requires n >= 0
+  ensures result >= 1
+  effects pure
+  example factorial(0) == 1
+{ if n == 0 then 1 else n * factorial(n - 1) }
+"""
+
+CLAMP_MAL = """
+fn clamp(x: Int, lo: Int, hi: Int) -> Int
+  requires lo <= hi
+  ensures x >= lo or result == lo
+  effects pure
+  example clamp(5, 1, 10) == 5
+{ if x < lo then hi else x }
+"""
+
+
+def test_lo_que_el_probador_prueba_lleva_certificado_de_nivel_2(store):
+    [f] = store.add(FACT)
+    assert f["certificate"]["level"] == 2 and f["certificate"]["ok"]
+    assert store.sig("factorial")["certificate"]["level"] == 2
+    assert store.verify("factorial")["certificate"]["level"] == 2
+
+
+def test_lo_que_no_prueba_se_queda_en_nivel_1(store):
+    src = FACT.replace("ensures result >= 1", "ensures result >= 1 and result >= n")  # n*r >= n con r >= 1: no lineal
+    [f] = store.add(src)
+    assert f["certificate"]["ok"] and f["certificate"]["level"] in (1, 2)
+    roto = """
+fn f(n: Int) -> Int
+  requires n >= 0
+  ensures result == 42
+  effects pure
+  example f(0) == 42
+{ if n == 0 then 42 else f(n) }
+"""
+    [g] = store.add(roto)  # sin medida de terminación: nivel 1, pero certificada por ejemplos
+    assert g["certificate"] == {**g["certificate"], "level": 1, "ok": True}
+
+
+def test_un_contraejemplo_del_probador_deja_certificado_fallido_y_no_crea_alias(store):
+    with pytest.raises(SelloError) as ei:
+        store.add(CLAMP_MAL)
+    assert ei.value.code == "E201" and ei.value.extra["found_by"] == "prover"
+    assert store.names() == []
+    from sello.hash import hash_program
+    from sello.parser import parse
+    cert = store.certificate(hash_program(parse(CLAMP_MAL))["clamp"])
+    assert cert["ok"] is False and cert["error"]["found_by"] == "prover"

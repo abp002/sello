@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 from .checker import Checker
-from .compile import check_source, compile_source, run_examples
+from .compile import check_source, compile_source, prove, run_examples
 from .errors import SelloError
 from .interp import fmt
 from .parser import parse_expr
@@ -76,7 +76,7 @@ def _out(d: dict, code: int = 0) -> int:
 def cmd_check(args: argparse.Namespace) -> int:
     src = Path(args.file).read_text()
     try:
-        return _out(check_source(src))
+        return _out(check_source(src, prover=not args.no_prover))
     except SelloError as e:
         return _out({"ok": False, "error": e.to_dict()}, 1)
 
@@ -85,6 +85,8 @@ def _load(args: argparse.Namespace):
     src = Path(args.file).read_text()
     program, interp = compile_source(src)
     run_examples(program, interp)
+    if not args.no_prover:
+        prove(program)
     ck = Checker(program)
     ck.fns = {f.name: f for f in program.fns}
     return program, interp, ck
@@ -125,9 +127,11 @@ def cmd_test(args: argparse.Namespace) -> int:
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="sello", description="Sello: un lenguaje cuyo usuario es la IA")
     sub = p.add_subparsers(dest="cmd", required=True)
-    c = sub.add_parser("check", help="parse, typecheck and run examples"); c.add_argument("file"); c.set_defaults(f=cmd_check)
+    c = sub.add_parser("check", help="parse, typecheck, run examples and prove contracts"); c.add_argument("file"); c.set_defaults(f=cmd_check)
     r = sub.add_parser("run", help="evaluate an expression"); r.add_argument("file"); r.add_argument("expr"); r.set_defaults(f=cmd_run)
     t = sub.add_parser("test", help="run hidden cases"); t.add_argument("file"); t.add_argument("cases"); t.set_defaults(f=cmd_test)
+    for sp in (c, r, t):
+        sp.add_argument("--no-prover", action="store_true", help="skip verification level 2 (Z3)")
     for name, fn, extra, help_ in [
         ("add", cmd_add, ["file"], "check a file and add its functions to the store"),
         ("sig", cmd_sig, ["name"], "signature + contract + certificate, no body"),

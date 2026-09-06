@@ -49,8 +49,9 @@ def test_postcondicion_violada_es_E201():
 
 def test_todo_correcto_devuelve_resumen_con_firmas():
     r = check_source(FACT)
-    assert r == {"ok": True, "examples": 2,
-                 "functions": [{"name": "factorial", "signature": "factorial(n: Int) -> Int", "examples": 2}]}
+    assert r == {"ok": True, "examples": 2, "proven": 1,
+                 "functions": [{"name": "factorial", "signature": "factorial(n: Int) -> Int", "examples": 2, "level": 2}]}
+    assert "level" not in check_source(FACT, prover=False)["functions"][0]
 
 
 CLAMP_DOBLE = """
@@ -92,10 +93,13 @@ fn primero(xs: List[Int]) -> Option[Int]
 
 
 def test_forall_en_ensures_caza_el_empate_con_E201():
-    """El caso `most_frequent`: el juez débil acepta, el contrato caza el empate."""
-    assert check_source(PRIMERO)["ok"]
+    """El caso `most_frequent`: el juez débil acepta, el contrato caza el empate. Desde el
+    2026-09-06 el probador lo caza en compilación con una entrada que los ejemplos no cubren."""
+    assert check_source(PRIMERO, prover=False)["ok"]
     e = fails_with(PRIMERO.replace("example primero([2, 2, 3]) == Some(2)", "example primero([2, 3]) == Some(2)"), "E201")
     assert e.extra["got"] == "Some(2)" and "forall" in e.detail
+    e = fails_with(PRIMERO, "E201")
+    assert e.extra["found_by"] == "prover" and e.extra["input"].startswith("primero(")
 
 
 def test_distinct_en_requires_rechaza_repetidos_con_E300():

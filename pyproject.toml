@@ -5,7 +5,9 @@ description = "Un lenguaje de programación cuyo usuario es la IA: almacén de f
 readme = "README.md"
 requires-python = ">=3.12"
 license = { text = "MIT" }
-dependencies = []
+dependencies = [
+    "z3-solver>=5.1.0.0",
+]
 
 [project.optional-dependencies]
 dev = ["pytest>=8", "hypothesis>=6"]
