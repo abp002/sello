@@ -1,0 +1,13 @@
+{
+ "id": "DA0523",
+ "source": "apps",
+ "source_id": "apps_test_4295",
+ "fn": "solve",
+ "sello": "solve(n: Int, k: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn solve(n: Int, k: Int) -> Int\n  requires (n >= 0)\n  requires (k >= 1)\n  ensures (result == (if ((n % k) <= (k - (n % k))) then (n % k) else (k - (n % k))))\n  ensures (result >= 0)\n  ensures (result < k)\n  effects pure\n  example (solve(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, k: int) {\n    n >= 0 && k >= 1\n}\n\nfunction MinValue(n: int, k: int): int\n    requires ValidInput(n, k)\n{\n    var remainder := n % k;\n    var complement := k - remainder;\n    if remainder <= complement then remainder else complement\n}\n\npredicate IsCorrectResult(n: int, k: int, result: int) \n    requires ValidInput(n, k)\n{\n    result == MinValue(n, k) &&\n    result >= 0 &&\n    result < k\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, k: int) returns (result: int)\n    requires ValidInput(n, k)\n    ensures IsCorrectResult(n, k, result)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

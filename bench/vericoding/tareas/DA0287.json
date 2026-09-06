@@ -1,0 +1,13 @@
+{
+ "id": "DA0287",
+ "source": "apps",
+ "source_id": "apps_test_1381",
+ "fn": "solve",
+ "sello": "solve(k: Int, n: Int, s: Int, p: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn solve(k: Int, n: Int, s: Int, p: Int) -> Int\n  requires (k >= 1)\n  requires (n >= 1)\n  requires (s >= 1)\n  requires (p >= 1)\n  requires (k <= 10000)\n  requires (n <= 10000)\n  requires (s <= 10000)\n  requires (p <= 10000)\n  ensures (result >= 1)\n  ensures (result == ((((k * (((n + s) - 1) / s)) + p) - 1) / p))\n  ensures ((result * p) >= (k * (((n + s) - 1) / s)))\n  ensures (((result - 1) * p) < (k * (((n + s) - 1) / s)))\n  effects pure\n  example (solve(0, 0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(k: int, n: int, s: int, p: int)\n{\n  k >= 1 && n >= 1 && s >= 1 && p >= 1 &&\n  k <= 10000 && n <= 10000 && s <= 10000 && p <= 10000\n}\n\nfunction SheetsPerPerson(n: int, s: int): int\n  requires s >= 1\n{\n  (n + s - 1) / s\n}\n\nfunction TotalSheetsNeeded(k: int, n: int, s: int): int\n  requires s >= 1\n{\n  k * SheetsPerPerson(n, s)\n}\n\nfunction MinPacksNeeded(k: int, n: int, s: int, p: int): int\n  requires s >= 1 && p >= 1\n{\n  (TotalSheetsNeeded(k, n, s) + p - 1) / p\n}\n\npredicate CorrectResult(result: int, k: int, n: int, s: int, p: int)\n  requires s >= 1 && p >= 1\n{\n  result == MinPacksNeeded(k, n, s, p) &&\n  result * p >= TotalSheetsNeeded(k, n, s) &&\n  (result - 1) * p < TotalSheetsNeeded(k, n, s)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(k: int, n: int, s: int, p: int) returns (result: int)\n  requires ValidInput(k, n, s, p)\n  ensures result >= 1\n  ensures CorrectResult(result, k, n, s, p)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

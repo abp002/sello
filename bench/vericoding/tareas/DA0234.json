@@ -1,0 +1,11 @@
+{
+ "id": "DA0234",
+ "source": "apps",
+ "source_id": "apps_test_1100",
+ "fn": "solve",
+ "sello": "solve(n: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(n: Int) -> Int\n  requires (n >= 3)\n  ensures (result == ((n - 2) * (n - 2)))\n  effects pure\n  example (solve(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int)\n{\n    n >= 3\n}\n\nfunction MinJumps(n: int): int\n    requires ValidInput(n)\n{\n    (n - 2) * (n - 2)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int) returns (result: int)\n    requires ValidInput(n)\n    ensures result == MinJumps(n)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

@@ -1,0 +1,13 @@
+{
+ "id": "DA0455",
+ "source": "apps",
+ "source_id": "apps_test_2602",
+ "fn": "SolveCookieDistribution",
+ "sello": "SolveCookieDistribution(a: Int, b: Int, n: Int, m: Int) -> Bool",
+ "helpers": [],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn SolveCookieDistribution(a: Int, b: Int, n: Int, m: Int) -> Bool\n  requires (a >= 0)\n  requires (b >= 0)\n  requires (n >= 0)\n  requires (m >= 0)\n  requires ((n + m) > 0)\n  ensures (result == (((a + b) >= (n + m)) and (m <= (if (a <= b) then a else b))))\n  ensures ((not result) or (((a + b) >= (n + m)) and (m <= (if (a <= b) then a else b))))\n  ensures ((not (not result)) or (((a + b) < (n + m)) or (m > (if (a <= b) then a else b))))\n  effects pure\n  example (SolveCookieDistribution(0, 0, 0, 0) == true)\n{\n  true\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidTestCase(a: nat, b: nat, n: nat, m: nat)\n{\n    n + m > 0\n}\n\npredicate CanSatisfyAllGuests(a: nat, b: nat, n: nat, m: nat)\n{\n\n    a + b >= n + m &&\n\n    m <= min(a, b)\n}\n\nfunction min(x: nat, y: nat): nat\n{\n    if x <= y then x else y\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod SolveCookieDistribution(a: nat, b: nat, n: nat, m: nat) returns (result: bool)\n    requires ValidTestCase(a, b, n, m)\n    ensures result == CanSatisfyAllGuests(a, b, n, m)\n    ensures result ==> (a + b >= n + m && m <= min(a, b))\n    ensures !result ==> (a + b < n + m || m > min(a, b))\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

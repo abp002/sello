@@ -1,0 +1,11 @@
+{
+ "id": "DA0674",
+ "source": "apps",
+ "source_id": "apps_test_4721",
+ "fn": "solve",
+ "sello": "solve(n: Int, m: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(n: Int, m: Int) -> Int\n  requires (2 <= n)\n  requires (n <= 100)\n  requires (2 <= m)\n  requires (m <= 100)\n  ensures (2 <= n)\n  ensures (n <= 100)\n  ensures (2 <= m)\n  ensures (m <= 100)\n  ensures (result == ((n - 1) * (m - 1)))\n  ensures (result >= 1)\n  effects pure\n  example (solve(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, m: int)\n{\n    2 <= n <= 100 && 2 <= m <= 100\n}\n\nfunction CountBlocks(n: int, m: int): int\n    requires ValidInput(n, m)\n{\n    (n - 1) * (m - 1)\n}\n\npredicate CorrectOutput(n: int, m: int, blocks: int)\n{\n    ValidInput(n, m) && blocks == CountBlocks(n, m)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, m: int) returns (blocks: int)\n    requires ValidInput(n, m)\n    ensures CorrectOutput(n, m, blocks)\n    ensures blocks >= 1\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

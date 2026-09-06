@@ -1,0 +1,11 @@
+{
+ "id": "DD0740",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_555_DifferenceSumCubesAndSumNumbers",
+ "fn": "DifferenceSumCubesAndSumNumbers",
+ "sello": "DifferenceSumCubesAndSumNumbers(n: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn DifferenceSumCubesAndSumNumbers(n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == (((((n * n) * (n + 1)) * (n + 1)) / 4) - ((n * (n + 1)) / 2)))\n  effects pure\n  example (DifferenceSumCubesAndSumNumbers(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod DifferenceSumCubesAndSumNumbers(n: int) returns (diff: int)\n    requires n >= 0\n    ensures diff == (n * n * (n + 1) * (n + 1)) / 4 - (n * (n + 1)) / 2\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

@@ -1,0 +1,13 @@
+{
+ "id": "DA0586",
+ "source": "apps",
+ "source_id": "apps_test_4466",
+ "fn": "solve",
+ "sello": "solve(x: Int, y: Int, z: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn solve(x: Int, y: Int, z: Int) -> Int\n  requires (x >= 1)\n  requires (y >= 1)\n  requires (z >= 1)\n  requires ((y + (2 * z)) <= x)\n  ensures (result == ((x - z) / (y + z)))\n  ensures (result >= 0)\n  ensures ((result * (y + z)) <= (x - z))\n  ensures ((x - z) < ((result + 1) * (y + z)))\n  effects pure\n  example (solve(0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(x: int, y: int, z: int)\n{\n    x >= 1 && y >= 1 && z >= 1 && y + 2 * z <= x\n}\n\nfunction MaxPeople(x: int, y: int, z: int): int\n    requires ValidInput(x, y, z)\n{\n    (x - z) / (y + z)\n}\n\npredicate ValidSolution(x: int, y: int, z: int, result: int)\n    requires ValidInput(x, y, z)\n{\n    result == MaxPeople(x, y, z) &&\n    result >= 0 &&\n    result * (y + z) <= x - z < (result + 1) * (y + z)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(x: int, y: int, z: int) returns (result: int)\n    requires ValidInput(x, y, z)\n    ensures ValidSolution(x, y, z, result)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

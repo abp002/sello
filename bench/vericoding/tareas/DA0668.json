@@ -1,0 +1,11 @@
+{
+ "id": "DA0668",
+ "source": "apps",
+ "source_id": "apps_test_4711",
+ "fn": "solve",
+ "sello": "solve(a: Int, b: Int, c: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(a: Int, b: Int, c: Int) -> Int\n  requires (1 <= a)\n  requires (a <= 10000)\n  requires (1 <= b)\n  requires (b <= 10000)\n  requires (1 <= c)\n  requires (c <= 10000)\n  ensures (result == (if (((a + b) <= (a + c)) and ((a + b) <= (b + c))) then (a + b) else if ((a + c) <= (b + c)) then (a + c) else (b + c)))\n  effects pure\n  example (solve(0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(a: int, b: int, c: int) {\n    1 <= a <= 10000 && 1 <= b <= 10000 && 1 <= c <= 10000\n}\n\nfunction MinOfThree(x: int, y: int, z: int): int {\n    if x <= y && x <= z then x\n    else if y <= z then y\n    else z\n}\n\nfunction CorrectResult(a: int, b: int, c: int): int {\n    MinOfThree(a + b, a + c, b + c)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(a: int, b: int, c: int) returns (result: int)\n    requires ValidInput(a, b, c)\n    ensures result == CorrectResult(a, b, c)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

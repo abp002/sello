@@ -1,0 +1,15 @@
+{
+ "id": "DA0600",
+ "source": "apps",
+ "source_id": "apps_test_4495",
+ "fn": "CountDivisible",
+ "sello": "CountDivisible(a: Int, b: Int, x: Int) -> Int",
+ "helpers": [
+  "CountDivisibleInRange"
+ ],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn CountDivisibleInRange(a: Int, b: Int, x: Int) -> Int\n  requires (a >= 0)\n  requires (b >= a)\n  requires (x > 0)\n  ensures (result == (if (a == 0) then ((b / x) + 1) else ((b / x) - ((a - 1) / x))))\n  ensures (result >= 0)\n  effects pure\n  example (CountDivisibleInRange(0, 0, 1) == 1)\n  example (CountDivisibleInRange(0, 1, 1) == 2)\n{\n  if (a == 0) then ((b / x) + 1) else ((b / x) - ((a - 1) / x))\n}\n\nfn CountDivisible(a: Int, b: Int, x: Int) -> Int\n  requires (a >= 0)\n  requires (b >= a)\n  requires (x > 0)\n  ensures (result == CountDivisibleInRange(a, b, x))\n  ensures (result >= 0)\n  effects pure\n  example (CountDivisible(0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(a: int, b: int, x: int)\n{\n    a >= 0 && b >= a && x > 0\n}\n\nfunction CountDivisibleInRange(a: int, b: int, x: int): int\n    requires ValidInput(a, b, x)\n    ensures CountDivisibleInRange(a, b, x) >= 0\n{\n    if a == 0 then\n        b / x + 1\n    else\n        b / x - (a - 1) / x\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod CountDivisible(a: int, b: int, x: int) returns (count: int)\n    requires ValidInput(a, b, x)\n    ensures count == CountDivisibleInRange(a, b, x)\n    ensures count >= 0\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

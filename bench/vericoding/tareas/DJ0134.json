@@ -1,0 +1,11 @@
+{
+ "id": "DJ0134",
+ "source": "verified_cogen",
+ "source_id": "rustbench_abs",
+ "fn": "Abs",
+ "sello": "Abs(x: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn Abs(x: Int) -> Int\n  requires (x != -2147483648)\n  ensures (result >= 0)\n  ensures ((result == x) or (result == -x))\n  effects pure\n  example (Abs(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod Abs(x: int) returns (result: int)\n    requires x != -2147483648\n    ensures result >= 0\n    ensures result == x || result == -x\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n}\n// </vc-code>\n"
+}

@@ -1,0 +1,13 @@
+{
+ "id": "DA0046",
+ "source": "apps",
+ "source_id": "apps_test_185",
+ "fn": "MinimumMoves",
+ "sello": "MinimumMoves(n: Int, k: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "función supuesta: min"
+ ],
+ "esqueleto": "fn MinimumMoves(n: Int, k: Int) -> Int\n  requires (2 <= n)\n  requires (n <= 5000)\n  requires (1 <= k)\n  requires (k <= n)\n  ensures (result == (if ((k == 1) or (k == n)) then (3 * n) else ((3 * n) + (if ((k - 1) <= (n - k)) then (k - 1) else (n - k)))))\n  ensures (result > 0)\n  effects pure\n  example (MinimumMoves(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, k: int)\n{\n  2 <= n <= 5000 && 1 <= k <= n\n}\n\nfunction OptimalMoves(n: int, k: int): int\n  requires ValidInput(n, k)\n{\n  if k == 1 || k == n then\n    3 * n\n  else\n    3 * n + min(k - 1, n - k)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod MinimumMoves(n: int, k: int) returns (result: int)\n  requires ValidInput(n, k)\n  ensures result == OptimalMoves(n, k)\n  ensures result > 0\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

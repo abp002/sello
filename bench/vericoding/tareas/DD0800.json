@@ -1,0 +1,13 @@
+{
+ "id": "DD0800",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_792_CountLists",
+ "fn": "CountLists",
+ "sello": "CountLists(lists: List[List[Int]]) -> Int",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn CountLists(lists: List[List[Int]]) -> Int\n  requires (len(lists) >= 0)\n  ensures (result >= 0)\n  ensures (result == len(lists))\n  effects pure\n  example (CountLists([]) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod CountLists(lists: seq<seq<int>>) returns (count: int)\n    ensures count >= 0\n    ensures count == |lists|\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

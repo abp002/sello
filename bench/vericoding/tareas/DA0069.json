@@ -1,0 +1,11 @@
+{
+ "id": "DA0069",
+ "source": "apps",
+ "source_id": "apps_test_271",
+ "fn": "solve",
+ "sello": "solve(n: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(n: Int) -> Int\n  requires (n >= 0)\n  ensures ((result % 10) == 0)\n  ensures (result >= 0)\n  ensures ((not ((n % 10) < 5)) or (result == ((n / 10) * 10)))\n  ensures ((not ((n % 10) > 5)) or (result == (((n / 10) + 1) * 10)))\n  ensures ((not ((n % 10) == 5)) or (((not (((n / 10) % 2) == 0)) or (result == ((n / 10) * 10))) and ((not (((n / 10) % 2) == 1)) or (result == (((n / 10) + 1) * 10)))))\n  effects pure\n  example (solve(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidResult(n: int, result: int)\n  requires n >= 0\n{\n  var quotient := n / 10;\n  var remainder := n % 10;\n  result % 10 == 0 && \n  result >= 0 &&\n  (remainder < 5 ==> result == quotient * 10) &&\n  (remainder > 5 ==> result == (quotient + 1) * 10) &&\n  (remainder == 5 ==> (quotient % 2 == 0 ==> result == quotient * 10) && \n                      (quotient % 2 == 1 ==> result == (quotient + 1) * 10))\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int) returns (result: int)\n  requires n >= 0\n  ensures ValidResult(n, result)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

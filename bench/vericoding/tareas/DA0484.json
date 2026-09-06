@@ -1,0 +1,11 @@
+{
+ "id": "DA0484",
+ "source": "apps",
+ "source_id": "apps_test_4180",
+ "fn": "solve",
+ "sello": "solve(n: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(n: Int) -> Int\n  requires (1 <= n)\n  requires (n <= 10000)\n  ensures (0 <= result)\n  ensures (result <= 999)\n  ensures (result == ((1000 - (n % 1000)) % 1000))\n  effects pure\n  example (solve(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int)\n{\n    1 <= n <= 10000\n}\n\npredicate ValidChange(change: int)\n{\n    0 <= change <= 999\n}\n\nfunction CorrectChange(n: int): int\n    requires ValidInput(n)\n{\n    (1000 - n % 1000) % 1000\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int) returns (change: int)\n    requires ValidInput(n)\n    ensures ValidChange(change)\n    ensures change == CorrectChange(n)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

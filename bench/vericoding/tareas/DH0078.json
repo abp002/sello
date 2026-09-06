@@ -1,0 +1,13 @@
+{
+ "id": "DH0078",
+ "source": "humaneval",
+ "source_id": "humaneval_077_iscube__cube_root",
+ "fn": "cube_root",
+ "sello": "cube_root(N: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn cube_root(N: Int) -> Int\n  requires (N >= 0)\n  ensures (((result * result) * result) <= N)\n  ensures (N < (((result + 1) * (result + 1)) * (result + 1)))\n  ensures (result <= N)\n  ensures (result >= 0)\n  effects pure\n  example (cube_root(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nfunction cube(n: int): int { n * n * n }\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod cube_root(N: nat) returns (r: nat)\n\n  ensures cube(r) <= N < cube(r + 1)\n  ensures r <= N\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

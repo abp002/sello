@@ -1,0 +1,15 @@
+{
+ "id": "DD0225",
+ "source": "dafnybench",
+ "source_id": "Dafny_Verify_tmp_tmphq7j0row_Generated_Code_ComputePower_ComputePower",
+ "fn": "ComputePower",
+ "sello": "ComputePower(n: Int) -> Int",
+ "helpers": [
+  "Power"
+ ],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn Power(n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == (if (n == 0) then 1 else (2 * Power((n - 1)))))\n  ensures (result >= 0)\n  effects pure\n  example (Power(0) == 1)\n  example (Power(1) == 2)\n{\n  if (n == 0) then 1 else (2 * Power((n - 1)))\n}\n\nfn ComputePower(n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == Power(n))\n  ensures (result >= 0)\n  effects pure\n  example (ComputePower(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nfunction Power(n: nat): nat {\n    if n == 0 then 1 else 2 * Power(n - 1)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod ComputePower(n: nat) returns (p: nat)\n    ensures p == Power(n)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

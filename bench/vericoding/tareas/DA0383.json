@@ -1,0 +1,11 @@
+{
+ "id": "DA0383",
+ "source": "apps",
+ "source_id": "apps_test_2015",
+ "fn": "CheckLampArrangement",
+ "sello": "CheckLampArrangement(r: Int, g: Int, b: Int) -> Bool",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn CheckLampArrangement(r: Int, g: Int, b: Int) -> Bool\n  requires (r >= 1)\n  requires (g >= 1)\n  requires (b >= 1)\n  ensures (result == ((2 * (if ((r >= g) and (r >= b)) then r else if ((g >= r) and (g >= b)) then g else b)) <= (((r + g) + b) + 1)))\n  effects pure\n  example (CheckLampArrangement(0, 0, 0) == true)\n{\n  true\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(r: int, g: int, b: int)\n{\n    r >= 1 && g >= 1 && b >= 1\n}\n\nfunction MaxOf3(r: int, g: int, b: int): int\n{\n    if r >= g && r >= b then r\n    else if g >= r && g >= b then g\n    else b\n}\n\npredicate CanArrange(r: int, g: int, b: int)\n    requires ValidInput(r, g, b)\n{\n    var maxCount := MaxOf3(r, g, b);\n    var total := r + g + b;\n    2 * maxCount <= total + 1\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod CheckLampArrangement(r: int, g: int, b: int) returns (result: bool)\n    requires ValidInput(r, g, b)\n    ensures result == CanArrange(r, g, b)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

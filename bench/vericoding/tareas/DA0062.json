@@ -1,0 +1,13 @@
+{
+ "id": "DA0062",
+ "source": "apps",
+ "source_id": "apps_test_235",
+ "fn": "solve",
+ "sello": "solve(n: Int) -> Int",
+ "helpers": [
+  "vasya_eats_with_strategy"
+ ],
+ "notas": [],
+ "esqueleto": "fn vasya_eats_with_strategy(n: Int, k: Int) -> Int\n  requires (n >= 0)\n  requires (k >= 1)\n  ensures (result == (if (n <= 0) then 0 else ((if (n < k) then n else k) + vasya_eats_with_strategy(((n - (if (n < k) then n else k)) - ((n - (if (n < k) then n else k)) / 10)), k))))\n  effects pure\n  example (vasya_eats_with_strategy(0, 1) == 0)\n  example (vasya_eats_with_strategy(1, 1) == 1)\n{\n  if (n <= 0) then 0 else ((if (n < k) then n else k) + vasya_eats_with_strategy(((n - (if (n < k) then n else k)) - ((n - (if (n < k) then n else k)) / 10)), k))\n}\n\nfn solve(n: Int) -> Int\n  requires (n >= 1)\n  ensures (1 <= result)\n  ensures (result <= n)\n  ensures ((vasya_eats_with_strategy(n, result) * 2) >= n)\n  ensures ((result == 1) or ((vasya_eats_with_strategy(n, (result - 1)) * 2) < n))\n  effects pure\n  example (solve(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int)\n{\n    n >= 1\n}\n\nfunction vasya_eats_with_strategy(n: int, k: int): int\n    requires n >= 0\n    requires k >= 1\n    decreases n\n{\n    if n <= 0 then 0\n    else\n        var cur := if n < k then n else k;\n        var remaining_after_vasya := n - cur;\n        var remaining_after_petya := remaining_after_vasya - remaining_after_vasya / 10;\n        cur + vasya_eats_with_strategy(remaining_after_petya, k)\n}\n\npredicate IsMinimalSolution(n: int, k: int)\n    requires ValidInput(n)\n    requires k >= 1\n{\n    vasya_eats_with_strategy(n, k) * 2 >= n &&\n    (k == 1 || vasya_eats_with_strategy(n, k - 1) * 2 < n)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int) returns (result: int)\n    requires ValidInput(n)\n    ensures 1 <= result <= n\n    ensures IsMinimalSolution(n, result)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

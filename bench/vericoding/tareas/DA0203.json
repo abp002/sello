@@ -1,0 +1,11 @@
+{
+ "id": "DA0203",
+ "source": "apps",
+ "source_id": "apps_test_1000",
+ "fn": "solve",
+ "sello": "solve(n: Int, v: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(n: Int, v: Int) -> Int\n  requires (2 <= n)\n  requires (n <= 100)\n  requires (1 <= v)\n  requires (v <= 100)\n  ensures (result == (if ((n - 1) <= v) then (n - 1) else (v + ((((n - 1) - v) * (((n - 1) - v) + 3)) / 2))))\n  effects pure\n  example (solve(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, v: int) {\n    2 <= n <= 100 && 1 <= v <= 100\n}\n\nfunction MinCost(n: int, v: int): int\n    requires ValidInput(n, v)\n{\n    var req := n - 1;\n    if req <= v then\n        req\n    else\n        var remaining := req - v;\n        v + remaining * (remaining + 3) / 2\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, v: int) returns (result: int)\n    requires ValidInput(n, v)\n    ensures result == MinCost(n, v)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

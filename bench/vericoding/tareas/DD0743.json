@@ -1,0 +1,18 @@
+{
+ "id": "DD0743",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_566_SumOfDigits",
+ "fn": "SumOfDigits",
+ "sello": "SumOfDigits(number: Int) -> Int",
+ "helpers": [
+  "Power10",
+  "SumDigitsRecursive",
+  "NumberOfDigits"
+ ],
+ "notas": [
+  "div",
+  "nat"
+ ],
+ "esqueleto": "fn Power10(n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == (if (n == 0) then 1 else (10 * Power10((n - 1)))))\n  ensures (result >= 1)\n  ensures ((not (n > 0)) or ((result % 10) == 0))\n  ensures (result >= 0)\n  effects pure\n  example (Power10(0) == 1)\n  example (Power10(1) == 10)\n{\n  if (n == 0) then 1 else (10 * Power10((n - 1)))\n}\n\nfn SumDigitsRecursive(n: Int, p: Int) -> Int\n  requires (n >= 0)\n  requires (p >= 0)\n  ensures (result == (if ((n == 0) or (p == 0)) then 0 else ((n / p) + SumDigitsRecursive((n % p), (p / 10)))))\n  ensures (result >= 0)\n  effects pure\n  example (SumDigitsRecursive(0, 0) == 0)\n  example (SumDigitsRecursive(1, 1) == 1)\n{\n  if ((n == 0) or (p == 0)) then 0 else ((n / p) + SumDigitsRecursive((n % p), (p / 10)))\n}\n\nfn NumberOfDigits(n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == (if ((0 <= n) and (n <= 9)) then 1 else (1 + NumberOfDigits((n / 10)))))\n  ensures (result >= 1)\n  ensures ((result == 1) == ((0 <= n) and (n <= 9)))\n  ensures (result >= 0)\n  effects pure\n  example (NumberOfDigits(0) == 1)\n  example (NumberOfDigits(10) == 2)\n{\n  if ((0 <= n) and (n <= 9)) then 1 else (1 + NumberOfDigits((n / 10)))\n}\n\nfn SumOfDigits(number: Int) -> Int\n  requires (number >= 0)\n  requires (number >= 0)\n  ensures (result >= 0)\n  ensures (result == SumDigitsRecursive(number, Power10((NumberOfDigits(number) - 1))))\n  ensures (result >= 0)\n  effects pure\n  example (SumOfDigits(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nghost function IntValues(n: int) : (r: seq<int>)\n  requires n >= 0\n  ensures 0 in r\n  ensures n in r\n  ensures n/10 in r\n\n{\n  if n == 0 then [0]\n  else [n] + IntValues(n/10)\n}\n\nfunction Power10(n: nat): (r: nat)\n  ensures r >= 1\n  ensures n > 0 ==> r % 10 == 0\n{\n  if (n == 0) then 1 else 10 * Power10(n-1)\n}\n\nfunction NumberToSeq(number: int) : seq<int>\n  requires number >= 0\n{\n  if number == 0 then []\n  else [number % 10] + NumberToSeq(number/10)\n}\n\nfunction Sum(digits: seq<int>) : int\n{\n  if |digits| == 0 then 0 else digits[0] + Sum(digits[1..])\n}\n\nfunction SumDigits(n: nat) : nat\n{\n  var ndigits := NumberOfDigits(n);\n  var p := Power10(ndigits-1);\n  SumDigitsRecursive(n, p)\n}\n\nfunction SumDigitsRecursive(n: nat, p: nat) : (r: nat)\n{\n  if n == 0 || p == 0 then 0\n  else\n    var leftMostDigit := n/p;\n    var rest := n%p;\n    leftMostDigit + SumDigitsRecursive(rest, p/10)\n\n}\n\nfunction NumberOfDigits(n: nat) : (r: nat)\n  ensures r >= 1\n  ensures r == 1 <==> 0 <= n <= 9\n{\n  if 0 <= n <= 9 then 1 else 1+NumberOfDigits(n/10)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod SumOfDigits(number: nat) returns (sum: nat)\n  requires number >= 0\n  ensures sum >= 0\n  ensures sum == SumDigits(number)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

@@ -1,0 +1,15 @@
+{
+ "id": "DD0484",
+ "source": "dafnybench",
+ "source_id": "Software-building-and-verification-Projects_tmp_tmp5tm1srrn_CVS-projeto_aula3_sumBackwards",
+ "fn": "sumBackwards",
+ "sello": "sumBackwards(n: Int) -> Int",
+ "helpers": [
+  "sum"
+ ],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn sum(n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == (if (n == 0) then 0 else (n + sum((n - 1)))))\n  ensures (result >= 0)\n  effects pure\n  example (sum(0) == 0)\n  example (sum(1) == 1)\n{\n  if (n == 0) then 0 else (n + sum((n - 1)))\n}\n\nfn sumBackwards(n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == sum(n))\n  ensures (result >= 0)\n  effects pure\n  example (sumBackwards(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nfunction fib(n : nat) : nat\n{\n  if (n==0) then 1 else\n  if (n==1) then 1 else fib(n-1)+fib(n-2)\n}\n\ndatatype List<T> = Nil | Cons(head: T, tail: List<T>)\n\nfunction add(l : List<int>) : int {\n  match l\n  case Nil => 0\n  case Cons(x,xs) => x + add(xs)\n}\n\nfunction sum(n: nat) : nat\n{\n  if (n == 0) then 0 else n + sum(n-1)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod sumBackwards(n: nat) returns (r: nat)\n  ensures r == sum(n)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

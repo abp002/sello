@@ -1,0 +1,13 @@
+{
+ "id": "DA0001",
+ "source": "apps",
+ "source_id": "apps_test_5",
+ "fn": "solve",
+ "sello": "solve(n: Int, pos: Int, l: Int, r: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "función supuesta: abs"
+ ],
+ "esqueleto": "fn solve(n: Int, pos: Int, l: Int, r: Int) -> Int\n  requires (1 <= n)\n  requires (n <= 100)\n  requires (1 <= pos)\n  requires (pos <= n)\n  requires (1 <= l)\n  requires (l <= r)\n  requires (r <= n)\n  ensures (result >= 0)\n  ensures ((not ((l == 1) and (r == n))) or (result == 0))\n  ensures ((not ((l == 1) and (r < n))) or (result == ((if ((pos - r) >= 0) then (pos - r) else -(pos - r)) + 1)))\n  ensures ((not ((l > 1) and (r == n))) or (result == ((if ((pos - l) >= 0) then (pos - l) else -(pos - l)) + 1)))\n  ensures ((not ((((l > 1) and (r < n)) and ((l <= pos) and (pos <= r))) and ((pos - l) < (r - pos)))) or (result == ((((pos - l) + 1) + (r - l)) + 1)))\n  ensures ((not ((((l > 1) and (r < n)) and ((l <= pos) and (pos <= r))) and ((pos - l) >= (r - pos)))) or (result == ((((r - pos) + 1) + (r - l)) + 1)))\n  ensures ((not (((l > 1) and (r < n)) and (pos > r))) or (result == ((((pos - r) + 1) + (r - l)) + 1)))\n  ensures ((not (((l > 1) and (r < n)) and (pos < l))) or (result == ((((l - pos) + 1) + (r - l)) + 1)))\n  ensures (result <= (2 * n))\n  effects pure\n  example (solve(0, 0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, pos: int, l: int, r: int)\n{\n    1 <= n <= 100 && 1 <= pos <= n && 1 <= l <= r <= n\n}\n\npredicate NoTabsToClose(l: int, r: int, n: int)\n{\n    l == 1 && r == n\n}\n\npredicate OnlyCloseRight(l: int, r: int, n: int)\n{\n    l == 1 && r < n\n}\n\npredicate OnlyCloseLeft(l: int, r: int, n: int)\n{\n    l > 1 && r == n\n}\n\npredicate CloseBothSides(l: int, r: int, n: int)\n{\n    l > 1 && r < n\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, pos: int, l: int, r: int) returns (result: int)\n    requires ValidInput(n, pos, l, r)\n    ensures result >= 0\n    ensures NoTabsToClose(l, r, n) ==> result == 0\n    ensures OnlyCloseRight(l, r, n) ==> result == abs(pos - r) + 1\n    ensures OnlyCloseLeft(l, r, n) ==> result == abs(pos - l) + 1\n    ensures CloseBothSides(l, r, n) && l <= pos <= r && pos - l < r - pos ==> result == (pos - l) + 1 + (r - l) + 1\n    ensures CloseBothSides(l, r, n) && l <= pos <= r && pos - l >= r - pos ==> result == (r - pos) + 1 + (r - l) + 1\n    ensures CloseBothSides(l, r, n) && pos > r ==> result == (pos - r) + 1 + (r - l) + 1\n    ensures CloseBothSides(l, r, n) && pos < l ==> result == (l - pos) + 1 + (r - l) + 1\n    ensures result <= 2 * n\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

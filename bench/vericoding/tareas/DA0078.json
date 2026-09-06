@@ -1,0 +1,13 @@
+{
+ "id": "DA0078",
+ "source": "apps",
+ "source_id": "apps_test_433",
+ "fn": "solve",
+ "sello": "solve(n: Int, a: Int, b: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn solve(n: Int, a: Int, b: Int) -> Int\n  requires (n >= 1)\n  requires (1 <= a)\n  requires (a <= n)\n  requires (-100 <= b)\n  requires (b <= 100)\n  ensures (1 <= result)\n  ensures (result <= n)\n  ensures (result == ((((((a - 1) + b) % n) + n) % n) + 1))\n  effects pure\n  example (solve(0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, a: int, b: int) {\n    n >= 1 && 1 <= a <= n && -100 <= b <= 100\n}\n\nfunction FinalEntrance(n: int, a: int, b: int): int\n    requires ValidInput(n, a, b)\n{\n    ((a - 1 + b) % n + n) % n + 1\n}\n\npredicate ValidOutput(result: int, n: int) {\n    1 <= result <= n\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, a: int, b: int) returns (result: int)\n    requires ValidInput(n, a, b)\n    ensures ValidOutput(result, n)\n    ensures result == FinalEntrance(n, a, b)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

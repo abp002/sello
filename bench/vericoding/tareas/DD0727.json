@@ -1,0 +1,11 @@
+{
+ "id": "DD0727",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_452_CalculateLoss",
+ "fn": "CalculateLoss",
+ "sello": "CalculateLoss(costPrice: Int, sellingPrice: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn CalculateLoss(costPrice: Int, sellingPrice: Int) -> Int\n  requires (costPrice >= 0)\n  requires (sellingPrice >= 0)\n  ensures ((not (costPrice > sellingPrice)) or (result == (costPrice - sellingPrice)))\n  ensures ((not (costPrice <= sellingPrice)) or (result == 0))\n  effects pure\n  example (CalculateLoss(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod CalculateLoss(costPrice: int, sellingPrice: int) returns (loss: int)\n    requires costPrice >= 0 && sellingPrice >= 0\n    ensures (costPrice > sellingPrice ==> loss == costPrice - sellingPrice) && (costPrice <= sellingPrice ==> loss == 0)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

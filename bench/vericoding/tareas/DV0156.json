@@ -1,0 +1,13 @@
+{
+ "id": "DV0156",
+ "source": "verina",
+ "source_id": "verina_basic_76_task",
+ "fn": "MyMin",
+ "sello": "MyMin(x: Int, y: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn MyMin(x: Int, y: Int) -> Int\n  requires (x == x)\n  ensures ((not (x <= y)) or (result == x))\n  ensures ((not (x > y)) or (result == y))\n  effects pure\n  example (MyMin(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod MyMin(x: int, y: int) returns (result: int)\n    ensures (x <= y ==> result == x) && (x > y ==> result == y)\n// </vc-spec>\n// <vc-code>\n{\n    // TODO: implement\n    assume {:axiom} false;\n    result := 0;\n}\n// </vc-code>\n"
+}

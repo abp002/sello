@@ -1,0 +1,11 @@
+{
+ "id": "DA0063",
+ "source": "apps",
+ "source_id": "apps_test_244",
+ "fn": "ShellGame",
+ "sello": "ShellGame(n: Int, x: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn ShellGame(n: Int, x: Int) -> Int\n  requires (n >= 1)\n  requires (n <= 2000000000)\n  requires (0 <= x)\n  requires (x <= 2)\n  ensures (0 <= result)\n  ensures (result <= 2)\n  effects pure\n  example (ShellGame(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidPosition(pos: int) {\n    0 <= pos <= 2\n}\n\nfunction SwapMove(pos: int, moveNum: int): int\n    requires ValidPosition(pos)\n    requires moveNum >= 1\n    ensures ValidPosition(SwapMove(pos, moveNum))\n{\n    if moveNum % 2 == 1 then\n        if pos == 0 then 1\n        else if pos == 1 then 0\n        else 2\n    else\n        if pos == 1 then 2\n        else if pos == 2 then 1\n        else 0\n}\n\nfunction ReverseMove(pos: int, moveNum: int): int\n    requires ValidPosition(pos)\n    requires moveNum >= 1\n    ensures ValidPosition(ReverseMove(pos, moveNum))\n{\n    if moveNum % 2 == 1 then\n        if pos == 0 then 1\n        else if pos == 1 then 0\n        else 2\n    else\n        if pos == 1 then 2\n        else if pos == 2 then 1\n        else 0\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod ShellGame(n: int, x: int) returns (result: int)\n    requires n >= 1 && n <= 2000000000\n    requires ValidPosition(x)\n    ensures ValidPosition(result)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

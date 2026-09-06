@@ -1,0 +1,15 @@
+{
+ "id": "DD0826",
+ "source": "dafnybench",
+ "source_id": "dafny_examples_tmp_tmp8qotd4ez_leetcode_0070-climbing-stairs_ClimbStairs",
+ "fn": "ClimbStairs",
+ "sello": "ClimbStairs(n: Int) -> Int",
+ "helpers": [
+  "Stairs"
+ ],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn Stairs(n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == (if (n <= 1) then 1 else (Stairs((n - 2)) + Stairs((n - 1)))))\n  ensures (result >= 0)\n  effects pure\n  example (Stairs(0) == 1)\n  example (Stairs(2) == 2)\n{\n  if (n <= 1) then 1 else (Stairs((n - 2)) + Stairs((n - 1)))\n}\n\nfn ClimbStairs(n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == Stairs(n))\n  ensures (result >= 0)\n  effects pure\n  example (ClimbStairs(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nfunction Stairs(n: nat): nat {\n  if n <= 1 then 1 else Stairs(n - 2) + Stairs(n - 1)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod ClimbStairs(n: nat) returns (r: nat)\n  ensures r == Stairs(n)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

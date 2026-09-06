@@ -9,3 +9,4 @@ dist/
 bench/resultados/*.log
 .sello/
 .claude/worktrees/
+bench/vericoding/cache/

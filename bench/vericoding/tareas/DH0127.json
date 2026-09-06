@@ -1,0 +1,15 @@
+{
+ "id": "DH0127",
+ "source": "humaneval",
+ "source_id": "humaneval_123_get_odd_collatz__next_odd_collatz_iter",
+ "fn": "next_odd_collatz_iter",
+ "sello": "next_odd_collatz_iter(n: Int) -> Int",
+ "helpers": [
+  "iterate_to_odd"
+ ],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn iterate_to_odd(n: Int) -> Int\n  requires (n >= 0)\n  requires ((n % 2) == 0)\n  requires (n > 0)\n  ensures (result == (if (((n / 2) % 2) == 1) then (n / 2) else iterate_to_odd((n / 2))))\n  ensures ((result % 2) == 1)\n  ensures (result >= 0)\n  effects pure\n  example (iterate_to_odd(2) == 1)\n  example (iterate_to_odd(10) == 5)\n{\n  if (((n / 2) % 2) == 1) then (n / 2) else iterate_to_odd((n / 2))\n}\n\nfn next_odd_collatz_iter(n: Int) -> Int\n  requires (n >= 0)\n  requires (n > 0)\n  ensures ((result % 2) == 1)\n  ensures (result == (if ((n % 2) == 0) then iterate_to_odd(n) else iterate_to_odd(((3 * n) + 1))))\n  ensures (result >= 0)\n  effects pure\n  example (next_odd_collatz_iter(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nfunction iterate_to_odd(n: nat): nat\n  requires n % 2 == 0\n  requires n > 0\n  ensures iterate_to_odd(n) % 2 == 1\n{\n  if (n / 2) % 2 == 1 then n / 2 else iterate_to_odd(n / 2)\n}\nfunction next_odd_collatz(n: nat): nat\n  requires n > 0\n{\n  if n % 2 == 0 then iterate_to_odd(n) else iterate_to_odd(3 * n + 1)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod next_odd_collatz_iter(n: nat) returns (next: nat)\n\n  requires n > 0\n\n  ensures next % 2 == 1\n  ensures next == next_odd_collatz(n)\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

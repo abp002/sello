@@ -1,0 +1,13 @@
+{
+ "id": "DD0065",
+ "source": "dafnybench",
+ "source_id": "Clover_is_even_ComputeIsEven",
+ "fn": "ComputeIsEven",
+ "sello": "ComputeIsEven(x: Int) -> Bool",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn ComputeIsEven(x: Int) -> Bool\n  requires (x == x)\n  ensures (((x % 2) == 0) == result)\n  effects pure\n  example (ComputeIsEven(0) == true)\n{\n  true\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod ComputeIsEven(x:int) returns (is_even:bool)\n  ensures (x % 2 == 0)==is_even\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

@@ -1,0 +1,13 @@
+{
+ "id": "DH0065",
+ "source": "humaneval",
+ "source_id": "humaneval_063",
+ "fn": "fibfib",
+ "sello": "fibfib(n: Int) -> Int",
+ "helpers": [
+  "fibfib_spec"
+ ],
+ "notas": [],
+ "esqueleto": "fn fibfib_spec(n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == (if (n == 0) then 0 else if (n == 1) then 0 else if (n == 2) then 1 else ((fibfib_spec((n - 1)) + fibfib_spec((n - 2))) + fibfib_spec((n - 3)))))\n  effects pure\n  example (fibfib_spec(0) == 0)\n  example (fibfib_spec(2) == 1)\n{\n  if (n == 0) then 0 else if (n == 1) then 0 else if (n == 2) then 1 else ((fibfib_spec((n - 1)) + fibfib_spec((n - 2))) + fibfib_spec((n - 3)))\n}\n\nfn fibfib(n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == fibfib_spec(n))\n  ensures ((not (n == 0)) or (result == 0))\n  ensures ((not (n == 1)) or (result == 0))\n  ensures ((not (n == 2)) or (result == 1))\n  ensures ((not (n >= 3)) or (result == ((fibfib_spec((n - 1)) + fibfib_spec((n - 2))) + fibfib_spec((n - 3)))))\n  effects pure\n  example (fibfib(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n\nfunction fibfib_spec(n: int): int\n    requires n >= 0\n{\n    if n == 0 then 0\n    else if n == 1 then 0\n    else if n == 2 then 1\n    else fibfib_spec(n-1) + fibfib_spec(n-2) + fibfib_spec(n-3)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod fibfib(n: int) returns (result: int)\n    requires n >= 0\n    ensures result == fibfib_spec(n)\n    ensures n == 0 ==> result == 0\n    ensures n == 1 ==> result == 0\n    ensures n == 2 ==> result == 1\n    ensures n >= 3 ==> result == fibfib_spec(n-1) + fibfib_spec(n-2) + fibfib_spec(n-3)\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

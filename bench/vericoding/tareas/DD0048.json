@@ -1,0 +1,13 @@
+{
+ "id": "DD0048",
+ "source": "dafnybench",
+ "source_id": "Clover_avg_ComputeAvg",
+ "fn": "ComputeAvg",
+ "sello": "ComputeAvg(a: Int, b: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn ComputeAvg(a: Int, b: Int) -> Int\n  requires (a == a)\n  ensures (result == ((a + b) / 2))\n  effects pure\n  example (ComputeAvg(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod ComputeAvg(a: int, b: int) returns (avg:int)\n  ensures avg == (a+b)/2\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

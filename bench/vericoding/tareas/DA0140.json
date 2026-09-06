@@ -1,0 +1,13 @@
+{
+ "id": "DA0140",
+ "source": "apps",
+ "source_id": "apps_test_709",
+ "fn": "MinBacteria",
+ "sello": "MinBacteria(x: Int) -> Int",
+ "helpers": [
+  "CountOnesInBinary"
+ ],
+ "notas": [],
+ "esqueleto": "fn CountOnesInBinary(n: Int) -> Int\n  requires (n >= 1)\n  ensures (result == (if (n == 1) then 1 else if ((n % 2) == 1) then (1 + CountOnesInBinary((n / 2))) else CountOnesInBinary((n / 2))))\n  ensures (result >= 1)\n  effects pure\n  example (CountOnesInBinary(1) == 1)\n  example (CountOnesInBinary(3) == 2)\n{\n  if (n == 1) then 1 else if ((n % 2) == 1) then (1 + CountOnesInBinary((n / 2))) else CountOnesInBinary((n / 2))\n}\n\nfn MinBacteria(x: Int) -> Int\n  requires (x >= 1)\n  ensures (x >= 1)\n  ensures (result == CountOnesInBinary(x))\n  effects pure\n  example (MinBacteria(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nfunction CountOnesInBinary(n: int): int\n    requires n >= 1\n    ensures CountOnesInBinary(n) >= 1\n    decreases n\n{\n    if n == 1 then 1\n    else if n % 2 == 1 then 1 + CountOnesInBinary(n / 2)\n    else CountOnesInBinary(n / 2)\n}\n\npredicate ValidInput(x: int) {\n    x >= 1\n}\n\npredicate ValidOutput(x: int, result: int) {\n    ValidInput(x) && result == CountOnesInBinary(x)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod MinBacteria(x: int) returns (result: int)\n    requires ValidInput(x)\n    ensures ValidOutput(x, result)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

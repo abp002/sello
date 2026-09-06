@@ -1,0 +1,11 @@
+{
+ "id": "DA0211",
+ "source": "apps",
+ "source_id": "apps_test_1017",
+ "fn": "solve",
+ "sello": "solve(n: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(n: Int) -> Int\n  requires (n >= 1)\n  ensures (result >= 1)\n  ensures (result == (if ((n % 3) == 0) then (2 * (n / 3)) else ((2 * (n / 3)) + 1)))\n  effects pure\n  example (solve(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int) {\n    n >= 1\n}\n\nfunction MaxDistributions(n: int): int\n    requires ValidInput(n)\n{\n    if n % 3 == 0 then 2 * (n / 3) else 2 * (n / 3) + 1\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int) returns (result: int)\n    requires ValidInput(n)\n    ensures result >= 1\n    ensures result == MaxDistributions(n)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

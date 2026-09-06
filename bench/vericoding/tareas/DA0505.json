@@ -1,0 +1,11 @@
+{
+ "id": "DA0505",
+ "source": "apps",
+ "source_id": "apps_test_4245",
+ "fn": "solve",
+ "sello": "solve(a: Int, b: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(a: Int, b: Int) -> Int\n  requires (a > 1)\n  requires (b >= 0)\n  ensures (result >= 0)\n  ensures ((1 + (result * (a - 1))) >= b)\n  ensures ((result == 0) or ((1 + ((result - 1) * (a - 1))) < b))\n  effects pure\n  example (solve(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(a: int, b: int)\n{\n  a > 1 && b >= 0\n}\n\nfunction SocketsAfterStrips(strips: int, a: int): int\n  requires a > 1 && strips >= 0\n{\n  1 + strips * (a - 1)\n}\n\nfunction CeilingDivision(x: int, y: int): int\n  requires y > 0\n{\n  if x % y == 0 then x / y\n  else if x >= 0 then x / y + 1\n  else x / y\n}\n\nfunction MinStripsNeeded(a: int, b: int): int\n  requires ValidInput(a, b)\n{\n  if b <= 1 then 0\n  else CeilingDivision(b - 1, a - 1)\n}\n\npredicate CorrectResult(a: int, b: int, result: int)\n  requires ValidInput(a, b)\n{\n  result >= 0 &&\n  SocketsAfterStrips(result, a) >= b &&\n  (result == 0 || SocketsAfterStrips(result - 1, a) < b)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(a: int, b: int) returns (result: int)\n  requires ValidInput(a, b)\n  ensures CorrectResult(a, b, result)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

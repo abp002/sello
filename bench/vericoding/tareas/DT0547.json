@@ -1,0 +1,13 @@
+{
+ "id": "DT0547",
+ "source": "numpy_triple",
+ "source_id": "random_SeedSequence",
+ "fn": "SeedSequence",
+ "sello": "SeedSequence(entropy: List[Int], spawnKey: List[Int], poolSize: Int) -> List[Int]",
+ "helpers": [],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn SeedSequence(entropy: List[Int], spawnKey: List[Int], poolSize: Int) -> List[Int]\n  requires forall x in entropy: (x >= 0)\n  requires forall x in spawnKey: (x >= 0)\n  requires (poolSize >= 0)\n  requires (poolSize > 0)\n  ensures (len(result) == poolSize)\n  ensures forall x in result: (x >= 0)\n  effects pure\n  example (SeedSequence([], [], 0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n/*\n * Dafny specification for numpy.random.SeedSequence functionality.\n * Mixes sources of entropy in a reproducible way to set initial state\n * for independent and very probably non-overlapping BitGenerators.\n */\n\n// Method that produces a seed state from entropy sources with reproducibility \n// and non-degeneracy properties\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod SeedSequence(entropy: seq<nat>, spawnKey: seq<nat>, poolSize: nat := 4) \n    returns (result: seq<nat>)\n    requires poolSize > 0  // Pool size must be positive\n    ensures |result| == poolSize  // Well-defined output: result has correct size\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

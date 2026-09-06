@@ -1,0 +1,16 @@
+{
+ "id": "DA0008",
+ "source": "apps",
+ "source_id": "apps_test_48",
+ "fn": "solve",
+ "sello": "solve(n: Int, m: Int, k: Int) -> Int",
+ "helpers": [
+  "countLessValue",
+  "countLessOrEqualValue"
+ ],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn countLessValue(n: Int, m: Int, target: Int) -> Int\n  requires (n >= 0)\n  requires (m >= 1)\n  requires (target >= 1)\n  ensures (result == (if (n == 0) then 0 else ((if ((if (((target - 1) / n) > m) then m else ((target - 1) / n)) >= 1) then if (((target - 1) / n) > m) then m else ((target - 1) / n) else 0) + countLessValue((n - 1), m, target))))\n  ensures (result >= 0)\n  ensures (result <= (n * m))\n  effects pure\n  example (countLessValue(0, 1, 1) == 0)\n  example (countLessValue(1, 1, 2) == 1)\n{\n  if (n == 0) then 0 else ((if ((if (((target - 1) / n) > m) then m else ((target - 1) / n)) >= 1) then if (((target - 1) / n) > m) then m else ((target - 1) / n) else 0) + countLessValue((n - 1), m, target))\n}\n\nfn countLessOrEqualValue(n: Int, m: Int, target: Int) -> Int\n  requires (n >= 1)\n  requires (m >= 1)\n  requires (target >= 0)\n  ensures (result == (if (target <= 0) then 0 else if (target >= (n * m)) then (n * m) else countLessValue(n, m, (target + 1))))\n  ensures (result >= 0)\n  ensures (result <= (n * m))\n  effects pure\n  example (countLessOrEqualValue(1, 1, 0) == 0)\n  example (countLessOrEqualValue(1, 1, 1) == 1)\n{\n  if (target <= 0) then 0 else if (target >= (n * m)) then (n * m) else countLessValue(n, m, (target + 1))\n}\n\nfn solve(n: Int, m: Int, k: Int) -> Int\n  requires (1 <= n)\n  requires (n <= 500000)\n  requires (1 <= m)\n  requires (m <= 500000)\n  requires (1 <= k)\n  requires (k <= (n * m))\n  ensures (1 <= result)\n  ensures (result <= (n * m))\n  ensures (countLessOrEqualValue(n, m, result) >= k)\n  ensures ((result == 1) or (countLessOrEqualValue(n, m, (result - 1)) < k))\n  effects pure\n  example (solve(0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nfunction countLessValue(n: int, m: int, target: int): int\n  requires n >= 0 && m >= 1 && target >= 1\n  ensures countLessValue(n, m, target) >= 0\n  ensures countLessValue(n, m, target) <= n * m\n{\n  if n == 0 then 0\n  else \n    var maxJ := (target - 1) / n;\n    var actualMaxJ := if maxJ > m then m else maxJ;\n    var contribution := if actualMaxJ >= 1 then actualMaxJ else 0;\n    contribution + countLessValue(n - 1, m, target)\n}\n\nfunction countLessOrEqualValue(n: int, m: int, target: int): int\n  requires n >= 1 && m >= 1 && target >= 0\n  ensures countLessOrEqualValue(n, m, target) >= 0\n  ensures countLessOrEqualValue(n, m, target) <= n * m\n{\n  if target <= 0 then 0\n  else if target >= n * m then n * m\n  else countLessValue(n, m, target + 1)\n}\n\npredicate ValidInput(n: int, m: int, k: int)\n{\n  1 <= n <= 500000 && 1 <= m <= 500000 && 1 <= k <= n * m\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, m: int, k: int) returns (result: int)\n  requires ValidInput(n, m, k)\n  ensures 1 <= result <= n * m\n  ensures countLessOrEqualValue(n, m, result) >= k\n  ensures result == 1 || countLessOrEqualValue(n, m, result - 1) < k\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

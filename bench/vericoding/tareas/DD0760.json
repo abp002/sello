@@ -1,0 +1,13 @@
+{
+ "id": "DD0760",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_600_IsEven",
+ "fn": "IsEven",
+ "sello": "IsEven(n: Int) -> Bool",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn IsEven(n: Int) -> Bool\n  requires (n == n)\n  ensures (result == ((n % 2) == 0))\n  effects pure\n  example (IsEven(0) == true)\n{\n  true\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod IsEven(n: int) returns (result: bool)\n    ensures result <==> n % 2 == 0\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

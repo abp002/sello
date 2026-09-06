@@ -1,0 +1,13 @@
+{
+ "id": "DA0476",
+ "source": "apps",
+ "source_id": "apps_test_4160",
+ "fn": "solve",
+ "sello": "solve(X: Int) -> Int",
+ "helpers": [
+  "calculateDeposit"
+ ],
+ "notas": [],
+ "esqueleto": "fn calculateDeposit(initial: Int, years: Int) -> Int\n  requires (initial >= 0)\n  requires (years >= 0)\n  ensures (result == (if (years == 0) then initial else (calculateDeposit(initial, (years - 1)) + (calculateDeposit(initial, (years - 1)) / 100))))\n  effects pure\n  example (calculateDeposit(0, 0) == 0)\n{\n  if (years == 0) then initial else (calculateDeposit(initial, (years - 1)) + (calculateDeposit(initial, (years - 1)) / 100))\n}\n\nfn solve(X: Int) -> Int\n  requires (X >= 101)\n  ensures (result >= 0)\n  ensures (calculateDeposit(100, result) >= X)\n  ensures ((result == 0) or (calculateDeposit(100, (result - 1)) < X))\n  effects pure\n  example (solve(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nfunction calculateDeposit(initial: int, years: int): int\n    requires initial >= 0\n    requires years >= 0\n{\n    if years == 0 then initial\n    else \n        var prevDeposit := calculateDeposit(initial, years - 1);\n        prevDeposit + prevDeposit / 100\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(X: int) returns (years: int)\n    requires X >= 101\n    ensures years >= 0\n    ensures var finalDeposit := calculateDeposit(100, years); finalDeposit >= X\n    ensures years == 0 || calculateDeposit(100, years - 1) < X\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

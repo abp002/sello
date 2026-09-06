@@ -1,0 +1,13 @@
+{
+ "id": "DA0089",
+ "source": "apps",
+ "source_id": "apps_test_475",
+ "fn": "solve",
+ "sello": "solve(n: Int, m: Int, k: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn solve(n: Int, m: Int, k: Int) -> Int\n  requires (n >= 0)\n  requires (m >= 0)\n  requires (k >= 0)\n  requires (n >= 1)\n  requires (m >= 1)\n  requires (k >= 0)\n  requires (k <= (n - 1))\n  ensures (result < 998244353)\n  ensures (result >= 0)\n  effects pure\n  example (solve(0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: nat, m: nat, k: nat) {\n    n >= 1 && m >= 1 && k >= 0 && k <= n - 1\n}\n\nfunction factorial(n: nat): nat\n{\n    if n == 0 then 1\n    else n * factorial(n - 1)\n}\n\nfunction binomial(n: nat, k: nat): nat\n    requires k <= n\n{\n    if factorial(k) == 0 || factorial(n - k) == 0 then 0\n    else factorial(n) / (factorial(k) * factorial(n - k))\n}\n\nfunction power(base: nat, exp: nat): nat\n{\n    if exp == 0 then 1\n    else base * power(base, exp - 1)\n}\n\nfunction ExpectedResult(n: nat, m: nat, k: nat): nat\n    requires ValidInput(n, m, k)\n{\n    (m * power(m - 1, k) * binomial(n - 1, k)) % 998244353\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: nat, m: nat, k: nat) returns (result: nat)\n    requires ValidInput(n, m, k)\n    ensures result < 998244353\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

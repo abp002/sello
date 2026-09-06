@@ -1,0 +1,11 @@
+{
+ "id": "DA0003",
+ "source": "apps",
+ "source_id": "apps_test_11",
+ "fn": "solve",
+ "sello": "solve(n: Int, a: Int, b: Int, p: Int, q: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(n: Int, a: Int, b: Int, p: Int, q: Int) -> Int\n  requires (n > 0)\n  requires (a > 0)\n  requires (b > 0)\n  requires (p > 0)\n  requires (q > 0)\n  ensures (result >= 0)\n  effects pure\n  example (solve(0, 0, 0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, a: int, b: int, p: int, q: int) {\n  n > 0 && a > 0 && b > 0 && p > 0 && q > 0\n}\n\nfunction gcd(a: int, b: int): int\n  requires a > 0 && b >= 0\n  ensures gcd(a, b) > 0\n  decreases b\n{\n  if b == 0 then a else gcd(b, a % b)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, a: int, b: int, p: int, q: int) returns (result: int)\n  requires ValidInput(n, a, b, p, q)\n  ensures result >= 0\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

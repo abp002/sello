@@ -1,0 +1,11 @@
+{
+ "id": "DD0778",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_641_NthNonagonalNumber",
+ "fn": "NthNonagonalNumber",
+ "sello": "NthNonagonalNumber(n: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn NthNonagonalNumber(n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == ((n * ((7 * n) - 5)) / 2))\n  effects pure\n  example (NthNonagonalNumber(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod NthNonagonalNumber(n: int) returns (number: int)\n    requires n >= 0\n    ensures number == n * (7 * n - 5) / 2\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

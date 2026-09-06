@@ -1,0 +1,13 @@
+{
+ "id": "DD0064",
+ "source": "dafnybench",
+ "source_id": "Clover_integer_square_root_SquareRoot",
+ "fn": "SquareRoot",
+ "sello": "SquareRoot(N: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn SquareRoot(N: Int) -> Int\n  requires (N >= 0)\n  ensures ((result * result) <= N)\n  ensures (N < ((result + 1) * (result + 1)))\n  ensures (result >= 0)\n  effects pure\n  example (SquareRoot(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod SquareRoot(N:nat) returns (r:nat)\n  ensures r*r <= N < (r+1)*(r+1)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

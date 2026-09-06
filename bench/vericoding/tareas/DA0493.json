@@ -1,0 +1,13 @@
+{
+ "id": "DA0493",
+ "source": "apps",
+ "source_id": "apps_test_4215",
+ "fn": "solve",
+ "sello": "solve(a: Int, b: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "función supuesta: max"
+ ],
+ "esqueleto": "fn solve(a: Int, b: Int) -> Int\n  requires (1 <= a)\n  requires (a <= 100)\n  requires (1 <= b)\n  requires (b <= 100)\n  ensures (result >= 0)\n  ensures (result == (if (0 >= (a - (2 * b))) then 0 else (a - (2 * b))))\n  ensures (result == (if (a > (2 * b)) then (a - (2 * b)) else 0))\n  effects pure\n  example (solve(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(a: int, b: int)\n{\n    1 <= a <= 100 && 1 <= b <= 100\n}\n\nfunction UncoveredLength(a: int, b: int): int\n{\n    max(0, a - 2 * b)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(a: int, b: int) returns (result: int)\n    requires ValidInput(a, b)\n    ensures result >= 0\n    ensures result == UncoveredLength(a, b)\n    ensures result == if a > 2 * b then a - 2 * b else 0\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

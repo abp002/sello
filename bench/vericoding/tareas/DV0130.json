@@ -1,0 +1,13 @@
+{
+ "id": "DV0130",
+ "source": "verina",
+ "source_id": "verina_basic_50_task",
+ "fn": "abs_impl",
+ "sello": "abs_impl(x: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn abs_impl(x: Int) -> Int\n  requires (x == x)\n  ensures ((not (x >= 0)) or (result == x))\n  ensures ((not (x < 0)) or ((x + result) == 0))\n  effects pure\n  example (abs_impl(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nfunction abs(x: int): int\n{\n    if x >= 0 then x else -x\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod abs_impl(x: int) returns (result: int)\n    ensures (x >= 0 ==> result == x) && (x < 0 ==> x + result == 0)\n// </vc-spec>\n// <vc-code>\n{\n    if x >= 0 {\n        result := x;\n    } else {\n        result := -x;\n    }\n}\n// </vc-code>\n"
+}

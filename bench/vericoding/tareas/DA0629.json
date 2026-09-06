@@ -1,0 +1,13 @@
+{
+ "id": "DA0629",
+ "source": "apps",
+ "source_id": "apps_test_4571",
+ "fn": "solve",
+ "sello": "solve(n: Int, m: Int) -> Int",
+ "helpers": [
+  "power"
+ ],
+ "notas": [],
+ "esqueleto": "fn power(base: Int, exp: Int) -> Int\n  requires (exp >= 0)\n  ensures (result == (if (exp == 0) then 1 else (base * power(base, (exp - 1)))))\n  effects pure\n  example (power(0, 0) == 1)\n  example (power(0, 1) == 0)\n{\n  if (exp == 0) then 1 else (base * power(base, (exp - 1)))\n}\n\nfn solve(n: Int, m: Int) -> Int\n  requires (1 <= n)\n  requires (n <= 100)\n  requires (1 <= m)\n  requires (m <= n)\n  requires (m <= 5)\n  ensures (result == (((1900 * m) + (100 * (n - m))) * power(2, m)))\n  effects pure\n  example (solve(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, m: int) {\n  1 <= n <= 100 && 1 <= m <= n && m <= 5\n}\n\nfunction power(base: int, exp: int): int\n  requires exp >= 0\n  decreases exp\n{\n  if exp == 0 then 1 else base * power(base, exp - 1)\n}\n\nfunction ExpectedTime(n: int, m: int): int\n  requires ValidInput(n, m)\n{\n  (1900 * m + 100 * (n - m)) * power(2, m)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, m: int) returns (result: int)\n  requires ValidInput(n, m)\n  ensures result == ExpectedTime(n, m)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

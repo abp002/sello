@@ -1,0 +1,13 @@
+{
+ "id": "DA0071",
+ "source": "apps",
+ "source_id": "apps_test_291",
+ "fn": "solve",
+ "sello": "solve(a: Int, b: Int) -> Int",
+ "helpers": [
+  "pow"
+ ],
+ "notas": [],
+ "esqueleto": "fn pow(base: Int, exp: Int) -> Int\n  requires (exp >= 0)\n  ensures (result == (if (exp == 0) then 1 else (base * pow(base, (exp - 1)))))\n  ensures ((not (exp == 0)) or (result == 1))\n  ensures ((not ((exp > 0) and (base > 0))) or (result > 0))\n  ensures ((not ((exp > 0) and (base == 0))) or (result == 0))\n  effects pure\n  example (pow(0, 0) == 1)\n  example (pow(0, 1) == 0)\n{\n  if (exp == 0) then 1 else (base * pow(base, (exp - 1)))\n}\n\nfn solve(a: Int, b: Int) -> Int\n  requires (1 <= a)\n  requires (a <= b)\n  requires (b <= 10)\n  ensures (result >= 0)\n  ensures ((a * pow(3, result)) > (b * pow(2, result)))\n  ensures ((result == 0) or ((a * pow(3, (result - 1))) <= (b * pow(2, (result - 1)))))\n  effects pure\n  example (solve(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nfunction pow(base: int, exp: int): int\n  requires exp >= 0\n  ensures exp == 0 ==> pow(base, exp) == 1\n  ensures exp > 0 && base > 0 ==> pow(base, exp) > 0\n  ensures exp > 0 && base == 0 ==> pow(base, exp) == 0\n{\n  if exp == 0 then 1\n  else base * pow(base, exp - 1)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(a: int, b: int) returns (years: int)\n  requires 1 <= a <= b <= 10\n  ensures years >= 0\n  ensures a * pow(3, years) > b * pow(2, years)\n  ensures years == 0 || a * pow(3, years - 1) <= b * pow(2, years - 1)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

@@ -1,0 +1,13 @@
+{
+ "id": "DD0080",
+ "source": "dafnybench",
+ "source_id": "Clover_return_seven_M",
+ "fn": "M",
+ "sello": "M(x: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn M(x: Int) -> Int\n  requires (x == x)\n  ensures (result == 7)\n  effects pure\n  example (M(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod M(x: int) returns (seven: int)\n  ensures seven==7\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

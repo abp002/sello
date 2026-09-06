@@ -12,6 +12,7 @@ Aquí vive la métrica. Antes que el compilador.
 | `mutantes.py` | soluciones de `resultados/juez-*.jsonl` | De los bugs de cuerpo que el juez débil deja pasar, ¿cuántos caza el contrato? Sin modelo. |
 | `cotas.py` | soluciones de `resultados/juez-*.jsonl` | ¿Cuántas funciones principales tienen un `ensures` que solo acota el resultado? Sin modelo. |
 | `probador.py` | soluciones de `juez-*.jsonl` y mutantes de `mutantes-*.jsonl` | ¿Cuántas funciones prueba el nivel 2 (Z3) y cuántos mutantes que llegaban a producción mata en compilación? Sin modelo. |
+| `vericoding/harness4.py` | `vericoding/tareas/` | **Fase 4.** Con el contrato del benchmark de vericoding (traducido de Dafny), ¿qué fracción deja el modelo en nivel 2, en cuántos intentos y con qué errores? |
 
 ## El juez imperfecto (`harness3.py`)
 
@@ -97,3 +98,30 @@ un bug real que el juez débil y el oráculo dejaron pasar: se lista aparte.
                      bench/resultados/juez-2026-09-05-1920-haiku-contrato.jsonl \
         --mutantes bench/resultados/mutantes-2026-09-05-1931.jsonl
     uv run python bench/probador.py --soluciones bench/resultados/juez-2026-09-05-0015-sonnet.jsonl --only nth   # humo
+
+## El benchmark de vericoding (`vericoding/`)
+
+Fase 4: las specs Dafny del [benchmark de vericoding](https://github.com/Beneficial-AI-Foundation/vericoding-benchmark)
+como contratos de Sello. Tres piezas:
+
+- `bajar.py`: el CSV de metadatos y las 3.029 specs Dafny (`specs/<ID>_specs.dfy`) a
+  `vericoding/cache/` (fuera del repo). Solo `raw.githubusercontent.com` pasa el proxy.
+- `traducir.py`: Dafny → Sello. Los helpers no recursivos se inlinean en las cláusulas; los
+  recursivos quedan congelados como `fn` con `ensures result == <cuerpo>` y ejemplos calculados;
+  `==>` es `not a or b`, `|s|` es `len(s)`, `x in s` es `contains(s, x)`, `forall x :: x in s ==> P`
+  es `forall x in s: P`, `nat` es `Int` más `>= 0`. Lo que Sello no tiene (índices `s[i]`, tramos,
+  cuantificadores sobre enteros, `array`, `real`, `string`, `set`, `map`, datatypes, varios valores
+  de retorno) no se traduce y se cuenta por qué: `resultados/vericoding-traduccion-*.md`. Las que
+  caben van a `vericoding/tareas/<ID>.json` (con la spec Dafny original). Tiene test.
+- `harness4.py`: la condición `sello_contrato` con ese contrato: la principal sin cuerpo ni
+  ejemplos y los helpers congelados; el modelo escribe el cuerpo y sus `example` (el benchmark no
+  trae casos). Lo que compila pero no se prueba vuelve al modelo con el motivo `unproven`, como en
+  el benchmark vuelve el error del verificador. Éxito («el verificador acepta»): la principal y todo
+  lo que llama, transitivamente, en nivel 2; los helpers congelados se dan por buenos (su contrato
+  es su definición) y se anota cuántos quedan en nivel 1. Segunda columna: nivel 1. Tiene test.
+
+    uv run python bench/vericoding/bajar.py
+    uv run python bench/vericoding/traducir.py                       # cobertura + tareas/
+    uv run python bench/vericoding/traducir.py DA0001 --ver          # una, con el contrato o los motivos
+    uv run python bench/vericoding/harness4.py --model haiku --muestra 50 --semilla 1
+    uv run python bench/vericoding/harness4.py --model haiku --only DA0003     # humo

@@ -1,0 +1,13 @@
+{
+ "id": "DA0229",
+ "source": "apps",
+ "source_id": "apps_test_1074",
+ "fn": "solve",
+ "sello": "solve(a: Int) -> Int",
+ "helpers": [
+  "CountOnesInOctal"
+ ],
+ "notas": [],
+ "esqueleto": "fn CountOnesInOctal(a: Int) -> Int\n  requires (a >= 0)\n  ensures (result == (if (a == 0) then 0 else ((if ((a % 8) == 1) then 1 else 0) + CountOnesInOctal((a / 8)))))\n  effects pure\n  example (CountOnesInOctal(0) == 0)\n  example (CountOnesInOctal(1) == 1)\n{\n  if (a == 0) then 0 else ((if ((a % 8) == 1) then 1 else 0) + CountOnesInOctal((a / 8)))\n}\n\nfn solve(a: Int) -> Int\n  requires (a >= 0)\n  ensures (result >= 0)\n  ensures (result == CountOnesInOctal(a))\n  effects pure\n  example (solve(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nfunction CountOnesInOctal(a: int): int\n    requires a >= 0\n{\n    if a == 0 then 0\n    else (if a % 8 == 1 then 1 else 0) + CountOnesInOctal(a / 8)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(a: int) returns (count: int)\n    requires a >= 0\n    ensures count >= 0\n    ensures count == CountOnesInOctal(a)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

@@ -1,0 +1,18 @@
+{
+ "id": "DA0223",
+ "source": "apps",
+ "source_id": "apps_test_1052",
+ "fn": "solve",
+ "sello": "solve(n: Int, k: Int) -> Int",
+ "helpers": [
+  "factorial",
+  "derangement",
+  "binomial",
+  "sum_binomial_derangement"
+ ],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn factorial(n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == (if (n <= 1) then 1 else (n * factorial((n - 1)))))\n  ensures (result > 0)\n  effects pure\n  example (factorial(0) == 1)\n  example (factorial(2) == 2)\n{\n  if (n <= 1) then 1 else (n * factorial((n - 1)))\n}\n\nfn derangement(n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == (if (n <= 1) then 0 else if (n == 2) then 1 else ((n - 1) * (derangement((n - 1)) + derangement((n - 2))))))\n  ensures (result >= 0)\n  effects pure\n  example (derangement(0) == 0)\n  example (derangement(2) == 1)\n{\n  if (n <= 1) then 0 else if (n == 2) then 1 else ((n - 1) * (derangement((n - 1)) + derangement((n - 2))))\n}\n\nfn binomial(n: Int, k: Int) -> Int\n  requires (n >= 0)\n  requires (k >= 0)\n  ensures (result == (if (k > n) then 0 else if ((k == 0) or (k == n)) then 1 else (factorial(n) / (factorial(k) * factorial((n - k))))))\n  ensures (result >= 0)\n  effects pure\n  example (binomial(0, 0) == 1)\n  example (binomial(0, 1) == 0)\n{\n  if (k > n) then 0 else if ((k == 0) or (k == n)) then 1 else (factorial(n) / (factorial(k) * factorial((n - k))))\n}\n\nfn sum_binomial_derangement(n: Int, k: Int, i: Int) -> Int\n  requires (n >= 0)\n  requires (k >= 0)\n  requires (i >= 0)\n  ensures (result == (if (i >= (n - k)) then 0 else ((binomial(n, i) * derangement((n - i))) + sum_binomial_derangement(n, k, (i + 1)))))\n  ensures (result >= 0)\n  effects pure\n  example (sum_binomial_derangement(0, 0, 0) == 0)\n  example (sum_binomial_derangement(2, 0, 0) == 1)\n{\n  if (i >= (n - k)) then 0 else ((binomial(n, i) * derangement((n - i))) + sum_binomial_derangement(n, k, (i + 1)))\n}\n\nfn solve(n: Int, k: Int) -> Int\n  requires (4 <= n)\n  requires (n <= 1000)\n  requires (1 <= k)\n  requires (k <= 4)\n  requires (k < n)\n  ensures (result == (factorial(n) - sum_binomial_derangement(n, k, 0)))\n  effects pure\n  example (solve(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, k: int)\n{\n  4 <= n <= 1000 && 1 <= k <= 4 && k < n\n}\n\nfunction factorial(n: int): int\n  requires n >= 0\n  ensures factorial(n) > 0\n{\n  if n <= 1 then 1 else n * factorial(n - 1)\n}\n\nfunction derangement(n: int): int\n  requires n >= 0\n  ensures derangement(n) >= 0\n{\n  if n <= 1 then 0\n  else if n == 2 then 1\n  else (n - 1) * (derangement(n - 1) + derangement(n - 2))\n}\n\nfunction binomial(n: int, k: int): int\n  requires n >= 0 && k >= 0\n  ensures binomial(n, k) >= 0\n{\n  if k > n then 0\n  else if k == 0 || k == n then 1\n  else factorial(n) / (factorial(k) * factorial(n - k))\n}\n\nfunction sum_binomial_derangement(n: int, k: int, i: int): int\n  requires n >= 0 && k >= 0 && i >= 0\n  ensures sum_binomial_derangement(n, k, i) >= 0\n  decreases n - k - i\n{\n  if i >= n - k then 0\n  else binomial(n, i) * derangement(n - i) + sum_binomial_derangement(n, k, i + 1)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, k: int) returns (result: int)\n  requires ValidInput(n, k)\n  ensures result == factorial(n) - sum_binomial_derangement(n, k, 0)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

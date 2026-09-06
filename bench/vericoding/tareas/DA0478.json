@@ -1,0 +1,13 @@
+{
+ "id": "DA0478",
+ "source": "apps",
+ "source_id": "apps_test_4167",
+ "fn": "solve",
+ "sello": "solve(N: Int, K: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn solve(N: Int, K: Int) -> Int\n  requires (N >= 1)\n  requires (K >= 1)\n  ensures (result >= 0)\n  ensures (result == (if ((K % 2) == 1) then (((N / K) * (N / K)) * (N / K)) else ((((N / K) * (N / K)) * (N / K)) + ((((N / K) + (if ((N % K) >= (K / 2)) then 1 else 0)) * ((N / K) + (if ((N % K) >= (K / 2)) then 1 else 0))) * ((N / K) + (if ((N % K) >= (K / 2)) then 1 else 0))))))\n  effects pure\n  example (solve(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidTriple(a: int, b: int, c: int, N: int, K: int)\n    requires K >= 1\n{\n    1 <= a <= N && 1 <= b <= N && 1 <= c <= N &&\n    (a + b) % K == 0 && (b + c) % K == 0 && (c + a) % K == 0\n}\n\nfunction CountValidTriples(N: int, K: int): int\n    requires N >= 1 && K >= 1\n{\n    if K % 2 == 1 then\n        var cnt1 := N / K;\n        cnt1 * cnt1 * cnt1\n    else\n        var cnt1 := N / K;\n        var cnt2 := N / K + (if N % K >= K / 2 then 1 else 0);\n        cnt1 * cnt1 * cnt1 + cnt2 * cnt2 * cnt2\n}\n\npredicate ValidInput(N: int, K: int)\n{\n    N >= 1 && K >= 1\n}\n\nfunction CountDivisibleByK(n: int, K: int): int\n    requires K >= 1\n{\n    if n <= 0 then 0 else n / K\n}\n\nfunction CountWithRemainderHalfK(n: int, K: int): int\n    requires K >= 1\n{\n    if n <= 0 then 0 else n / K + (if n % K >= K / 2 then 1 else 0)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(N: int, K: int) returns (result: int)\n    requires ValidInput(N, K)\n    ensures result >= 0\n    ensures result == CountValidTriples(N, K)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

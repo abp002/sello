@@ -1,0 +1,11 @@
+{
+ "id": "DA0539",
+ "source": "apps",
+ "source_id": "apps_test_4327",
+ "fn": "CalculateMaxPies",
+ "sello": "CalculateMaxPies(A: Int, P: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn CalculateMaxPies(A: Int, P: Int) -> Int\n  requires (0 <= A)\n  requires (A <= 100)\n  requires (0 <= P)\n  requires (P <= 100)\n  ensures (result == (((A * 3) + P) / 2))\n  ensures (result >= 0)\n  ensures (result == (((A * 3) + P) / 2))\n  effects pure\n  example (CalculateMaxPies(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(A: int, P: int)\n{\n    0 <= A <= 100 && 0 <= P <= 100\n}\n\nfunction TotalPieces(A: int, P: int): int\n    requires ValidInput(A, P)\n{\n    A * 3 + P\n}\n\nfunction MaxPies(A: int, P: int): int\n    requires ValidInput(A, P)\n{\n    TotalPieces(A, P) / 2\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod CalculateMaxPies(A: int, P: int) returns (pies: int)\n    requires ValidInput(A, P)\n    ensures pies == MaxPies(A, P)\n    ensures pies >= 0\n    ensures pies == (A * 3 + P) / 2\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

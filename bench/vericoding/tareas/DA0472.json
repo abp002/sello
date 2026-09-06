@@ -1,0 +1,13 @@
+{
+ "id": "DA0472",
+ "source": "apps",
+ "source_id": "apps_test_4143",
+ "fn": "solve",
+ "sello": "solve(N: Int, A: Int, B: Int, C: Int, D: Int, E: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn solve(N: Int, A: Int, B: Int, C: Int, D: Int, E: Int) -> Int\n  requires (N >= 1)\n  requires (A >= 1)\n  requires (B >= 1)\n  requires (C >= 1)\n  requires (D >= 1)\n  requires (E >= 1)\n  ensures (result == (4 + (((N + (if ((if ((if ((if (A <= B) then A else B) <= C) then if (A <= B) then A else B else C) <= D) then if ((if (A <= B) then A else B) <= C) then if (A <= B) then A else B else C else D) <= E) then if ((if ((if (A <= B) then A else B) <= C) then if (A <= B) then A else B else C) <= D) then if ((if (A <= B) then A else B) <= C) then if (A <= B) then A else B else C else D else E)) - 1) / (if ((if ((if ((if (A <= B) then A else B) <= C) then if (A <= B) then A else B else C) <= D) then if ((if (A <= B) then A else B) <= C) then if (A <= B) then A else B else C else D) <= E) then if ((if ((if (A <= B) then A else B) <= C) then if (A <= B) then A else B else C) <= D) then if ((if (A <= B) then A else B) <= C) then if (A <= B) then A else B else C else D else E))))\n  ensures (result >= 5)\n  effects pure\n  example (solve(0, 0, 0, 0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(N: int, A: int, B: int, C: int, D: int, E: int)\n{\n    N >= 1 && A >= 1 && B >= 1 && C >= 1 && D >= 1 && E >= 1\n}\n\nfunction MinCapacity(A: int, B: int, C: int, D: int, E: int): int\n    requires A >= 1 && B >= 1 && C >= 1 && D >= 1 && E >= 1\n{\n    var temp1 := if A <= B then A else B;\n    var temp2 := if temp1 <= C then temp1 else C;\n    var temp3 := if temp2 <= D then temp2 else D;\n    if temp3 <= E then temp3 else E\n}\n\nfunction CeilDiv(a: int, b: int): int\n    requires a >= 0 && b >= 1\n{\n    (a + b - 1) / b\n}\n\npredicate CorrectResult(N: int, A: int, B: int, C: int, D: int, E: int, result: int)\n    requires ValidInput(N, A, B, C, D, E)\n{\n    var minCap := MinCapacity(A, B, C, D, E);\n    var groups := CeilDiv(N, minCap);\n    result == 4 + groups\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(N: int, A: int, B: int, C: int, D: int, E: int) returns (result: int)\n    requires ValidInput(N, A, B, C, D, E)\n    ensures CorrectResult(N, A, B, C, D, E, result)\n    ensures result >= 5\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

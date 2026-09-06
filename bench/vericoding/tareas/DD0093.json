@@ -1,0 +1,13 @@
+{
+ "id": "DD0093",
+ "source": "dafnybench",
+ "source_id": "Clover_triple4_Triple",
+ "fn": "Triple",
+ "sello": "Triple(x: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn Triple(x: Int) -> Int\n  requires (x == x)\n  ensures (result == (3 * x))\n  effects pure\n  example (Triple(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod Triple (x:int) returns (r:int)\n  ensures r==3*x\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

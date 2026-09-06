@@ -1,0 +1,11 @@
+{
+ "id": "DD0794",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_770_SumOfFourthPowerOfOddNumbers",
+ "fn": "SumOfFourthPowerOfOddNumbers",
+ "sello": "SumOfFourthPowerOfOddNumbers(n: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn SumOfFourthPowerOfOddNumbers(n: Int) -> Int\n  requires (n > 0)\n  ensures (result == (((n * ((2 * n) + 1)) * ((((((24 * n) * n) * n) - ((12 * n) * n)) - (14 * n)) + 7)) / 15))\n  effects pure\n  example (SumOfFourthPowerOfOddNumbers(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod SumOfFourthPowerOfOddNumbers(n: int) returns (sum: int)\n    requires n > 0\n    ensures sum == n * (2 * n + 1) * (24 * n * n * n - 12 * n * n  - 14 * n + 7) / 15\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

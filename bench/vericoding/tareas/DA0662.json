@@ -1,0 +1,11 @@
+{
+ "id": "DA0662",
+ "source": "apps",
+ "source_id": "apps_test_4701",
+ "fn": "solve",
+ "sello": "solve(n: Int, k: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(n: Int, k: Int) -> Int\n  requires (n >= 1)\n  requires (k >= 1)\n  ensures (result >= 1)\n  effects pure\n  example (solve(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, k: int)\n{\n    n >= 1 && k >= 1\n}\n\nfunction ApplyOperations(start: int, operations: seq<bool>, k: int): int\n    requires k >= 1\n    requires start >= 1\n    ensures ApplyOperations(start, operations, k) >= start\n    decreases |operations|\n{\n    if |operations| == 0 then start\n    else if operations[0] then ApplyOperations(start * 2, operations[1..], k)\n    else ApplyOperations(start + k, operations[1..], k)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, k: int) returns (result: int)\n    requires ValidInput(n, k)\n    ensures result >= 1\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

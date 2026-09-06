@@ -1,0 +1,15 @@
+{
+ "id": "DD0356",
+ "source": "dafnybench",
+ "source_id": "Prog-Fun-Solutions_tmp_tmp7_gmnz5f_extra_mod_mod",
+ "fn": "mod",
+ "sello": "mod(n: Int) -> Int",
+ "helpers": [
+  "f"
+ ],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn f(n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == (if (n == 0) then 1 else if ((n % 2) == 0) then (1 + (2 * f((n / 2)))) else (2 * f((n / 2)))))\n  ensures (result >= 0)\n  effects pure\n  example (f(0) == 1)\n  example (f(1) == 2)\n{\n  if (n == 0) then 1 else if ((n % 2) == 0) then (1 + (2 * f((n / 2)))) else (2 * f((n / 2)))\n}\n\nfn mod(n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == f(n))\n  ensures (result >= 0)\n  effects pure\n  example (mod(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nghost function f(n: nat): nat {\n    if n == 0 then 1 \n    else if n%2 == 0 then 1 + 2*f(n/2)\n    else 2*f(n/2)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod mod(n:nat) returns (a:nat) \nensures a == f(n)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

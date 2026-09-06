@@ -1,0 +1,11 @@
+{
+ "id": "DA0676",
+ "source": "apps",
+ "source_id": "apps_test_4724",
+ "fn": "solve",
+ "sello": "solve(R: Int, G: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(R: Int, G: Int) -> Int\n  requires (0 <= R)\n  requires (R <= 4500)\n  requires (0 <= G)\n  requires (G <= 4500)\n  ensures (result == ((2 * G) - R))\n  ensures ((R + result) == (2 * G))\n  effects pure\n  example (solve(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(R: int, G: int) {\n    0 <= R <= 4500 && 0 <= G <= 4500\n}\n\nfunction RequiredPerformance(R: int, G: int): int {\n    2 * G - R\n}\n\npredicate CorrectResult(R: int, G: int, P: int) {\n    (R + P) == 2 * G\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(R: int, G: int) returns (result: int)\n    requires ValidInput(R, G)\n    ensures result == RequiredPerformance(R, G)\n    ensures CorrectResult(R, G, result)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

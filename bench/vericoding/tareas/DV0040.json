@@ -1,0 +1,13 @@
+{
+ "id": "DV0040",
+ "source": "verina",
+ "source_id": "verina_advanced_41_task",
+ "fn": "MaxOfThree",
+ "sello": "MaxOfThree(a: Int, b: Int, c: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn MaxOfThree(a: Int, b: Int, c: Int) -> Int\n  requires (a == a)\n  ensures (result >= a)\n  ensures (result >= b)\n  ensures (result >= c)\n  ensures (((result == a) or (result == b)) or (result == c))\n  effects pure\n  example (MaxOfThree(0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod MaxOfThree(a: int, b: int, c: int) returns (result: int)\n    ensures result >= a && result >= b && result >= c\n    ensures result == a || result == b || result == c\n// </vc-spec>\n// <vc-code>\n{\n    // impl-start\n    assume {:axiom} false;\n    result := 0;\n    // impl-end\n}\n// </vc-code>\n"
+}
