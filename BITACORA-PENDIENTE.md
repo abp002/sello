@@ -161,3 +161,138 @@ que decrece y no es negativa, la longitud de una lista o la diferencia de dos `I
   hechos derivados en los puntos de ligadura)? Criterio: sobre las mismas 36 soluciones,
   funciones en nivel 2 > 46/89 sin que baje el número de mutantes muertos (25/48) ni aparezca
   ningún rechazo no confirmado por el intérprete, con los mismos presupuestos de tiempo.
+
+---
+
+## 2026-09-06 (tarde) · Hechos para las listas, servidor MCP y reconocimiento de la fase 4
+
+Rama `claude/sello-work-bgacgo`. Sesión con el límite de uso por medio: el intento de
+lanzar cuatro variantes de codificación en paralelo (agentes en worktrees) murió antes de
+empezar; se hizo en secuencia, a mano.
+
+### Qué se hizo
+
+- Hechos derivados para la teoría de secuencias de Z3 (`sello/prover.py`, `FACTS`): al ligar
+  `[h, ..t]` sobre `s`, `len(t) == len(s) - 1`, `forall i: t[i] == s[i+1]` y `forall i >= 1:
+  s[i] == t[i-1]`; para cada `a ++ b`, la longitud y los índices por tramos. Son teoremas de la
+  teoría, pero dichos así un testigo `s[i]` de un cuantificador negado alcanza `t[i-1]`, donde
+  vive la hipótesis de inducción.
+- Cada consulta se decide en fases configurables (`PHASES`): solver sin patrones de
+  instanciación explícitos, primero solo E-matching (300 ms) y luego MBQI (700 ms). Fases
+  seguidas sobre el mismo solver comparten el scope (`decide`). El traductor puede poner
+  patrones explícitos (`xs[i]`) en cada cuantificador (`Translator(patterns=True)`), pero está
+  apagado: ver «qué se midió».
+- Servidor MCP (`sello/mcp.py`, `uv run sello mcp --store PATH`, paquete `mcp` 2.x,
+  `MCPServer` por stdio): tools `sello_spec` (la spec, el prompt), `sello_check`, `sello_add`,
+  `sello_sig`, `sello_view`, `sello_deps`, `sello_users`, `sello_names`, `sello_verify`,
+  `sello_eval`, con los mismos JSON que la CLI y `{ok: false, error}` en vez de excepción.
+  Comprobado en proceso (las diez tools sobre `ejemplos/basicos.sello`); sin tests (glue).
+- Reconocimiento del benchmark de vericoding para la fase 4 (abajo).
+
+### Qué se midió
+
+Medición rápida (`prove_program` sobre las 36 soluciones aceptadas del 5 de septiembre,
+funciones probadas de 92; varía ±1-2 entre corridas por el tiempo):
+
+| configuración | probadas |
+|---|---|
+| sin hechos, dos fases (referencia) | 45/92 |
+| hechos de cons | 50/92 |
+| hechos de concat | 47/92 |
+| cons + concat | 49-50/92 |
+| cons + concat con patrones explícitos en todo | 41/92 |
+| solo patrones explícitos | 41/92 (y un contraejemplo real más, ver abajo) |
+| cons + concat, cuatro fases (s0, s1, p0, p1) | 50-51/92 |
+| cons + concat, patrones primero (p0, p1, s0, s1) | 45-46/92 (con el contraejemplo) |
+| **cons + concat, dos fases sin patrones (elegida)** | **52/92** |
+
+Medición completa (`bench/probador.py`, mismas 36 soluciones y mutantes del 5 de septiembre):
+
+| | funciones en nivel 2 | mutantes muertos / llegaban | equivalentes muertos | tiempo (s) |
+|---|---|---|---|---|
+| original (mañana) | 46/89 (52 %) | 25/48 | 15/118 | 83 + 361 |
+| hechos de cons, dos fases (`probador-2026-09-06-1312`) | 49/89 (55 %) | 27/48 | 12/118 | 68 + 373 |
+| cons + concat, cuatro fases (`probador-2026-09-06-1324`) | 49/89 (55 %) | 25/48 | 15/118 | 47 + 352 |
+| cons + concat, dos fases: la definitiva | ver `probador-2026-09-06-<hora>` (última del día) | | | |
+
+- Los patrones explícitos bajan las pruebas por E-matching, pero con ellos MBQI converge en un
+  modelo que sin ellos no encuentra: `find_max_helper([4, 6], [], Some(4))` de most_frequent
+  (haiku) devuelve `Some(4)` y viola su `ensures` (4 y 6 empatan; el `requires` del helper no
+  dice que `best` sea el más frecuente de lo ya visto). Es el segundo bug real en una
+  solución aceptada, de la misma familia que `search` de int_sqrt: un helper con `requires`
+  demasiado débil. Solo sale con las fases de patrones *antes* que las otras, y eso cuesta
+  4-7 pruebas y tiempo; como fases posteriores (frías) no sale. Queda documentado en
+  `prover.py`, no activado.
+- Lo que sigue en unknown con los hechos: `sorted(result)` y `distinct(result)` (merge_sorted,
+  dedupe), `forall x in xs: x <= result` cuando la recursión pasa por un `match` anidado, y
+  los contratos por helper Bool con `ensures` débil (max_subarray de sonnet: `start_sum_le`).
+
+### Qué falló
+
+- El torneo de codificaciones por agentes (axiomas al estilo Dafny, listas algebraicas, hechos
+  derivados, tuning): el límite de uso mató a los seis agentes con 0 resultados. Las dos
+  variantes no probadas (axiomas al estilo Dafny con sort no interpretado; listas algebraicas
+  con definiciones recursivas) siguen siendo las candidatas para `sorted`/`distinct`.
+- Los patrones explícitos como cuarta fase: ni pruebas ni mutantes de más. La ganancia del
+  contraejemplo depende del orden y del estado del solver entre obligaciones (con el scope
+  compartido desaparece): frágil, no se adopta.
+- `mcp` 2.x renombró FastMCP a `MCPServer`; el wrapper de errores tiene que conservar la
+  firma (`functools.wraps`) o MCP no ve los parámetros de la tool.
+
+### Decisiones tomadas
+
+#### Los hechos de cons y concat entran; los patrones explícitos no
+
+Medido: cons +5 funciones probadas sobre 92; concat +2 sola y neutra con cons (se queda por
+principio: es la misma familia de hechos y no cuesta); patrones -4 a -11. Presupuestos como
+antes (300 ms E-matching, 700 ms MBQI, 3 s por función, 30 s por programa).
+
+#### El servidor MCP es la API de lectura, sin lógica propia
+
+Cada tool devuelve el dict de la CLI; el almacén se abre por llamada; la spec se sirve como
+tool porque es el prompt. Sin tests, como la CLI.
+
+### Fase 4: el benchmark de vericoding, reconocido
+
+- Repo `github.com/Beneficial-AI-Foundation/vericoding-benchmark` (MIT), artículo arXiv
+  2509.22908 (bloqueado por el proxy; el resumen dice: 12.504 especificaciones, 27 % Lean,
+  44 % Verus, 82 % Dafny de éxito con modelos de serie). Los ficheros crudos sí bajan por
+  el proxy (`raw.githubusercontent.com`); la API de GitHub y Hugging Face, no.
+- 12.504 tareas: lean 7.141, dafny 3.029, verus 2.334. Dafny por fuente (total / sin
+  `qa-issue`): apps 883/677, dafnybench 929/443, numpy_triple 603/603, verified_cogen 172/172,
+  humaneval 164/162, verina 157/157, bignum 62/62, numpy_simple 59/58. Metadatos en
+  `vericoding_benchmark_v1.csv` (id, language, source, source-id, qa-issue, qa-issue-type,
+  qa-score); `vericoding_results_v1.csv` con 55.397 experimentos.
+- Formato: `specs/<ID>_specs.dfy` (DA apps, DD dafnybench, DH humaneval, DT numpy_triple,
+  DV verina, DJ verified_cogen, DB bignum, DS numpy_simple) con secciones `<vc-preamble>`
+  (funciones y predicados que definen la spec), `<vc-helpers>` (vacía: para lo que añada el
+  que resuelve), `<vc-spec>` (el `method` con `requires`/`ensures`) y `<vc-code>` con el
+  hueco `assume {:axiom} false`. Éxito en el benchmark: el verificador acepta el fichero con
+  la spec intacta.
+- Qué cabe en Sello (escaneo heurístico de las 2.334 specs Dafny sin `qa-issue`, preámbulo +
+  spec): 246 usan solo `int`/`bool`/`seq` sin índices ni cuantificadores acotados sobre
+  enteros (apps 129, dafnybench 61, verina 23, humaneval 18); 578 si se traducen `s[i]` y
+  `forall i :: 0 <= i < |s| ==> ...` con helpers (apps 283, dafnybench 99, humaneval 71,
+  numpy_triple 53, verina 48). Fuera: `array<T>` (542), `real` (506), `string` (596),
+  `set`/`multiset` (128), clases y datatypes (169), varios valores de retorno (158).
+  Ejemplo que cabe tal cual: DA0001 (predicados sobre enteros, `==>` → `not a or b`, `abs`
+  como helper).
+- Diseño propuesto para `bench/vericoding/`: `bajar.py` (por id, de raw.githubusercontent),
+  `traducir.py` (Dafny → esqueleto Sello: firma con tipos, predicados del preámbulo como
+  `fn ... -> Bool`, `requires`/`ensures` del `method`; lo no traducible se cuenta y se
+  descarta), y un harness como `sello_contrato`: el contrato lo escribe el benchmark, el
+  modelo escribe el cuerpo, y el éxito es el certificado de nivel 2 (lo que en el benchmark
+  es «el verificador acepta»), con el nivel 1 como segunda columna. Sin oráculo: el benchmark
+  no trae tests.
+- Lo que Sello no tiene y el benchmark pide a cada paso: índices `s[i]` y cuantificadores
+  acotados sobre enteros en los contratos. Son las dos features candidatas de la fase 4, y
+  entran solo si la medición dice que suben el nivel 2 sin subir los intentos.
+
+### Prerregistro de la siguiente medición
+
+- Fase 4, primera corrida: sobre las 246 tareas Dafny que caben tal cual (o una muestra de 50
+  con semilla fija), condición `sello_contrato` con el contrato traducido del benchmark.
+  Pregunta: qué fracción queda en nivel 2 con haiku y con sonnet, cuántos intentos, y qué
+  errores dominan. Criterio de éxito de la fase: que el nivel 2 sea comparable con el 82 %
+  de Dafny del artículo en ese subconjunto; si no, que los `unproven` digan qué codificación
+  falta.
