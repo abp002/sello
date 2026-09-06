@@ -124,6 +124,12 @@ def cmd_test(args: argparse.Namespace) -> int:
                  "failed": failed}, 1 if failed else 0)
 
 
+def cmd_mcp(args: argparse.Namespace) -> int:
+    from .mcp import serve
+    serve(args.store)
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="sello", description="Sello: un lenguaje cuyo usuario es la IA")
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -147,6 +153,9 @@ def main(argv: list[str] | None = None) -> int:
             sp.add_argument(a)
         sp.add_argument("--store", default=".sello/store.db")
         sp.set_defaults(f=fn)
+    m = sub.add_parser("mcp", help="serve the store and the compiler to agents over MCP (stdio)")
+    m.add_argument("--store", default=".sello/store.db")
+    m.set_defaults(f=cmd_mcp)
     args = p.parse_args(argv)
     return args.f(args)
 

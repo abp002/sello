@@ -67,6 +67,7 @@ a producción, entre ellos 11/19 de los silenciosos de haiku. También encontró
     uv run sello sig max_of                       # firma + contrato + certificado
     uv run sello users contains_in                # quién la llama
     uv run sello eval 'max_of([factorial(3), div(9, 2)])'
+    uv run sello mcp                              # la misma API por MCP (stdio) para agentes
 
 ## Hoja de ruta
 
@@ -79,10 +80,11 @@ a producción, entre ellos 11/19 de los silenciosos de haiku. También encontró
    dominio y `E102`. Sello pasa de 7/5 a 1/0 e iguala a Python con asserts.~~
 3. **Solver**: ~~Z3 sobre los contratos (nivel 2): verificación modular, contraejemplos
    confirmados por el intérprete, medida de terminación. Primera medición: 52 % de las
-   funciones probadas, 52 % de los mutantes que llegaban a producción muertos en compilación.~~
-   Pendiente: subir la tasa de pruebas sobre listas (cuantificadores sobre secuencias, donde
-   Z3 no decide), guardas en tiempo de ejecución para lo no probado (nivel 3), servidor MCP
-   para que los agentes consulten el almacén.
+   funciones probadas, 52 % de los mutantes que llegaban a producción muertos en compilación.
+   Hechos de cons y concat para la teoría de secuencias: 55 %.~~ ~~Servidor MCP (`sello mcp`)
+   para que los agentes consulten el almacén.~~ Pendiente: otra codificación de las listas
+   para lo que Z3 no decide (cuantificadores sobre secuencias), guardas en tiempo de ejecución
+   para lo no probado (nivel 3).
 4. **Benchmark**: contra el conjunto público de vericoding.
 5. **El almacén como dataset**: afinar un modelo abierto con código Sello generado y
    filtrado por el compilador. Solo con Z3 hecho y la sintaxis congelada. Objetivo: que el

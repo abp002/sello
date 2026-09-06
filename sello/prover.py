@@ -53,7 +53,7 @@ from .nodes import (
 from .parser import parse
 from .pretty import unparse, unparse_fn
 
-QUERY_MS = 1000      # por consulta a Z3
+QUERY_MS = 1000      # por consulta a Z3 (todas sus fases)
 FN_MS = 3000         # por función
 PROGRAM_MS = 30000   # por programa: lo que quede sin probar se queda en nivel 1
 MAX_INT = 10 ** 6    # un contraejemplo con enteros mayores no se ejecuta
@@ -65,8 +65,18 @@ PROVEN, COUNTEREXAMPLE, UNKNOWN = "proven", "counterexample", "unknown"
 # `t -> xs` de max_subarray mató el proceso, 2026-09-06): con tope Z3 lanza una excepción.
 z3.set_param("memory_max_size", 512)
 
-FAST_MS = 300        # primera fase de cada consulta: solo E-matching, sin buscar modelos
 CONTAINS = "exists"   # medido el 2026-09-06 sobre 44 funciones: exists 21, native 19, count 18
+# Hechos que la teoría de secuencias de Z3 no deriva sola (medidos el 2026-09-06 sobre las 36
+# soluciones: sin hechos 45/92 funciones probadas, cons 50, concat 47, cons+concat 49-50).
+FACTS: frozenset = frozenset({"cons", "concat"})
+# Fases de cada consulta: (solver, mbqi, ms). "s" es el solver sin patrones de instanciación
+# explícitos; "p", el que los lleva (`xs[i]` en cada cuantificador). Medido el 2026-09-06 sobre
+# las 36 soluciones: dos fases "s" 52/92 funciones probadas; con patrones bajan las pruebas por
+# E-matching (41/92), y como fases extra no suben ni pruebas ni mutantes muertos (49/89 y 25/48
+# en la medición completa frente a 49/89 y 27/48). Solo en el orden «patrones primero» MBQI
+# encontró un bug real más (find_max_helper([4, 6], [], Some(4)) de most_frequent, haiku), a
+# cambio de 4-7 pruebas menos: se queda documentado, no activado.
+PHASES: tuple = (("s", False, 300), ("s", True, 700))
 
 
 @dataclass
@@ -145,26 +155,38 @@ def check(s: z3.Solver, ctx: z3.Context, ms: int, mbqi: bool) -> tuple[z3.CheckS
         return r, None
 
 
-def decide(s: z3.Solver, ctx: z3.Context, budget: Budget, confirm_model) -> tuple[bool | None, object]:
-    """¿Es válida la obligación ya negada en `s`? Dos fases: E-matching solo (rápido: decide la
-    mayoría de las pruebas y da candidatos a contraejemplo), luego con MBQI el tiempo que quede.
-    Devuelve (True probada | False refutada | None sin decidir, lo que devolvió confirm_model)."""
-    first = True
-    for mbqi in (False, True):
-        ms = budget.query_ms()
-        if first:
-            ms = min(ms, FAST_MS)
-        if ms <= 0:
-            return None, None
-        r, model = check(s, ctx, ms, mbqi)
-        if r == z3.unsat:
-            return True, None
-        if model is not None:
-            found = confirm_model(model)
-            if found is not None:
-                return False, found
-        first = False
-    return None, None
+def decide(runs: list, ctx: z3.Context, budget: Budget, confirm_model) -> tuple[bool | None, object]:
+    """¿Es válida una obligación? `runs` son fases (solver, camino, proposición, mbqi, ms) en
+    orden: primero solo E-matching (rápido: decide la mayoría de las pruebas y da candidatos a
+    contraejemplo), luego con MBQI. Devuelve (True probada | False refutada | None sin decidir,
+    lo que devolvió confirm_model)."""
+    open_ = None  # solver con la obligación ya apilada: fases seguidas sobre el mismo solver
+    try:              # comparten el estado (lo aprendido en la primera sirve a la segunda)
+        for s, path, prop, mbqi, cap in runs:
+            ms = min(budget.query_ms(), cap)
+            if ms <= 0:
+                return None, None
+            if s is not open_:
+                if open_ is not None:
+                    open_.pop()
+                s.push()
+                s.add(*path)
+                s.add(z3.Not(prop))
+                open_ = s
+            r, model = check(s, ctx, ms, mbqi)  # si Z3 se atasca, Stuck: el contexto se abandona sin pop
+            if r == z3.unsat:
+                return True, None
+            if model is not None:
+                found = confirm_model(model)
+                if found is not None:
+                    return False, found
+        return None, None
+    except Stuck:
+        open_ = None
+        raise
+    finally:
+        if open_ is not None:
+            open_.pop()
 
 
 def concrete(t: Type, want: Type | None = None) -> Type:
@@ -217,17 +239,22 @@ class Binder:
 
 
 class Translator:
-    def __init__(self, program: Program, fn: Fn, ctx: z3.Context) -> None:
+    def __init__(self, program: Program, fn: Fn, ctx: z3.Context, patterns: bool = False,
+                 shared: Translator | None = None) -> None:
         self.ctx = ctx
+        self.patterns = patterns
         self.fns = {f.name: f for f in program.fns}
         self.fn = fn
         self.checker = Checker(program)
         self.checker.fns = self.fns
         self.checker.in_contract = True  # el programa ya pasó el checker: aquí todo vale
-        self.options: dict[str, z3.DatatypeSortRef] = {}
-        self.counts: dict[str, z3.FuncDeclRef] = {}
-        self.ufs: dict[str, z3.FuncDeclRef | z3.ExprRef] = {}
-        self.n = 0
+        # Sorts, funciones recursivas y símbolos se comparten entre los dos traductores de una
+        # función: un datatype o una RecFunction definidos dos veces en el mismo contexto no son
+        # el mismo.
+        self.options: dict[str, z3.DatatypeSortRef] = shared.options if shared else {}
+        self.counts: dict[str, z3.FuncDeclRef] = shared.counts if shared else {}
+        self.ufs: dict[str, z3.FuncDeclRef | z3.ExprRef] = shared.ufs if shared else {}
+        self.n = shared.n if shared else 0
         self.obligations: list[Obligation] = []
         self.self_calls: list[tuple[list, list]] = []  # (camino, args) de cada llamada recursiva del cuerpo
         self.facts: list[z3.BoolRef] = []  # identidades de la teoría que ayudan a instanciar
@@ -389,7 +416,11 @@ class Translator:
             return l == r if op == "==" else l != r
         if op == "++":
             t = self.type_at(e, env, want)
-            return z3.Concat(self.expr(e.left, env, path, t), self.expr(e.right, env, path, t))
+            a, b = self.expr(e.left, env, path, t), self.expr(e.right, env, path, t)
+            ab = z3.Concat(a, b)
+            if isinstance(t, TList):
+                self.facts_concat(a, b, ab)
+            return ab
         raise Unsupported(f"operator {op}")
 
     def call(self, e: Call, env: Env, path: list) -> z3.ExprRef:
@@ -419,16 +450,22 @@ class Translator:
                     return self.count_fn(self.sort(st.elem))(xs, x) > 0
                 if CONTAINS == "exists":
                     i = z3.Int(self.fresh("i"), self.ctx)
-                    return z3.Exists([i], z3.And(i >= 0, i < z3.Length(xs), xs[i] == x))
+                    return z3.Exists([i], z3.And(i >= 0, i < z3.Length(xs), xs[i] == x), **self.pat(xs[i]))
                 return z3.Contains(xs, z3.Unit(x))
             return self.count_fn(self.sort(st.elem))(xs, x)
         i = z3.Int(self.fresh("i"), self.ctx)
         if e.name == "sorted":
-            return z3.ForAll([i], z3.Implies(z3.And(i >= 0, i + 1 < z3.Length(xs)), xs[i] <= xs[i + 1]))
+            return z3.ForAll([i], z3.Implies(z3.And(i >= 0, i + 1 < z3.Length(xs)), xs[i] <= xs[i + 1]),
+                             **self.pat(xs[i]))
         if e.name == "distinct":
             j = z3.Int(self.fresh("j"), self.ctx)
-            return z3.ForAll([i, j], z3.Implies(z3.And(i >= 0, i < j, j < z3.Length(xs)), xs[i] != xs[j]))
+            return z3.ForAll([i, j], z3.Implies(z3.And(i >= 0, i < j, j < z3.Length(xs)), xs[i] != xs[j]),
+                             **self.pat(z3.MultiPattern(xs[i], xs[j])))
         raise Unsupported(f"builtin {e.name}")
+
+    def pat(self, p) -> dict:
+        """`patterns=` para un cuantificador generado, en el traductor con patrones."""
+        return {"patterns": [p]} if self.patterns else {}
 
     def quant(self, e: Quant, env: Env, path: list) -> z3.ExprRef:
         st = self.type_at(e.subject, env, None)
@@ -442,8 +479,8 @@ class Translator:
         finally:
             self.binders.pop()
         if e.kind == "forall":
-            return z3.ForAll([i], z3.Implies(guard, body))
-        return z3.Exists([i], z3.And(guard, body))
+            return z3.ForAll([i], z3.Implies(guard, body), **self.pat(xs[i]))
+        return z3.Exists([i], z3.And(guard, body), **self.pat(xs[i]))
 
     def match(self, e: Match, env: Env, path: list, want: Type | None) -> z3.ExprRef:
         st = self.type_at(e.subject, env, None)
@@ -474,6 +511,7 @@ class Translator:
             # Probado el 2026-09-06 con h y t como constantes nuevas en vez de términos: no ayuda.
             if self.collect:
                 self.facts.append(z3.Implies(z3.Length(s) > 0, s == z3.Concat(z3.Unit(head), tail)))
+                self.facts_cons(s, tail)
             binds = {}
             if p.head != "_":
                 binds[p.head] = (head, st.elem)
@@ -489,6 +527,32 @@ class Translator:
         if isinstance(p, PWild):
             return self.true(), ({p.name: (s, st)} if p.name else {})
         raise Unsupported(f"pattern {type(p).__name__}")
+
+    # ---- hechos derivados ----
+    def facts_cons(self, s: z3.ExprRef, tail: z3.ExprRef) -> None:
+        """Lo que relaciona `s` con su cola elemento a elemento, con patrones sobre el
+        índice: así un testigo `s[i]` de un cuantificador negado alcanza `t[i - 1]`, donde
+        vive la hipótesis de inducción, y al revés."""
+        if "cons" not in FACTS or self.binders:
+            return
+        n = z3.Length(s)
+        i = z3.Int(self.fresh("i"), self.ctx)
+        self.facts.append(z3.Implies(n > 0, z3.Length(tail) == n - 1))
+        self.facts.append(z3.ForAll([i], z3.Implies(z3.And(n > 0, i >= 0, i < z3.Length(tail)), tail[i] == s[i + 1]),
+                                    **self.pat(tail[i])))
+        self.facts.append(z3.ForAll([i], z3.Implies(z3.And(i >= 1, i < n), s[i] == tail[i - 1]),
+                                    **self.pat(s[i])))
+
+    def facts_concat(self, a: z3.ExprRef, b: z3.ExprRef, ab: z3.ExprRef) -> None:
+        """Longitud e índices de `a ++ b` por tramos."""
+        if "concat" not in FACTS or not self.collect or self.binders:
+            return
+        la, lb = z3.Length(a), z3.Length(b)
+        i = z3.Int(self.fresh("i"), self.ctx)
+        self.facts.append(z3.Length(ab) == la + lb)
+        self.facts.append(z3.ForAll([i], z3.Implies(z3.And(i >= 0, i < la), ab[i] == a[i]), **self.pat(ab[i])))
+        self.facts.append(z3.ForAll([i], z3.Implies(z3.And(i >= la, i < la + lb), ab[i] == b[i - la]), **self.pat(ab[i])))
+        self.facts.append(z3.ForAll([i], z3.Implies(z3.And(i >= 0, i < lb), ab[la + i] == b[i]), **self.pat(b[i])))
 
     # ---- terminación ----
     def terminates(self, s: z3.Solver, params: list, budget: Budget) -> bool | None:
@@ -511,11 +575,8 @@ class Translator:
                 ms = budget.query_ms()
                 if ms <= 0:
                     return None
-                s.push()
-                s.add(*path)
-                s.add(z3.Not(z3.And(of(args) < measure, measure >= 0)))
-                valid, _ = decide(s, self.ctx, budget, lambda m: None)
-                s.pop()
+                prop = z3.And(of(args) < measure, measure >= 0)
+                valid, _ = decide([(s, path, prop, False, 300), (s, path, prop, True, 700)], self.ctx, budget, lambda m: None)
                 if valid is None and budget.query_ms() <= 0:
                     return None
                 if not valid:
@@ -609,6 +670,37 @@ def _mutual(program: Program, fn: Fn) -> bool:
     return any(fn.name in comp and len(comp) > 1 for comp in _sccs(graph))
 
 
+def _setup(tr: Translator, fn: Fn, env: Env) -> z3.Solver:
+    """Traduce requires, cuerpo y ensures (recogiendo obligaciones) y monta el solver con los
+    axiomas de las funciones que aparecen, el requires y los hechos."""
+    s = z3.Solver(ctx=tr.ctx)
+    req: list = []
+    for r in fn.requires:
+        req.append(tr.expr(r, env, req, BOOL))
+    tr.in_body = True
+    body = tr.expr(fn.body, env, [], fn.ret)
+    tr.in_body = False
+    renv = env.bind("result", body, fn.ret)
+    prev: list = []
+    for c in fn.ensures:
+        prop = tr.expr(c, renv, prev, BOOL)
+        tr.obligate(prev, prop, "E201", f"`ensures {unparse(c)}`")
+        prev.append(prop)
+    # Solo los axiomas de las funciones que aparecen (y de las que aparecen en ellos): un
+    # cuantificador de más cambia la estrategia de Z3 y `div` pasaba de 10 ms a unknown.
+    seen: set[str] = set()
+    while set(tr.ufs) - seen:
+        name = sorted(set(tr.ufs) - seen)[0]
+        seen.add(name)
+        try:
+            s.add(tr.axiom(tr.fns[name]))
+        except Unsupported:
+            continue  # sin axioma la función queda libre: más débil, nunca falso
+    s.add(*req)
+    s.add(*tr.facts)
+    return s
+
+
 def prove(program: Program, fn: Fn, interp: Interpreter | None = None,
           budget: Budget | None = None) -> Verdict:
     t0 = time.monotonic()
@@ -623,31 +715,13 @@ def prove(program: Program, fn: Fn, interp: Interpreter | None = None,
         tr = Translator(program, fn, ctx)
         params = [z3.Const(p.name, tr.sort(p.type)) for p in fn.params]
         env = Env({p.name: c for p, c in zip(fn.params, params)}, {p.name: p.type for p in fn.params})
-        s = z3.Solver(ctx=ctx)
-        req: list = []
-        for r in fn.requires:
-            req.append(tr.expr(r, env, req, BOOL))
-        tr.in_body = True
-        body = tr.expr(fn.body, env, [], fn.ret)
-        tr.in_body = False
-        renv = env.bind("result", body, fn.ret)
-        prev: list = []
-        for c in fn.ensures:
-            prop = tr.expr(c, renv, prev, BOOL)
-            tr.obligate(prev, prop, "E201", f"`ensures {unparse(c)}`")
-            prev.append(prop)
-        # Solo los axiomas de las funciones que aparecen (y de las que aparecen en ellos): un
-        # cuantificador de más cambia la estrategia de Z3 y `div` pasaba de 10 ms a unknown.
-        seen: set[str] = set()
-        while set(tr.ufs) - seen:
-            name = sorted(set(tr.ufs) - seen)[0]
-            seen.add(name)
-            try:
-                s.add(tr.axiom(tr.fns[name]))
-            except Unsupported:
-                continue  # sin axioma la función queda libre: más débil, nunca falso
-        s.add(*req)
-        s.add(*tr.facts)
+        s = _setup(tr, fn, env)
+        sp, trp = s, tr
+        if any(kind == "p" for kind, _, _ in PHASES):
+            trp = Translator(program, fn, ctx, patterns=True, shared=tr)
+            sp = _setup(trp, fn, env)
+            if len(trp.obligations) != len(tr.obligations):  # no debería pasar: mismo recorrido
+                sp, trp = s, tr
     except Unsupported as u:
         return done(UNKNOWN, f"unsupported: {u}")
     except z3.Z3Exception as z:
@@ -655,14 +729,12 @@ def prove(program: Program, fn: Fn, interp: Interpreter | None = None,
 
     reason = ""
     try:
-        for ob in tr.obligations:
+        for ob, obp in zip(tr.obligations, trp.obligations):
             if budget.query_ms() <= 0:
                 return done(UNKNOWN, reason or "timeout")
-            s.push()
-            s.add(*ob.path)
-            s.add(z3.Not(ob.prop))
-            valid, err = decide(s, ctx, budget, lambda m: confirm(program, fn, params, m, interp))
-            s.pop()
+            runs = [((sp, obp) if kind == "p" else (s, ob)) + (mbqi, cap) for kind, mbqi, cap in PHASES]
+            valid, err = decide([(sv, o.path, o.prop, mbqi, cap) for sv, o, mbqi, cap in runs], ctx, budget,
+                                lambda m: confirm(program, fn, params, m, interp))
             if valid is False:
                 return done(COUNTEREXAMPLE, error=err)
             if valid is None:
@@ -746,7 +818,14 @@ def prove_program(program: Program, program_ms: int | None = None) -> dict[str, 
 def _main(argv: list[str]) -> int:
     """El proceso hijo: programa por stdin, un veredicto JSON por línea según los tiene."""
     import argparse
-    global PROGRAM_MS, FN_MS, QUERY_MS
+    import os
+    global PROGRAM_MS, FN_MS, QUERY_MS, FACTS, PHASES
+    if "SELLO_MS" in os.environ:  # experimento: "query,fn"
+        QUERY_MS, FN_MS = (int(x) for x in os.environ["SELLO_MS"].split(","))
+    if "SELLO_FACTS" in os.environ:  # experimento
+        FACTS = frozenset(x for x in os.environ["SELLO_FACTS"].split(",") if x)
+    if "SELLO_PHASES" in os.environ:  # experimento: p. ej. "s0:300,s1:700,p1:700"
+        PHASES = tuple((x[0], x[1] == "1", int(x.split(":")[1])) for x in os.environ["SELLO_PHASES"].split(","))
     ap = argparse.ArgumentParser()
     ap.add_argument("--program-ms", type=int, default=PROGRAM_MS)
     ap.add_argument("--fn-ms", type=int, default=FN_MS)

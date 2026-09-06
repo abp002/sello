@@ -158,4 +158,5 @@ All errors are JSON: `{"code", "where", "what", "fix", "example"}`. Codes are st
 `sello check FILE` parses, typechecks, runs every example and proves what it can. Output
 is JSON: `{"ok": true, "functions": [{"name", "signature", "examples", "level"}, ...],
 "proven": N}` or `{"ok": false, "error": {...}}`. A function at level 1 also carries
-`"unproven"`: why the prover could not decide.
+`"unproven"`: why the prover could not decide. `sello mcp` serves the same API to agents
+over MCP (stdio); its `sello_spec` tool returns this document.
