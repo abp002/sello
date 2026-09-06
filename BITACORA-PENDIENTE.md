@@ -305,7 +305,7 @@ tool porque es el prompt. Sin tests, como la CLI.
 
 ## 2026-09-06 (tarde, segunda sesión) · Fase 4: el benchmark de vericoding en Sello
 
-Rama `claude/sello-work-bgacgo`, commits `9076c2e` a `⟨COMMIT⟩`. Sesión desde Claude Code
+Rama `claude/sello-work-bgacgo`, commits `9076c2e`, `d47506e`, `bb19fd4` y siguientes. Sesión desde Claude Code
 remoto: hay `claude -p` (haiku y sonnet), `raw.githubusercontent.com` pasa el proxy (la API de
 GitHub y Hugging Face, no), 4 CPUs.
 
@@ -354,6 +354,13 @@ GitHub y Hugging Face, no), 4 CPUs.
   del verificador. Éxito: la principal y todo lo que llama, transitivamente, en nivel 2; los
   helpers congelados no cuentan (su contrato es su definición) y se anota cuántos quedan en
   nivel 1. Segunda columna: nivel 1. Hasta 5 intentos, 4 workers.
+- `sello/prover.py`: la hipótesis de inducción como implicación por llamada, bajo su camino, y la
+  terminación probada sin ella (bug de solidez destapado por DD0435, en «Qué falló»; test de
+  regresión en `tests/test_prover.py`).
+- `harness4.py`, tras el límite de sesión: una llamada sin respuesta no es un intento (se repite
+  con espera y, si sigue vacía, la tarea queda fuera del recuento), `--reusar` para repetir solo
+  esas tareas copiando las demás de una corrida anterior, y `code` guarda el último programa
+  aceptado, no el último intento. Test en `tests/test_vericoding.py`.
 - `bench/README.md` y `README.md`.
 
 ### Qué se midió: la traducción (`bench/resultados/vericoding-traduccion-2026-09-06-1443.md`)
@@ -398,14 +405,14 @@ verified_cogen 1, bignum 1; 16 con helpers congelados), hasta 5 intentos, 4 work
 
 | | sonnet | haiku |
 |---|---|---|
-| probadas (nivel 2) | **46/50 (92 %)** | ⟨HAIKU-N2⟩ |
-| · a la primera | 38 | ⟨HAIKU-PRIMERA⟩ |
-| · media de intentos hasta probar | 1,35 | ⟨HAIKU-INTENTOS⟩ |
-| principal en nivel 2 | 47/50 | ⟨HAIKU-PRINCIPAL⟩ |
-| aceptadas (nivel 1) | 49/50 | ⟨HAIKU-N1⟩ |
-| por fuente (nivel 2) | apps 19/21, dafnybench 16/18, humaneval 4/4, verina 5/5, verified_cogen 1/1, bignum 1/1 | ⟨HAIKU-FUENTES⟩ |
-| coste | 6,49 USD (0,14 por tarea probada) | ⟨HAIKU-COSTE⟩ |
-| por llamada (mediana) | 25 s, 2.300 tokens de salida (88 % razonamiento) | ⟨HAIKU-LLAMADA⟩ |
+| probadas (nivel 2) | **46/50 (92 %)** | **44/50 (88 %)** |
+| · a la primera | 38 | 39 |
+| · media de intentos hasta probar | 1,35 | 1,25 |
+| principal en nivel 2 | 47/50 | 46/50 |
+| aceptadas (nivel 1) | 49/50 | 50/50 |
+| por fuente (nivel 2) | apps 19/21, dafnybench 16/18, humaneval 4/4, verina 5/5, verified_cogen 1/1, bignum 1/1 | apps 16/21, dafnybench 17/18, humaneval 4/4, verina 5/5, verified_cogen 1/1, bignum 1/1 |
+| coste | 6,49 USD (0,14 por tarea probada) | 5,00 USD (0,11 por tarea probada) |
+| por llamada (mediana) | 25 s, 2.300 tokens de salida (88 % razonamiento) | 95 s, 11.600 tokens de salida (94 % razonamiento) |
 
 - Sonnet: 82 llamadas en total. Rechazos por intento: `unproven` 26, `E201` 5 (las cinco de
   DD0435), `E200` 3 (el ejemplo que escribió el propio modelo estaba mal en el primer intento:
@@ -427,7 +434,26 @@ verified_cogen 1, bignum 1; 16 con helpers congelados), hasta 5 intentos, 4 work
     tras un `E401` (`len` en el cuerpo: solo vale en el contrato) y un `E404`.
 - Helpers congelados que Z3 no prueba solos, iguales en los dos modelos: `CountValidMinutes`
   (DA0122), `CountValidTriplesHelper` y `CountValidTriplesForZHelper` (DA0552), `gcd` (DD0429).
-- ⟨HAIKU-DETALLE⟩
+- Haiku: 85 llamadas. Rechazos por intento: `unproven` 24, `E000` 4 (sintaxis de verdad: un
+  paréntesis antes de `ensures`, dos veces en DA0023), `E200` 3, `E300` 2, `E201` 2, `E102` 2
+  (`requires true` en un helper propio), `contract` 1 (tocó el helper congelado de DA0122 al
+  quinto intento), `E500` 1 (`sello check` agotó sus 120 s con un ejemplo grande sobre un helper
+  congelado, DA0476), `E401` 1, `E404` 1. 7 de las 44 probadas añaden helpers propios. Las 6 que
+  no prueba: DA0008 (`undecided`/`timeout` sobre los helpers congelados de una búsqueda binaria,
+  más un E300 y un E201 con entrada del probador), DA0023 (la misma aritmética no lineal que
+  sonnet), DA0029 (`timeout` cinco veces), DA0122 (`timeout`, y al final tocó el contrato), DA0476
+  (`termination`: un contador que crece), DD0730 (como sonnet). Sonnet sí y haiku no: DA0008,
+  DA0029, DA0122, DA0476; haiku sí y sonnet no: DA0552 (al quinto) y DD0435, que es el bug de
+  solidez de «Qué falló». Por llamada, haiku tarda cuatro veces más que sonnet y gasta cinco veces
+  más tokens de salida (casi todo razonamiento); por tarea probada cuesta parecido.
+- **Recomprobados los 100 programas finales con el probador corregido** (sin modelo, el último
+  programa aceptado de cada tarea): **sonnet 46/50 y haiku 43/50**. DD0435 de haiku cae a nivel 1
+  por terminación (sonnet nunca la compiló: cinco `E201` con `q(1, 4)`); DD0730 pasa a probada en
+  los dos (la hipótesis como implicación sin cuantificador le va mejor a Z3 que el axioma); y
+  dos veredictos oscilan entre ejecuciones consecutivas del mismo programa sin carga (DB0020 de
+  sonnet y DH0127 de haiku, `undecided` unas veces y probadas otras: el presupuesto de 1 s por
+  consulta está en el filo). Los ficheros de la corrida se conservan tal cual; el número que
+  vale es el recomprobado.
 - Contra el artículo: el resumen da un 82 % de éxito en Dafny con modelos de serie sobre todo el
   benchmark. Aquí es el 9 % que cabe en Sello (enteros, booleanos y listas, sin índices ni
   cuantificadores sobre enteros), o sea el subconjunto fácil, y con un modelo. Lo que dice la
@@ -463,10 +489,41 @@ verified_cogen 1, bignum 1; 16 con helpers congelados), hasta 5 intentos, 4 work
   `harness4.py`: una llamada con 0 tokens de salida se repite dos veces con espera y, si sigue
   vacía, la tarea queda `sin respuesta` y fuera del recuento; `--reusar <jsonl>` copia las
   tareas contestadas de la corrida anterior y repite solo las demás (test en
-  `tests/test_vericoding.py`). ⟨HAIKU-REPETICION⟩
+  `tests/test_vericoding.py`). La repetición (`vericoding-2026-09-06-1807-haiku-...`, 18 tareas,
+  sola en la máquina, 1,36 USD): 17 probadas (15 a la primera) y DD0730 en nivel 1; con las 32
+  reutilizadas, 44/50. Contar la llamada vacía como intento daba 27/50.
 - Las dos corridas fueron a la vez, 4 workers cada una sobre 4 CPUs, y el reloj del probador es
   de pared: los `timeout` (DA0029, DA0122, DA0552) pueden deberse en parte a la carga.
-  ⟨RECOMPROBACION⟩
+  Recomprobados sin carga (`sello check` en serie) los últimos programas aceptados que quedaron
+  en nivel 1: los `undecided` (DA0023, DD0730) y los `timeout` de DA0029 y DA0122 siguen igual;
+  en DA0552 (sonnet) la principal pasa a nivel 2 sin carga y solo quedan en `timeout` los dos
+  lemas auxiliares que el modelo añadió. La carga influyó al menos ahí; los números que quedan
+  son los de la corrida.
+- **Un bug de solidez del probador, encontrado por el benchmark.** Haiku «probó» DD0435 al
+  segundo intento con `find_value(x, y, r + 1)`, una recursión en la que `r` solo crece
+  (`q(1, 4)` acaba en `E500: recursion too deep`), y el certificado decía nivel 2 en las dos
+  funciones. Causa: el contrato de la propia función entraba en Z3 como axioma `forall params:
+  requires -> ensures` (la hipótesis de inducción) y seguía puesto durante la prueba de
+  terminación. Con una spec insatisfacible en un solo punto (para `(1, 4)` ningún entero al
+  cuadrado cae entre 1 y 4) ese axioma es falso en bloque, MBQI lo detecta, el conjunto de
+  hipótesis es inconsistente y toda consulta sale `unsat`: «probada» cualquier obligación y
+  cualquier medida. Arreglo en `sello/prover.py`, como en Dafny: la hipótesis se asume solo para
+  cada llamada recursiva del cuerpo, con sus argumentos y bajo el camino que lleva a ella (una
+  implicación sin cuantificador), y la terminación se prueba en un solver sin esas hipótesis.
+  Test de regresión con el programa de DD0435 (`find_value` queda en nivel 1 por terminación).
+  El certificado de `q` sigue siendo de nivel 2: llama a `find_value` (nivel 1) y promete lo de
+  siempre, «si las llamadas cumplen su contrato»; por eso el harness exige el cierre. La
+  medición de la fase 3 (`bench/probador.py`) repetida con el arreglo
+  (`probador-2026-09-06-1829`): **61/82 funciones en nivel 2 (74 %; antes 49/89, 55 %)**, la
+  principal en 19/36 (igual), **28/48 mutantes** que llegaban a producción muertos en compilación
+  (antes 27/48; 12/19 de los silenciosos de haiku, antes 11/19), 27/118 equivalentes con bug
+  fuera del oráculo (antes 14/118), y **dos bugs reales más** en soluciones aceptadas, los dos en
+  `most_frequent` de haiku: `find_max_helper([9, 49], [], None)` devuelve `None` (condición
+  `sello`) y `find_most_frequent_helper([26, 26, 8], [], 8)` devuelve 8 (`sello_contrato`):
+  helpers cuyo contrato miente fuera de como los llama la principal, como el `search` de
+  `int_sqrt`. Sus 7 funciones salen del denominador. Y más rápido: 36 s frente a 59 en
+  soluciones, 222 frente a 311 en mutantes. La hipótesis como implicación en cada llamada no
+  solo es sólida: le da a Z3 menos cuantificadores y más pruebas.
 
 ### Decisiones tomadas (una nota por decisión)
 
@@ -516,7 +573,20 @@ fuera del recuento con la marca `sin respuesta` y se repite después con `--reus
 tal cual las tareas contestadas de la corrida anterior. Los ficheros de la corrida rota se
 conservan y el resumen de la repetición dice qué tareas se copiaron y cuáles se repitieron.
 Contar la llamada vacía como intento fallido (lo que pasó el 2026-09-06) habría dado a haiku
-un 54 % en vez de ⟨HAIKU-PCT⟩.
+un 54 % en vez de un 88 %.
+
+#### La hipótesis de inducción se asume solo en la llamada recursiva y la terminación se prueba sin ella
+
+El contrato de la función que se prueba no es un axioma: como `forall` es falso en bloque en
+cuanto la spec es insatisfacible en un punto, y de un conjunto inconsistente Z3 prueba lo que
+sea (DD0435). Se asume solo para cada llamada recursiva del cuerpo, con sus argumentos y bajo
+su camino, y la terminación se prueba aparte, sin hipótesis. Es sólido por inducción bien
+fundada: la medida decrece en toda llamada, así que la hipótesis solo se usa en puntos menores;
+donde la spec es insatisfacible la inducción es vacía y la cadena de llamadas acaba en un caso
+base que no lo es. Los contratos de las otras funciones siguen siendo axiomas cuantificados:
+son lo que promete su certificado. Pendiente de decidir: comprobar antes de probar que las
+hipótesis (requires y contratos de las llamadas) son satisfacibles, para que ningún certificado
+descanse sobre un contrato inconsistente.
 
 #### Una spec insatisfacible del benchmark cuenta como tarea
 
