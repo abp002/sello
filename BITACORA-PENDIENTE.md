@@ -300,3 +300,159 @@ tool porque es el prompt. Sin tests, como la CLI.
   errores dominan. Criterio de éxito de la fase: que el nivel 2 sea comparable con el 82 %
   de Dafny del artículo en ese subconjunto; si no, que los `unproven` digan qué codificación
   falta.
+
+---
+
+## 2026-09-06 (tarde, segunda sesión) · Fase 4: el benchmark de vericoding en Sello
+
+Rama `claude/sello-work-bgacgo`, commit `9076c2e` y siguientes. Sesión desde Claude Code
+remoto: hay `claude -p` (haiku y sonnet), `raw.githubusercontent.com` pasa el proxy (la API de
+GitHub y Hugging Face, no), 4 CPUs.
+
+### Qué se hizo
+
+- `bench/vericoding/bajar.py`: el CSV de metadatos y las 3.029 specs Dafny del benchmark
+  (`specs/<ID>_specs.dfy`) a `bench/vericoding/cache/` (gitignored). 16 hilos, 2 minutos.
+- `bench/vericoding/traducir.py`: Dafny → Sello, con test (`tests/test_traducir.py`, 12).
+  Lexer y parser del subconjunto de Dafny que aparece en las specs (declaraciones `function`,
+  `predicate`, `method`; lo demás se salta y se anota), inferencia de tipos mínima (para
+  distinguir `+` de `++` y dar tipo a las variables de un cuantificador), y traducción a AST
+  de Sello (se reimprime con el formateador canónico, así que el modelo ve el mismo texto que
+  en `sello_contrato`):
+  - Los helpers no recursivos se inlinean en las cláusulas (beta-reducción sin captura: una
+    variable ligada que choca con una libre del argumento se renombra; los `var x := e; b`
+    también se sustituyen). Los recursivos quedan congelados como `fn`, con el `requires` de
+    Dafny (o una tautología), `ensures result == <cuerpo>` (la definición: lo único que un
+    llamador ve por contrato) más los `ensures` de Dafny, y dos `example` calculados con el
+    intérprete sobre entradas pequeñas que cumplan el `requires`.
+  - `==>` → `not a or b`, `<==>` → `==`, `|s|` → `len(s)`, `x in s` → `contains(s, x)`,
+    `forall x :: x in s ==> P` → `forall x in s: P` (también `forall x | x in s :: P`,
+    `forall x <- s :: P`, varias variables anidadas), `exists x :: x in s && P` → `exists x in
+    s: P`, `+` de secuencias → `++`, `a <= b < c` → `a <= b and b < c`, `nat` → `Int` más
+    `>= 0` en `requires`/`ensures` (`seq<nat>` → `forall x in s: x >= 0`), un `&&` de primer
+    nivel se parte en cláusulas, el valor de retorno se llama `result`, los nombres reservados
+    de Sello se renombran (`sorted` → `sorted_`). `abs`, `min` y `max` se suponen con su
+    definición de siempre cuando la spec los usa sin definirlos (en el benchmark los define
+    quien resuelve). `/` y `%` se traducen tal cual (Dafny es euclídeo, Sello redondea hacia
+    abajo: coinciden con divisor positivo) y la tarea lleva la nota `div` si el divisor no es
+    un literal positivo.
+  - Lo que Sello no tiene no se traduce y se cuenta por motivo: índices `s[i]`, tramos,
+    cuantificadores sobre enteros o sin dominio, `array`, `real`, `string`, `char`, `set`,
+    `multiset`, `map`, datatypes, tuplas, genéricos, varios valores de retorno, `modifies`,
+    `old`, `match`, comprensiones, lambdas, funciones sin cuerpo o sin definir.
+  - Cada tarea traducida (`bench/vericoding/tareas/<ID>.json`) lleva el esqueleto Sello completo
+    (principal con cuerpo y ejemplo de relleno, para parsear), los nombres de los helpers
+    congelados, las notas y la spec Dafny original. El esqueleto pasa el checker de Sello; si
+    no, la tarea no cabe («traducción inválida») y es un fallo del traductor, no del lenguaje.
+- `bench/contrato.py`: `Contrato(ejemplos_libres=True)`: la cabecera congelada se compara sin
+  los `example`, que los pone el modelo (el benchmark no trae casos). Test.
+- `bench/vericoding/harness4.py`, con test (`tests/test_vericoding.py`): la condición
+  `sello_contrato` con el contrato del benchmark. El modelo recibe la spec y el contrato
+  congelado, escribe el cuerpo y los ejemplos; cada intento pasa por `contrato.violacion` y por
+  `sello check` (compilador, ejemplos, probador). Lo que compila pero no se prueba vuelve al
+  modelo con el motivo (`unproven` por función del cierre), como en el benchmark vuelve el error
+  del verificador. Éxito: la principal y todo lo que llama, transitivamente, en nivel 2; los
+  helpers congelados no cuentan (su contrato es su definición) y se anota cuántos quedan en
+  nivel 1. Segunda columna: nivel 1. Hasta 5 intentos, 4 workers.
+- `bench/README.md` y `README.md`.
+
+### Qué se midió: la traducción (`bench/resultados/vericoding-traduccion-2026-09-06-1443.md`)
+
+Sobre las 2.334 specs Dafny sin `qa-issue`, en 8 segundos:
+
+| | apps | dafnybench | humaneval | verina | verified_cogen | numpy_triple | numpy_simple | bignum | total |
+|---|---|---|---|---|---|---|---|---|---|
+| specs | 677 | 443 | 162 | 157 | 172 | 603 | 58 | 62 | 2334 |
+| **caben** | 99 (15 %) | 57 (13 %) | 16 (10 %) | 18 (11 %) | 4 (2 %) | 1 | 1 | 3 | **199 (9 %)** |
+| · con helpers recursivos congelados | 24 | 19 | 10 | 1 | 1 | 0 | 0 | 3 | 58 |
+
+- Notas en las que caben: `requires vacío` (tautología) 31, `div` 31, `nat` 35, `función
+  supuesta` 7 (`min` 4, `max` 2, `abs` 1). Longitud mediana del contrato 345 caracteres,
+  máxima 2.606 (`var` inlineado que duplica subexpresiones).
+- Por qué no caben las 2.135 restantes (una spec puede tener varios motivos): tipo no
+  soportado 1.696 (`string` 554, `array` 501, `real` 376, `char` 249, datatypes 219, tuplas
+  47), cuantificador sobre enteros 1.579, índice `s[i]` 682, tramo 321, helper recursivo con
+  `|s|`/`in`/`forall` en el cuerpo 283, `modifies` 115, sin valor de retorno 111, varios
+  valores de retorno 101, sin `ensures` 53, genéricos 37.
+- Lo que desbloquearía cada feature (specs que **solo** bloquea esa familia): cuantificador
+  sobre un rango de enteros **179**; índice `s[i]` 18; los dos juntos **220** (más los tramos, 220;
+  más reescribir a `match` los helpers recursivos con `|s|` en el cuerpo, 264). Es la respuesta
+  a la pregunta del reconocimiento: la feature de la fase 4 es el cuantificador acotado sobre
+  enteros, y el índice solo vale con él.
+- Fallos del traductor que quedan (no del lenguaje): sintaxis Dafny no cubierta 30 como única
+  traba (`bv32`, operadores de bits, specs truncadas en el propio benchmark como `ensures
+  result in` y fin de fichero), funciones sin definir en el propio benchmark 8 (p. ej.
+  `tirednessForSteps` en DA0113), 2 helpers sin ejemplo (requires que las entradas pequeñas
+  no cumplen).
+- De los 81 helpers congelados de las 58 tareas, Z3 prueba 70 por su cuenta (4 timeout, 4
+  `ensures result >= 0` de un `nat` que necesita inducción, 3 `gcd(b, a % b)` sin medida que
+  el probador vea).
+- El benchmark trae specs débiles que su `qa` no marcó: DA0003 solo dice `ensures result >= 0`
+  (el `gcd` del preámbulo no se usa). Cuentan como tareas: son las del benchmark.
+
+### Qué se midió: la corrida
+
+(Pendiente: haiku y sonnet sobre la muestra de 50 con semilla 1 están corriendo.)
+
+### Qué falló
+
+- Primer recuento: 134 tareas. Eran 199: comprobaba el esqueleto con el checker *antes* de
+  calcular los ejemplos de los helpers congelados (E100 en 60 specs); la proyección de tuplas
+  `p.0` y las lambdas con `requires` (`seq(6, i requires ... => ...)`) tiraban el parser del
+  método y salían como «sin método» o «función sin definir» (94 specs); una regla de lambda
+  demasiado amplia (`x requires` fuera de una lista de argumentos) tiró 94 más en la corrida
+  siguiente hasta acotarla.
+- `ensures result == <cuerpo>` en un helper recursivo se reevalúa en cada nivel: el coste se
+  dobla por nivel y `power(2, 100)` no termina. La búsqueda de ejemplos se colgó con
+  candidatos hasta 100; ahora los enteros llegan a 12 y hay reloj (`SIGALRM`, 3 s por helper).
+  En el harness, un ejemplo del modelo con entradas grandes sobre un helper congelado acabaría
+  en el timeout de `sello check` (120 s). Es el precio de comprobar el `ensures` en ejecución.
+- `pkill -f traducir.py` mató la propia shell de la sesión (dos veces): el patrón casaba con
+  la línea de comandos que lo lanzaba.
+- Una llamada a haiku con este prompt tarda 45 s y gasta unos 4.600 tokens de razonamiento
+  incluso en `Abs`; DA0008 (búsqueda binaria con helpers de recursión mutua) se comió 79.000
+  tokens de razonamiento y 0,48 USD en 5 intentos sin salir del nivel 1.
+
+### Decisiones tomadas (una nota por decisión)
+
+#### El contrato del benchmark se traduce inlineando los helpers no recursivos
+
+Un predicado de Dafny es una definición; en Sello, la verificación es modular y un llamador
+solo ve el contrato del helper, así que un helper como `fn` necesitaría `ensures result ==
+<cuerpo>` y ejemplos propios para servir de algo. Inlineado, el contrato queda autocontenido y
+el probador ve las fórmulas. Coste: cláusulas largas y subexpresiones duplicadas por los `var`
+(mediana 345 caracteres, máxima 2.606). Los helpers recursivos no se pueden inlinear y quedan
+congelados con la definición en el `ensures`.
+
+#### Los ejemplos de la principal los pone el modelo
+
+El benchmark no trae casos y Sello exige al menos un `example`. El contrato congelado se
+compara sin los `example` (`Contrato(ejemplos_libres=True)`); el modelo añade los suyos y el
+compilador los ejecuta. Son la parte del contrato que el benchmark no escribe.
+
+#### El éxito en vericoding es el nivel 2 de todo lo que la principal llama, menos los helpers congelados
+
+Un certificado de nivel 2 promete «si las funciones llamadas devuelven lo que dice su
+contrato»: un helper propio con un `ensures` fuerte y un cuerpo sin probar dejaría la principal
+en nivel 2 sin haber probado nada. Por eso cuenta el cierre. Los helpers congelados se dan por
+buenos porque su contrato es su definición (y Z3 prueba 70 de 81 por su cuenta); se anota
+cuántos quedan en nivel 1.
+
+#### Cuando no hay nada que suponer, el contrato traducido lleva una tautología
+
+31 de las 199 tareas no tienen `requires` en Dafny (una función total). Sello exige la cláusula
+y rechaza el literal `true` (E102), así que el traductor pone `len(xs) >= 0` o `x == x`, con la
+nota `requires vacío`. Es el mismo idioma que usan los modelos (`requires len(xs) >= 0` sale 4
+veces en las soluciones aceptadas del 5 de septiembre). Hallazgo para revisar con datos: una
+función total no tiene `requires` honesto; E102 sobre `requires` puede ser una regla de más.
+
+#### `/` y `%` se traducen tal cual y la tarea lleva la nota `div`
+
+Dafny es euclídeo y Sello redondea hacia abajo; coinciden con divisor positivo, que es casi
+siempre el caso en las specs (`/ 2`, `% 10`). Traducir la división euclídea exacta haría
+ilegible el contrato. Con divisor no literal positivo, nota `div` (31 tareas) para poder
+filtrarlas si un resultado depende de ello.
+
+### Prerregistro de la siguiente medición
+
+(Pendiente de los números de la corrida.)
