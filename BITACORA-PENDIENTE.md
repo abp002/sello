@@ -213,7 +213,11 @@ Medición completa (`bench/probador.py`, mismas 36 soluciones y mutantes del 5 d
 | original (mañana) | 46/89 (52 %) | 25/48 | 15/118 | 83 + 361 |
 | hechos de cons, dos fases (`probador-2026-09-06-1312`) | 49/89 (55 %) | 27/48 | 12/118 | 68 + 373 |
 | cons + concat, cuatro fases (`probador-2026-09-06-1324`) | 49/89 (55 %) | 25/48 | 15/118 | 47 + 352 |
-| cons + concat, dos fases: la definitiva | ver `probador-2026-09-06-<hora>` (última del día) | | | |
+| **cons + concat, dos fases: la definitiva (`probador-2026-09-06-1329`)** | **49/89 (55 %)** | **27/48 (56 %)** | 14/118 | 59 + 311 |
+
+- La definitiva por columna: funciones en nivel 2 12/23, 20/35, 17/31; principal 7, 7, 5 de
+  12; mutantes muertos 15/24, 2/2, 10/22; silenciosos de haiku 12/19; sin fallos de
+  herramienta; el bug de `search` sigue saliendo.
 
 - Los patrones explícitos bajan las pruebas por E-matching, pero con ellos MBQI converge en un
   modelo que sin ellos no encuentra: `find_max_helper([4, 6], [], Some(4))` de most_frequent

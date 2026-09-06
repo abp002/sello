@@ -59,7 +59,10 @@ prueba 46/89 funciones (la principal en 18/36 soluciones), encuentra un bug real
 solución que el juez débil y 345 llamadas del oráculo dieron por buena (`int_sqrt` de haiku
 con contrato de sonnet: `search(0, 1, 1)`), y mata en compilación 25/48 mutantes que llegaban
 a producción, entre ellos 11/19 de los silenciosos de haiku. También encontró que `div` de
-`ejemplos/basicos.sello` violaba su `ensures` con divisor negativo desde el primer día.
+`ejemplos/basicos.sello` violaba su `ensures` con divisor negativo desde el primer día. Por
+la tarde, dos hechos sobre secuencias que Z3 no deriva solo (la cola elemento a elemento y
+`++` por tramos) suben a 49/89 y 27/48; los patrones de instanciación explícitos, medidos,
+no entran. `sello mcp` sirve la misma API por MCP.
 
     uv sync --extra dev
     uv run sello check ejemplos/basicos.sello     # parse, tipos, ejemplos, probador (nivel 2)
