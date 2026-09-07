@@ -97,7 +97,9 @@ def ask(prompt: str, model: str) -> dict:
            "--setting-sources", "", "--strict-mcp-config", "--disable-slash-commands",
            "--no-chrome", "--no-session-persistence", "--output-format", "json"]
     t0 = time.time()
-    r = subprocess.run(cmd, capture_output=True, text=True, timeout=600, cwd=tempfile.gettempdir())
+    # stdin=DEVNULL: sin él, claude -p espera ~3 s por stdin en cada llamada.
+    r = subprocess.run(cmd, capture_output=True, text=True, timeout=600, cwd=tempfile.gettempdir(),
+                       stdin=subprocess.DEVNULL)
     ms = int((time.time() - t0) * 1000)
     try:
         d = json.loads(r.stdout)
