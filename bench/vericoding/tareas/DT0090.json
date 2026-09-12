@@ -1,0 +1,16 @@
+{
+ "id": "DT0090",
+ "source": "numpy_triple",
+ "source_id": "bitwise_operations_right_shift",
+ "fn": "RightShift",
+ "sello": "RightShift(x1: List[Int], x2: List[Int]) -> List[Int]",
+ "helpers": [
+  "Power2"
+ ],
+ "notas": [
+  "div",
+  "nat"
+ ],
+ "esqueleto": "fn Power2(exp: Int) -> Int\n  requires (exp >= 0)\n  ensures (result == (if (exp == 0) then 1 else (2 * Power2((exp - 1)))))\n  ensures (result > 0)\n  effects pure\n  example (Power2(0) == 1)\n  example (Power2(1) == 2)\n{\n  if (exp == 0) then 1 else (2 * Power2((exp - 1)))\n}\n\nfn RightShift(x1: List[Int], x2: List[Int]) -> List[Int]\n  requires (len(x1) == len(x2))\n  requires forall i in 0..len(x2): (x2[i] >= 0)\n  ensures (len(result) == len(x1))\n  ensures forall i in 0..len(result): ((not (x1[i] >= 0)) or (result[i] == (x1[i] / Power2(x2[i]))))\n  ensures forall i in 0..len(result): ((not (x1[i] < 0)) or (result[i] == (x1[i] / Power2(x2[i]))))\n  ensures forall i in 0..len(result): ((not (x2[i] == 0)) or (result[i] == x1[i]))\n  ensures forall i in 0..len(result): ((((not (x1[i] > 0)) or (result[i] >= 0)) and ((not (x1[i] < 0)) or (result[i] <= 0))) and ((not (x1[i] == 0)) or (result[i] == 0)))\n  ensures forall i in 0..len(result): if (result[i] >= 0) then (result[i] <= (if (x1[i] >= 0) then x1[i] else -x1[i])) else (-result[i] <= (if (x1[i] >= 0) then x1[i] else -x1[i]))\n  effects pure\n  example (RightShift([], []) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// Helper function to compute powers of 2\nfunction Power2(exp: nat): int\n  ensures Power2(exp) > 0\n{\n  if exp == 0 then 1 else 2 * Power2(exp - 1)\n}\n\n// Helper function for arithmetic right shift of negative numbers\nfunction ArithmeticRightShift(value: int, shift: nat): int\n  requires value < 0\n{\n  // For negative numbers, we use floor division to maintain sign extension\n  value / Power2(shift)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod RightShift(x1: seq<int>, x2: seq<int>) returns (result: seq<int>)\n  // Input sequences must have the same length\n  requires |x1| == |x2|\n  // All shift amounts must be non-negative\n  requires forall i :: 0 <= i < |x2| ==> x2[i] >= 0\n  // Result has same length as inputs\n  ensures |result| == |x1|\n  // For non-negative values, right shift equals division by 2^shift\n  ensures forall i :: 0 <= i < |result| && x1[i] >= 0 ==>\n    result[i] == x1[i] / Power2(x2[i])\n  // For negative values, use arithmetic right shift (sign extension)\n  ensures forall i :: 0 <= i < |result| && x1[i] < 0 ==>\n    result[i] == ArithmeticRightShift(x1[i], x2[i])\n  // Identity property: shifting by 0 returns original value\n  ensures forall i :: 0 <= i < |result| && x2[i] == 0 ==>\n    result[i] == x1[i]\n  // Sign preservation properties\n  ensures forall i :: 0 <= i < |result| ==>\n    (x1[i] > 0 ==> result[i] >= 0) &&\n    (x1[i] < 0 ==> result[i] <= 0) &&\n    (x1[i] == 0 ==> result[i] == 0)\n  // Bounded result: absolute value decreases or stays same\n  ensures forall i :: 0 <= i < |result| ==>\n    if result[i] >= 0 then result[i] <= if x1[i] >= 0 then x1[i] else -x1[i]\n    else -result[i] <= if x1[i] >= 0 then x1[i] else -x1[i]\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

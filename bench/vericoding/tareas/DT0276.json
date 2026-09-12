@@ -1,0 +1,11 @@
+{
+ "id": "DT0276",
+ "source": "numpy_triple",
+ "source_id": "logic_functions_logical_and",
+ "fn": "LogicalAnd",
+ "sello": "LogicalAnd(x1: List[Bool], x2: List[Bool]) -> List[Bool]",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn LogicalAnd(x1: List[Bool], x2: List[Bool]) -> List[Bool]\n  requires (len(x1) == len(x2))\n  ensures (len(result) == len(x1))\n  ensures forall i in 0..len(result): (result[i] == (x1[i] and x2[i]))\n  effects pure\n  example (LogicalAnd([], []) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// Method that computes the logical AND of two boolean sequences element-wise\n// Each element of the result is the logical AND of the corresponding elements from the input sequences\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod LogicalAnd(x1: seq<bool>, x2: seq<bool>) returns (result: seq<bool>)\n    // Precondition: input sequences must have the same length\n    requires |x1| == |x2|\n    \n    // Postcondition: result has same length as inputs\n    ensures |result| == |x1|\n    \n    // Postcondition: each element is the logical AND of corresponding input elements  \n    ensures forall i :: 0 <= i < |result| ==> result[i] == (x1[i] && x2[i])\n    \n    // Additional properties that follow from the specification:\n    // Commutativity: LogicalAnd(x1, x2) equivalent to LogicalAnd(x2, x1)\n    // Identity: LogicalAnd(x, all_true_seq) equivalent to x\n    // Zero: LogicalAnd(x, all_false_seq) equivalent to all_false_seq  \n    // Idempotent: LogicalAnd(x, x) equivalent to x\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

@@ -1,0 +1,13 @@
+{
+ "id": "DA0174",
+ "source": "apps",
+ "source_id": "apps_test_862",
+ "fn": "solve",
+ "sello": "solve(n: Int, a: List[Int]) -> Int",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn solve(n: Int, a: List[Int]) -> Int\n  requires (n >= 2)\n  requires (len(a) == n)\n  requires forall i in 0..n: (a[i] >= 0)\n  ensures (1 <= result)\n  ensures (result <= n)\n  ensures forall j in 0..n: (((n * (if ((a[(result - 1)] - (result - 1)) < 0) then ((a[(result - 1)] - (result - 1)) / n) else ((((a[(result - 1)] - (result - 1)) + n) - 1) / n))) <= (n * (if ((a[j] - j) < 0) then ((a[j] - j) / n) else ((((a[j] - j) + n) - 1) / n)))) and (((n * (if ((a[(result - 1)] - (result - 1)) < 0) then ((a[(result - 1)] - (result - 1)) / n) else ((((a[(result - 1)] - (result - 1)) + n) - 1) / n))) < (n * (if ((a[j] - j) < 0) then ((a[j] - j) / n) else ((((a[j] - j) + n) - 1) / n)))) or ((result - 1) <= j)))\n  effects pure\n  example (solve(0, []) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, a: seq<int>) {\n  n >= 2 && |a| == n && (forall i :: 0 <= i < n ==> a[i] >= 0)\n}\n\nfunction ComputeB(a: seq<int>, i: int): int\n  requires 0 <= i < |a|\n{\n  a[i] - i\n}\n\nfunction ComputeC(n: int, b: int): int\n  requires n >= 2\n{\n  if b < 0 then b / n else (b + n - 1) / n\n}\n\nfunction ComputeCC(n: int, a: seq<int>, i: int): int\n  requires ValidInput(n, a) && 0 <= i < n\n{\n  var b := ComputeB(a, i);\n  var c := ComputeC(n, b);\n  n * c\n}\n\npredicate IsOptimalEntrance(n: int, a: seq<int>, entrance: int)\n  requires ValidInput(n, a) && 1 <= entrance <= n\n{\n  var i := entrance - 1;\n  forall j :: 0 <= j < n ==> \n    (var cci := ComputeCC(n, a, i);\n     var ccj := ComputeCC(n, a, j);\n     cci <= ccj && (cci < ccj || i <= j))\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, a: seq<int>) returns (result: int)\n  requires ValidInput(n, a)\n  ensures 1 <= result <= n\n  ensures IsOptimalEntrance(n, a, result)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

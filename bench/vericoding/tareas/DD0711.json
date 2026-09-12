@@ -1,0 +1,11 @@
+{
+ "id": "DD0711",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_401_IndexWiseAddition",
+ "fn": "IndexWiseAddition",
+ "sello": "IndexWiseAddition(a: List[List[Int]], b: List[List[Int]]) -> List[List[Int]]",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn IndexWiseAddition(a: List[List[Int]], b: List[List[Int]]) -> List[List[Int]]\n  requires (len(a) > 0)\n  requires (len(b) > 0)\n  requires (len(a) == len(b))\n  requires forall i in 0..len(a): (len(a[i]) == len(b[i]))\n  ensures (len(result) == len(a))\n  ensures forall i in 0..len(result): (len(result[i]) == len(a[i]))\n  ensures forall i in 0..len(result): forall j in 0..len(result[i]): (result[i][j] == (a[i][j] + b[i][j]))\n  effects pure\n  example (IndexWiseAddition([], []) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod IndexWiseAddition(a: seq<seq<int>>, b: seq<seq<int>>) returns (result: seq<seq<int>>)\n    requires |a| > 0 && |b| > 0\n    requires |a| == |b|\n    requires forall i :: 0 <= i < |a| ==> |a[i]| == |b[i]|\n    ensures |result| == |a|\n    ensures forall i :: 0 <= i < |result| ==> |result[i]| == |a[i]|\n    ensures forall i :: 0 <= i < |result| ==> forall j :: 0 <= j < |result[i]| ==> result[i][j] == a[i][j] + b[i][j]\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

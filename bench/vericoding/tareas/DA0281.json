@@ -1,0 +1,13 @@
+{
+ "id": "DA0281",
+ "source": "apps",
+ "source_id": "apps_test_1346",
+ "fn": "solve",
+ "sello": "solve(n: Int, m: Int, p: Int, f: List[Int], g: List[Int]) -> Int",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn solve(n: Int, m: Int, p: Int, f: List[Int], g: List[Int]) -> Int\n  requires (n >= 1)\n  requires (m >= 1)\n  requires (p >= 2)\n  requires (len(f) == n)\n  requires (len(g) == m)\n  requires forall k in 0..len(f): (f[k] > 0)\n  requires forall k in 0..len(g): (g[k] > 0)\n  requires exists k in 0..len(f): ((f[k] % p) != 0)\n  requires exists k in 0..len(g): ((g[k] % p) != 0)\n  requires (p != 0)\n  ensures exists i in 0..len(f): exists j in 0..len(g): (((((((forall k in 0..i: ((f[k] % p) == 0)) and ((f[i] % p) != 0)) and (forall k in 0..j: ((g[k] % p) == 0))) and ((g[j] % p) != 0)) and (result == (i + j))) and (0 <= result)) and (result < (len(f) + len(g))))\n  effects pure\n  example (solve(0, 0, 0, [], []) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, m: int, p: int, f: seq<int>, g: seq<int>) {\n    n >= 1 && m >= 1 &&\n    p >= 2 &&\n    |f| == n && |g| == m &&\n    (forall k :: 0 <= k < |f| ==> f[k] > 0) &&\n    (forall k :: 0 <= k < |g| ==> g[k] > 0) &&\n    (exists k :: 0 <= k < |f| && f[k] % p != 0) &&\n    (exists k :: 0 <= k < |g| && g[k] % p != 0)\n}\n\npredicate ValidResult(result: int, n: int, m: int, p: int, f: seq<int>, g: seq<int>) \n    requires p != 0\n{\n    exists i, j :: 0 <= i < |f| && 0 <= j < |g| &&\n            (forall k :: 0 <= k < i ==> f[k] % p == 0) &&\n            f[i] % p != 0 &&\n            (forall k :: 0 <= k < j ==> g[k] % p == 0) &&\n            g[j] % p != 0 &&\n            result == i + j &&\n            0 <= result < |f| + |g|\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, m: int, p: int, f: seq<int>, g: seq<int>) returns (result: int)\n    requires ValidInput(n, m, p, f, g)\n    requires p != 0\n    ensures ValidResult(result, n, m, p, f, g)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

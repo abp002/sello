@@ -1,0 +1,13 @@
+{
+ "id": "DV0095",
+ "source": "verina",
+ "source_id": "verina_basic_15_task",
+ "fn": "ContainsConsecutiveNumbers",
+ "sello": "ContainsConsecutiveNumbers(a: List[Int]) -> Bool",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn ContainsConsecutiveNumbers(a: List[Int]) -> Bool\n  requires (len(a) >= 0)\n  ensures (result == (exists i in 0..(len(a) - 1): ((a[i] + 1) == a[(i + 1)])))\n  effects pure\n  example (ContainsConsecutiveNumbers([]) == true)\n{\n  true\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod ContainsConsecutiveNumbers(a: seq<int>) returns (result: bool)\n    ensures\n        result <==> exists i :: 0 <= i < |a| - 1 && a[i] + 1 == a[i + 1]\n// </vc-spec>\n// <vc-code>\n{\n    // impl-start\n    assume {:axiom} false;\n    result := false;\n    // impl-end\n}\n// </vc-code>\n"
+}

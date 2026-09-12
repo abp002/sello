@@ -89,6 +89,17 @@ con modelos de serie sobre todo el benchmark; aquí es el 9 % que cabe, así que
 comparación es que el cuello de botella de la fase 4 es la cobertura del traductor, no el modelo.
 Números en `bench/resultados/vericoding-*`.
 
+**Fase 4, segunda tanda: el cuantificador acotado y el índice** (12 de septiembre de 2026): en
+los contratos, `forall i in a..b: P` (rango de enteros, `a` incluido y `b` excluido) y `xs[i]`,
+que traducen 1:1 el `forall i :: 0 <= i < |s| ==> P(s[i])` de Dafny. El probador los codifica en
+Z3 con la obligación de que el índice esté en rango, y el traductor saca las cotas de las
+premisas (con varias variables, cada rango puede usar las anteriores: `0 <= i < j < |s|`).
+Remedida la traducción sin modelo: caben **355 de 2.334 (15 %)**, 156 más y ninguna menos. La
+predicción era 220: las 64 que faltan las tapaba el cuantificador y ahora se ven (20 son
+cuantificadores sin cotas sobre todos los enteros, 29 helpers recursivos que indexan en el
+cuerpo, que Sello prohíbe por diseño, y tramos `s[i..j]`). Pendiente la corrida con modelo sobre
+las specs nuevas, prerregistrada en el vault.
+
     uv sync --extra dev
     uv run sello check ejemplos/basicos.sello     # parse, tipos, ejemplos, probador (nivel 2)
     uv run sello add ejemplos/basicos.sello       # al almacén, con certificado
@@ -116,10 +127,10 @@ Números en `bench/resultados/vericoding-*`.
    para lo no probado (nivel 3).
 4. **Benchmark**: ~~contra el conjunto público de vericoding: traductor Dafny → Sello, 199 de
    2.334 specs caben tal cual, primera corrida en condición `sello_contrato`: sonnet 46/50 y
-   haiku 44/50 en nivel 2 sobre una muestra de 50.~~ Pendiente, y
-   solo si la medición lo justifica: cuantificadores sobre rangos de enteros e índices `s[i]`
-   en los contratos (desbloquearían 219 specs más), y una medida de terminación entre funciones
-   para la recursión mutua.
+   haiku 44/50 en nivel 2 sobre una muestra de 50.~~ ~~Cuantificadores sobre rangos de enteros
+   e índices `s[i]` en los contratos: 355 de 2.334 caben.~~ Pendiente: la corrida con modelo
+   sobre las 156 specs nuevas (la feature se queda solo si el nivel 2 no baja ni suben los
+   intentos), y una medida de terminación entre funciones para la recursión mutua.
 5. **El almacén como dataset**: afinar un modelo abierto con código Sello generado y
    filtrado por el compilador. Solo con Z3 hecho y la sintaxis congelada. Objetivo: que el
    coste de razonamiento baje de 10x a 1x manteniendo aciertos.

@@ -1,0 +1,11 @@
+{
+ "id": "DA0208",
+ "source": "apps",
+ "source_id": "apps_test_1009",
+ "fn": "solve",
+ "sello": "solve(n: Int, k: Int, L: List[Int]) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(n: Int, k: Int, L: List[Int]) -> Int\n  requires (n >= 1)\n  requires (k >= 1)\n  requires (n <= (2 * k))\n  requires (len(L) == n)\n  requires forall i in 0..(len(L) - 1): (L[i] <= L[(i + 1)])\n  requires forall i in 0..len(L): (L[i] >= 0)\n  ensures (result >= 0)\n  effects pure\n  example (solve(0, 0, []) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, k: int, L: seq<int>)\n{\n    n >= 1 && k >= 1 && n <= 2*k &&\n    |L| == n &&\n    (forall i :: 0 <= i < |L|-1 ==> L[i] <= L[i+1]) &&\n    (forall i :: 0 <= i < |L| ==> L[i] >= 0)\n}\n\npredicate ValidBoxConfiguration(boxes: seq<int>, boxSize: int)\n{\n    |boxes| >= 1 &&\n    (forall i :: 0 <= i < |boxes| ==> boxes[i] <= boxSize) &&\n    (forall i :: 0 <= i < |boxes| ==> boxes[i] >= 0)\n}\n\nfunction sum(s: seq<int>): int\n{\n    if |s| == 0 then 0 else s[0] + sum(s[1..])\n}\n\nfunction max(s: seq<int>): int\n    requires |s| > 0\n{\n    if |s| == 1 then s[0]\n    else if s[0] >= max(s[1..]) then s[0]\n    else max(s[1..])\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, k: int, L: seq<int>) returns (result: int)\n    requires ValidInput(n, k, L)\n    ensures result >= 0\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

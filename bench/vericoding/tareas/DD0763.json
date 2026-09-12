@@ -1,0 +1,13 @@
+{
+ "id": "DD0763",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_605_IsPrime",
+ "fn": "IsPrime",
+ "sello": "IsPrime(n: Int) -> Bool",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn IsPrime(n: Int) -> Bool\n  requires (n >= 2)\n  ensures (result == (forall k in 2..n: ((n % k) != 0)))\n  effects pure\n  example (IsPrime(0) == true)\n{\n  true\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod IsPrime(n: int) returns (result: bool)\n    requires n >= 2\n    ensures result <==> (forall k :: 2 <= k < n ==> n % k != 0)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

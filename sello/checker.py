@@ -5,9 +5,9 @@ from __future__ import annotations
 from .builtins import NAMES as BUILTINS
 from .errors import SelloError
 from .nodes import (
-    ANY, BOOL, INT, TEXT, Binary, TText, BoolLit, Call, Expr, Fn, If, IntLit, ListLit, Match,
-    Name, NoneLit, PCons, PEmpty, PNone, PSome, PWild, Program, Quant, SomeExpr, TAny, TextLit,
-    TList, TOption, Type, Unary, unify,
+    ANY, BOOL, INT, TEXT, Binary, TText, BoolLit, Call, Expr, Fn, If, Index, IntLit, ListLit,
+    Match, Name, NoneLit, PCons, PEmpty, PNone, PSome, PWild, Program, Quant, RangeExpr,
+    SomeExpr, TAny, TextLit, TList, TOption, Type, Unary, unify,
 )
 from .pretty import unparse
 
@@ -152,13 +152,30 @@ class Checker:
             return self.expect(e.otherwise, env, t, fn, "`then` and `else` must share a type")
         if isinstance(e, Match):
             return self.type_of_match(e, env, fn)
+        if isinstance(e, Index):
+            self.only_in_contract("[i]", e, fn)
+            st = self.type_of(e.seq, env, fn)
+            if not isinstance(st, (TList, TAny)):
+                raise SelloError("E400", f"`[i]` needs a List, got {st} in `{unparse(e.seq)}`",
+                                 e.line, e.col, _name(fn), {"expected": "List[T]", "actual": str(st)})
+            self.expect(e.idx, env, INT, fn, "an index must be Int")
+            return st.elem if isinstance(st, TList) else ANY
+        if isinstance(e, RangeExpr):
+            raise SelloError("E400", f"`..` only builds the domain of `forall` and `exists`, "
+                             f"as in `forall i in 0..len(xs): ...`", e.line, e.col, _name(fn))
         if isinstance(e, Quant):
             self.only_in_contract(e.kind, e, fn)
-            st = self.type_of(e.subject, env, fn)
-            if not isinstance(st, (TList, TAny)):
-                raise SelloError("E400", f"`{e.kind}` needs a List, got {st} in `{unparse(e.subject)}`",
-                                 e.line, e.col, _name(fn), {"expected": "List[T]", "actual": str(st)})
-            elem = st.elem if isinstance(st, TList) else ANY
+            if isinstance(e.subject, RangeExpr):
+                self.expect(e.subject.lo, env, INT, fn, f"the start of a range must be Int")
+                self.expect(e.subject.hi, env, INT, fn, f"the end of a range must be Int")
+                elem: Type = INT
+            else:
+                st = self.type_of(e.subject, env, fn)
+                if not isinstance(st, (TList, TAny)):
+                    raise SelloError("E400", f"`{e.kind}` needs a List or a range, got {st} "
+                                     f"in `{unparse(e.subject)}`", e.line, e.col, _name(fn),
+                                     {"expected": "List[T] or lo..hi", "actual": str(st)})
+                elem = st.elem if isinstance(st, TList) else ANY
             self.expect(e.body, {**env, e.var: elem}, BOOL, fn, f"body of `{e.kind}` must be Bool")
             return BOOL
         raise TypeError(f"nodo desconocido: {e!r}")

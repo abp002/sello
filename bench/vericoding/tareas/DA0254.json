@@ -1,0 +1,11 @@
+{
+ "id": "DA0254",
+ "source": "apps",
+ "source_id": "apps_test_1179",
+ "fn": "solve",
+ "sello": "solve(n: Int, k: Int, L: List[Int]) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(n: Int, k: Int, L: List[Int]) -> Int\n  requires (n >= 1)\n  requires (k >= 1)\n  requires (len(L) == n)\n  requires (k <= ((n * (n + 1)) / 2))\n  ensures exists i in 1..(n + 1): ((((((i - 1) * ((i - 1) + 1)) / 2) < k) and (k <= ((i * (i + 1)) / 2))) and (result == L[((k - (((i - 1) * ((i - 1) + 1)) / 2)) - 1)]))\n  effects pure\n  example (solve(0, 0, []) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, k: int, L: seq<int>)\n{\n  n >= 1 && k >= 1 && |L| == n && k <= n * (n + 1) / 2\n}\n\nfunction TotalIdentifiersAfterRobot(i: int): int\n  requires i >= 0\n{\n  i * (i + 1) / 2\n}\n\npredicate CorrectResult(n: int, k: int, L: seq<int>, result: int)\n  requires ValidInput(n, k, L)\n{\n  exists i :: 1 <= i <= n && \n    TotalIdentifiersAfterRobot(i - 1) < k <= TotalIdentifiersAfterRobot(i) &&\n    result == L[k - TotalIdentifiersAfterRobot(i - 1) - 1]\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, k: int, L: seq<int>) returns (result: int)\n  requires ValidInput(n, k, L)\n  ensures CorrectResult(n, k, L, result)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

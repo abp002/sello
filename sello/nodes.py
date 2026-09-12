@@ -177,8 +177,23 @@ class Match(Expr):
 
 
 @dataclass
+class Index(Expr):
+    """`xs[i]`. Solo en contratos; el cuerpo recorre con `match`."""
+    seq: Expr
+    idx: Expr
+
+
+@dataclass
+class RangeExpr(Expr):
+    """`lo..hi`: los enteros de `lo` a `hi`, `hi` excluido. Solo como dominio de un cuantificador."""
+    lo: Expr
+    hi: Expr
+
+
+@dataclass
 class Quant(Expr):
-    """`forall x in xs: body` / `exists x in xs: body`. Solo en contratos."""
+    """`forall x in xs: body` / `exists x in xs: body`. El dominio es una lista o un rango.
+    Solo en contratos."""
     kind: str  # 'forall' | 'exists'
     var: str
     subject: Expr
@@ -203,6 +218,10 @@ def children(e: Expr) -> list[Expr]:
         return [e.subject, *(a.body for a in e.arms)]
     if isinstance(e, Quant):
         return [e.subject, e.body]
+    if isinstance(e, Index):
+        return [e.seq, e.idx]
+    if isinstance(e, RangeExpr):
+        return [e.lo, e.hi]
     return []
 
 

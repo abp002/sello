@@ -1,0 +1,11 @@
+{
+ "id": "DA0244",
+ "source": "apps",
+ "source_id": "apps_test_1134",
+ "fn": "solve",
+ "sello": "solve(n: Int, m: List[Int]) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(n: Int, m: List[Int]) -> Int\n  requires (n > 0)\n  requires (len(m) == n)\n  requires forall i in 0..n: ((0 <= m[i]) and (m[i] < (i + 1)))\n  ensures (result >= 0)\n  effects pure\n  example (solve(0, []) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, m: seq<int>) {\n    n > 0 && |m| == n && \n    forall i :: 0 <= i < n ==> 0 <= m[i] < i + 1\n}\n\npredicate ValidSolution(n: int, m: seq<int>, dm: seq<int>) {\n    |dm| == n && |m| == n &&\n    (forall i :: 0 <= i < n ==> dm[i] >= m[i] + 1) &&\n    (forall i :: 0 <= i < n - 1 ==> dm[i] <= dm[i + 1])\n}\n\nfunction SumBelow(m: seq<int>, dm: seq<int>): int\n    requires |m| == |dm|\n{\n    if |m| == 0 then 0\n    else (dm[0] - 1 - m[0]) + SumBelow(m[1..], dm[1..])\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, m: seq<int>) returns (result: int)\n    requires ValidInput(n, m)\n    ensures result >= 0\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

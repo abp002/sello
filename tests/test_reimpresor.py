@@ -13,8 +13,8 @@ from hypothesis import strategies as st
 
 from sello.lexer import KEYWORDS
 from sello.nodes import (
-    Arm, Binary, BoolLit, Call, If, IntLit, ListLit, Match, Name, NoneLit,
-    PCons, PEmpty, PNone, PSome, PWild, Quant, SomeExpr, TextLit, Unary,
+    Arm, Binary, BoolLit, Call, If, Index, IntLit, ListLit, Match, Name, NoneLit,
+    PCons, PEmpty, PNone, PSome, PWild, Quant, RangeExpr, SomeExpr, TextLit, Unary,
 )
 from sello.parser import parse_expr
 from sello.pretty import unparse
@@ -53,7 +53,10 @@ expresion = st.deferred(lambda: st.one_of(
     st.builds(Binary, st.sampled_from(OPS), expresion, expresion),
     st.builds(If, expresion, expresion, expresion),
     st.builds(Match, expresion, st.lists(st.builds(Arm, patron, expresion), min_size=1, max_size=3)),
-    st.builds(Quant, st.sampled_from(["forall", "exists"]), nombre, expresion, expresion),
+    st.builds(Index, expresion, expresion),
+    # Un rango solo se parsea como dominio de un cuantificador, así que solo se genera ahí.
+    st.builds(Quant, st.sampled_from(["forall", "exists"]), nombre,
+              st.one_of(expresion, st.builds(RangeExpr, expresion, expresion)), expresion),
 ))
 
 

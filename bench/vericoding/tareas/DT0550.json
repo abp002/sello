@@ -1,0 +1,13 @@
+{
+ "id": "DT0550",
+ "source": "numpy_triple",
+ "source_id": "set_operations_intersect1d",
+ "fn": "intersect1d",
+ "sello": "intersect1d(ar1: List[Int], ar2: List[Int]) -> List[Int]",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn intersect1d(ar1: List[Int], ar2: List[Int]) -> List[Int]\n  requires (len(ar1) >= 0)\n  ensures forall i in 0..len(result): (contains(ar1, result[i]) and contains(ar2, result[i]))\n  ensures forall i in 0..len(result): forall j in (i + 1)..len(result): (result[i] < result[j])\n  ensures forall val in ar1: ((not contains(ar2, val)) or contains(result, val))\n  effects pure\n  example (intersect1d([], []) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// Find the intersection of two arrays, returning sorted unique values present in both\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod intersect1d(ar1: seq<int>, ar2: seq<int>) returns (result: seq<int>)\n  ensures // Result contains only values that exist in both input arrays\n    forall i :: 0 <= i < |result| ==> result[i] in ar1 && result[i] in ar2\n  ensures // Result is sorted in strict ascending order (which ensures uniqueness)\n    forall i, j :: 0 <= i < j < |result| ==> result[i] < result[j]\n  ensures // Result is complete - contains all values that appear in both arrays\n    forall val :: val in ar1 && val in ar2 ==> val in result\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

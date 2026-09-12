@@ -1,0 +1,13 @@
+{
+ "id": "DA0035",
+ "source": "apps",
+ "source_id": "apps_test_155",
+ "fn": "solve",
+ "sello": "solve(n: Int, m: Int, k: Int) -> List[Int]",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn solve(n: Int, m: Int, k: Int) -> List[Int]\n  requires (n >= 2)\n  requires (m >= 2)\n  requires ((n % 2) == 0)\n  requires (k >= 0)\n  requires (k < (n * m))\n  ensures (len(result) == 2)\n  ensures (result[0] >= 1)\n  ensures (result[0] <= n)\n  ensures (result[1] >= 1)\n  ensures (result[1] <= m)\n  ensures if (k < n) then ((result[0] == (k + 1)) and (result[1] == 1)) else (((result[0] == (n - ((k - n) / (m - 1)))) and ((not (((n - ((k - n) / (m - 1))) % 2) == 1)) or (result[1] == (m - ((k - n) % (m - 1)))))) and ((not (((n - ((k - n) / (m - 1))) % 2) == 0)) or (result[1] == (2 + ((k - n) % (m - 1))))))\n  effects pure\n  example (solve(0, 0, 0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, m: int, k: int) {\n    n >= 2 && m >= 2 && n % 2 == 0 && k >= 0 && k < n * m\n}\n\npredicate ValidOutput(result: seq<int>, n: int, m: int) {\n    |result| == 2 && result[0] >= 1 && result[0] <= n && result[1] >= 1 && result[1] <= m\n}\n\npredicate CorrectPosition(result: seq<int>, n: int, m: int, k: int) \n    requires ValidInput(n, m, k)\n    requires |result| == 2\n{\n    if k < n then\n        result[0] == k + 1 && result[1] == 1\n    else\n        var k_remaining := k - n;\n        var r := n - k_remaining / (m - 1);\n        result[0] == r &&\n        (r % 2 == 1 ==> result[1] == m - k_remaining % (m - 1)) &&\n        (r % 2 == 0 ==> result[1] == 2 + k_remaining % (m - 1))\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, m: int, k: int) returns (result: seq<int>)\n    requires ValidInput(n, m, k)\n    ensures ValidOutput(result, n, m)\n    ensures CorrectPosition(result, n, m, k)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

@@ -1,0 +1,11 @@
+{
+ "id": "DA0423",
+ "source": "apps",
+ "source_id": "apps_test_2377",
+ "fn": "solve",
+ "sello": "solve(N: Int, H: Int, A: List[Int], B: List[Int]) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(N: Int, H: Int, A: List[Int], B: List[Int]) -> Int\n  requires (len(A) == N)\n  requires (len(B) == N)\n  requires (N > 0)\n  requires (H > 0)\n  requires forall i in 0..N: ((A[i] > 0) and (B[i] > 0))\n  requires forall i in 0..N: (A[i] <= B[i])\n  ensures (result > 0)\n  effects pure\n  example (solve(0, 0, [], []) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(N: int, H: int, A: seq<int>, B: seq<int>)\n{\n    |A| == N && |B| == N && N > 0 && H > 0 &&\n    (forall i :: 0 <= i < N ==> A[i] > 0 && B[i] > 0) &&\n    (forall i :: 0 <= i < N ==> A[i] <= B[i])\n}\n\nfunction sumSeq(s: seq<int>): int\n{\n    if |s| == 0 then 0 else s[0] + sumSeq(s[1..])\n}\n\npredicate MaxWieldExists(A: seq<int>, maxA: int)\n{\n    maxA in A && (forall i :: 0 <= i < |A| ==> A[i] <= maxA)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(N: int, H: int, A: seq<int>, B: seq<int>) returns (result: int)\n  requires ValidInput(N, H, A, B)\n  ensures result > 0\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

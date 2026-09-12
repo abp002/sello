@@ -298,3 +298,41 @@ def test_una_spec_insatisfacible_en_un_punto_no_prueba_cualquier_cosa():
     assert v.status == pr.UNKNOWN and v.reason.startswith("termination")
     d = check_source(INSATISFACIBLE)
     assert {f["name"]: f["level"] for f in d["functions"]} == {"q": 2, "find_value": 1}
+
+
+MAXI = """
+fn maxi(xs: List[Int]) -> Int
+  requires len(xs) > 0
+  ensures forall i in 0..len(xs): xs[i] <= result
+  ensures exists i in 0..len(xs): xs[i] == result
+  effects pure
+  example maxi([3, 9, 2]) == 9
+  example maxi([1]) == 1
+{ match xs { [] => 0  [h, ..t] => if is_empty(t) then h else if h >= maxi(t) then h else maxi(t) } }
+
+fn is_empty(t: List[Int]) -> Bool
+  requires 1 == 1
+  ensures result == (len(t) == 0)
+  effects pure
+  example is_empty([]) == true
+{ match t { [] => true  [_, .._] => false } }
+"""
+
+
+def test_el_cuantificador_sobre_un_rango_con_indice_se_prueba_en_nivel_2():
+    """ALE-108: la forma `forall i :: 0 <= i < |s| ==> P(s[i])` de Dafny, en Sello."""
+    r = check_source(MAXI)
+    assert r["ok"] and r["proven"] == 2, r
+
+
+def test_un_ensures_falso_con_indice_da_el_contraejemplo_y_un_indice_fuera_de_rango_es_E500():
+    first = ("fn first(xs: List[Int]) -> Int\n  requires len(xs) > 0\n"
+             "  ensures forall i in 0..len(xs): xs[i] >= result\n  effects pure\n"
+             "  example first([1, 2]) == 1\n{ match xs { [] => 0  [h, .._] => h } }")
+    e = fails_with(first, "E201")
+    assert e.extra["found_by"] == "prover" and e.extra["input"].startswith("first([")
+    # `xs[0]` en un ensures con `requires 1 == 1`: los ejemplos no pasan por `[]`, el probador sí.
+    src = ("fn f(xs: List[Int]) -> Int\n  requires 1 == 1\n  ensures xs[0] >= 0 or true\n"
+           "  effects pure\n  example f([1]) == 0\n{ 0 }")
+    e = fails_with(src, "E500")
+    assert e.extra["found_by"] == "prover" and "f([])" in e.extra["input"]

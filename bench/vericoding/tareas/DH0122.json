@@ -1,0 +1,11 @@
+{
+ "id": "DH0122",
+ "source": "humaneval",
+ "source_id": "humaneval_120_maximum__maximum",
+ "fn": "maximum",
+ "sello": "maximum(s: List[Int], k: Int) -> List[Int]",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn maximum(s: List[Int], k: Int) -> List[Int]\n  requires (1 <= k)\n  requires (k <= len(s))\n  requires (1 <= len(s))\n  requires (len(s) <= 1000)\n  requires forall x in s: ((-1000 <= x) and (x <= 1000))\n  ensures (len(result) == k)\n  ensures forall i in 0..k: forall j in (i + 1)..k: (result[i] <= result[j])\n  ensures forall x in result: contains(s, x)\n  effects pure\n  example (maximum([], 0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod maximum(s: seq<int>, k: int) returns (result: seq<int>)\n\n  requires 1 <= k <= |s|\n  requires 1 <= |s| <= 1000\n  requires forall x :: x in s ==> -1000 <= x <= 1000\n\n  ensures |result| == k\n  ensures forall i, j :: 0 <= i < j < k ==> result[i] <= result[j]\n  ensures forall x :: x in result ==> x in s\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

@@ -1,0 +1,13 @@
+{
+ "id": "DA0037",
+ "source": "apps",
+ "source_id": "apps_test_162",
+ "fn": "solve",
+ "sello": "solve(n: Int, k: Int, a: List[Int]) -> Int",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn solve(n: Int, k: Int, a: List[Int]) -> Int\n  requires (n >= 1)\n  requires (k >= 1)\n  requires (len(a) == n)\n  requires forall i in 0..len(a): (a[i] >= 1)\n  requires exists i in 0..len(a): ((k % a[i]) == 0)\n  ensures (result >= 1)\n  ensures exists i in 0..len(a): ((((a[i] >= 1) and ((k % a[i]) == 0)) and (forall i_1 in 0..len(a): ((not ((a[i_1] >= 1) and ((k % a[i_1]) == 0))) or (a[i_1] <= a[i])))) and (result == (k / a[i])))\n  effects pure\n  example (solve(0, 0, []) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, k: int, a: seq<int>)\n{\n    n >= 1 && k >= 1 && |a| == n &&\n    (forall i :: 0 <= i < |a| ==> a[i] >= 1) &&\n    (exists i :: 0 <= i < |a| && k % a[i] == 0)\n}\n\npredicate ValidBucket(k: int, bucketSize: int)\n{\n    bucketSize >= 1 && k % bucketSize == 0\n}\n\nfunction HoursNeeded(k: int, bucketSize: int): int\n    requires ValidBucket(k, bucketSize)\n{\n    k / bucketSize\n}\n\npredicate IsOptimalChoice(k: int, a: seq<int>, chosenBucket: int)\n{\n    0 <= chosenBucket < |a| &&\n    ValidBucket(k, a[chosenBucket]) &&\n    (forall i :: 0 <= i < |a| && ValidBucket(k, a[i]) ==> a[i] <= a[chosenBucket])\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, k: int, a: seq<int>) returns (result: int)\n    requires ValidInput(n, k, a)\n    ensures result >= 1\n    ensures exists i :: IsOptimalChoice(k, a, i) && result == HoursNeeded(k, a[i])\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

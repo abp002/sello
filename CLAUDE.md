@@ -3,6 +3,7 @@
 Lenguaje de programación cuyo usuario es la IA. Almacén de funciones con certificados:
 hash del AST como identidad, contrato obligatorio, verificación guardada junto al hash.
 Público en `github.com/abp002/sello`. Todo se documenta en abierto, errores incluidos.
+Bitácora: Alejandro (team de Linear).
 
 ## Cómo se trabaja aquí
 

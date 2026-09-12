@@ -1,0 +1,13 @@
+{
+ "id": "DA0205",
+ "source": "apps",
+ "source_id": "apps_test_1003",
+ "fn": "solve",
+ "sello": "solve(n: Int, m: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn solve(n: Int, m: Int) -> Int\n  requires (n >= 1)\n  requires (m >= 2)\n  ensures (result >= n)\n  ensures (result > 0)\n  ensures (((n + (result / m)) - result) <= 0)\n  ensures forall k in 1..result: (((n + (k / m)) - k) > 0)\n  effects pure\n  example (solve(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, m: int) {\n    n >= 1 && m >= 2\n}\n\nfunction SocksAfterDay(n: int, m: int, day: int): int\n  requires m > 0\n{\n    n + day / m - day\n}\n\npredicate CanWearSocksOnDay(n: int, m: int, day: int) \n  requires m > 0\n{\n    day >= 1 ==> SocksAfterDay(n, m, day - 1) > 0\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, m: int) returns (result: int)\n  requires ValidInput(n, m)\n  ensures result >= n\n  ensures result > 0\n  ensures SocksAfterDay(n, m, result) <= 0\n  ensures forall k :: 1 <= k < result ==> SocksAfterDay(n, m, k) > 0\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

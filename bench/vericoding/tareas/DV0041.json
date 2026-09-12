@@ -1,0 +1,13 @@
+{
+ "id": "DV0041",
+ "source": "verina",
+ "source_id": "verina_advanced_42_task",
+ "fn": "MaxProfit",
+ "sello": "MaxProfit(prices: List[Int]) -> Int",
+ "helpers": [],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn MaxProfit(prices: List[Int]) -> Int\n  requires forall x in prices: (x >= 0)\n  ensures ((((result == 0) and (len(prices) == 0)) or (exists i in 0..len(prices): exists j in (i + 1)..len(prices): ((prices[j] >= prices[i]) and ((prices[j] - prices[i]) == result)))) or (forall i in 0..len(prices): forall j in (i + 1)..len(prices): (prices[j] < prices[i])))\n  ensures (result >= 0)\n  effects pure\n  example (MaxProfit([]) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod MaxProfit(prices: seq<nat>) returns (result: nat)\n    ensures\n        (result == 0 && |prices| == 0) ||\n        (exists i: int, j: int :: 0 <= i < j < |prices| && prices[j] >= prices[i] && prices[j] - prices[i] == result) ||\n        (forall i: int, j: int :: 0 <= i < j < |prices| ==> prices[j] < prices[i])\n// </vc-spec>\n// <vc-code>\n{\n    // impl-start\n    assume {:axiom} false;\n    result := 0;\n    // impl-end\n}\n// </vc-code>\n"
+}

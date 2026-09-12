@@ -1,0 +1,11 @@
+{
+ "id": "DA0253",
+ "source": "apps",
+ "source_id": "apps_test_1177",
+ "fn": "solve",
+ "sello": "solve(N: Int, S: Int, A: List[Int]) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(N: Int, S: Int, A: List[Int]) -> Int\n  requires (N >= 1)\n  requires (S >= 1)\n  requires (len(A) == N)\n  requires (N <= 3000)\n  requires (S <= 3000)\n  requires forall i in 0..N: ((A[i] >= 1) and (A[i] <= 3000))\n  ensures (result >= 0)\n  ensures (result < 998244353)\n  ensures ((result % 998244353) == result)\n  ensures ((not ((N == 1) and (S == A[0]))) or (result == (if (S == A[0]) then 1 else 0)))\n  ensures ((not ((N == 1) and (S != A[0]))) or (result == (if (S == A[0]) then 1 else 0)))\n  ensures ((not (forall i in 0..len(A): (A[i] > S))) or (result == 0))\n  effects pure\n  example (solve(0, 0, []) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(N: int, S: int, A: seq<int>)\n{\n    N >= 1 && S >= 1 && |A| == N && N <= 3000 && S <= 3000 &&\n    forall i :: 0 <= i < N ==> A[i] >= 1 && A[i] <= 3000\n}\n\npredicate ValidResult(result: int)\n{\n    result >= 0 && result < 998244353\n}\n\npredicate AllElementsGreaterThanS(A: seq<int>, S: int)\n{\n    forall i :: 0 <= i < |A| ==> A[i] > S\n}\n\nfunction SingleElementCase(N: int, S: int, A: seq<int>): int\n    requires N == 1 && |A| == 1\n{\n    if S == A[0] then 1 else 0\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(N: int, S: int, A: seq<int>) returns (result: int)\n    requires ValidInput(N, S, A)\n    ensures ValidResult(result)\n    ensures result % 998244353 == result\n    ensures (N == 1 && S == A[0]) ==> result == SingleElementCase(N, S, A)\n    ensures (N == 1 && S != A[0]) ==> result == SingleElementCase(N, S, A)\n    ensures AllElementsGreaterThanS(A, S) ==> result == 0\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

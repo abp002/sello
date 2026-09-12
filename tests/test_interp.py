@@ -1,3 +1,4 @@
+import pytest
 from conftest import fails_with
 
 from sello.compile import check_source
@@ -70,3 +71,20 @@ def test_semantica_del_vocabulario_de_listas():
     assert ev("distinct([1, 2, 3])") and not ev("distinct([1, 2, 1])")
     assert ev("sorted([1, 1, 2])") and not ev("sorted([2, 1])") and ev("sorted([])")
     assert ev("forall x in []: false") and not ev("exists x in []: true")
+
+
+def test_semantica_del_indice_y_del_rango():
+    """`lo..hi` excluye `hi`, como `range` de Python; un índice fuera de la lista es E500."""
+    from sello.errors import SelloError
+    from sello.interp import Interpreter
+    from sello.nodes import Program
+    from sello.parser import parse_expr
+    ev = lambda s: Interpreter(Program([])).eval(parse_expr(s), {})
+    assert ev("[5, 6, 7][1]") == 6 and ev("[[1], [2, 3]][1][0]") == 2
+    assert ev("forall i in 0..3: i < 3") and not ev("forall i in 0..3: i < 2")
+    assert ev("forall i in 3..3: false") and not ev("exists i in 5..2: true")
+    assert ev("exists i in 0..len([4, 8]): [4, 8][i] == 8")
+    for src in ("[5][1]", "[5][-1]", "[][0]"):
+        with pytest.raises(SelloError) as ei:
+            ev(src)
+        assert ei.value.code == "E500" and "out of range" in ei.value.detail

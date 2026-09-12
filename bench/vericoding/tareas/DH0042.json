@@ -1,0 +1,13 @@
+{
+ "id": "DH0042",
+ "source": "humaneval",
+ "source_id": "humaneval_040",
+ "fn": "triples_sum_to_zero",
+ "sello": "triples_sum_to_zero(l: List[Int]) -> Bool",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn triples_sum_to_zero(l: List[Int]) -> Bool\n  requires (len(l) >= 0)\n  ensures (result == (exists i in 0..len(l): exists j in (i + 1)..len(l): exists k in (j + 1)..len(l): (((l[i] + l[j]) + l[k]) == 0)))\n  effects pure\n  example (triples_sum_to_zero([]) == true)\n{\n  true\n}",
+ "dafny": "// <vc-preamble>\n\npredicate HasTripleSumToZero(l: seq<int>)\n{\n    exists i, j, k :: 0 <= i < j < k < |l| && l[i] + l[j] + l[k] == 0\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod triples_sum_to_zero(l: seq<int>) returns (result: bool)\n    ensures result == HasTripleSumToZero(l)\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

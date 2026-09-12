@@ -3,11 +3,11 @@
 from __future__ import annotations
 
 from .errors import SelloError
-from .lexer import Token, lex
+from .lexer import Token, lex, pegado
 from .nodes import (
-    ANY, BOOL, INT, TEXT, Arm, Binary, BoolLit, Call, Expr, Fn, If, IntLit, ListLit,
+    ANY, BOOL, INT, TEXT, Arm, Binary, BoolLit, Call, Expr, Fn, If, Index, IntLit, ListLit,
     Match, Name, NoneLit, Param, Pattern, PCons, PEmpty, PNone, PSome, PWild, Program,
-    Quant, SomeExpr, TextLit, TList, TOption, Type, Unary,
+    Quant, RangeExpr, SomeExpr, TextLit, TList, TOption, Type, Unary,
 )
 
 
@@ -149,6 +149,9 @@ class Parser:
         var = self.expect_name().value
         self.expect_kw("in")
         subject = self.or_()
+        if self.at_sym(".."):
+            d = self.advance()
+            subject = RangeExpr(subject, self.or_(), line=d.line, col=d.col)
         self.expect_sym(":")
         body = self.expr()
         return Quant(t.value, var, subject, body, line=t.line, col=t.col)
@@ -200,7 +203,18 @@ class Parser:
         if self.at_sym("-"):
             t = self.advance()
             return Unary("-", self.unary(), line=t.line, col=t.col)
-        return self.primary()
+        return self.indexed()
+
+    def indexed(self) -> Expr:
+        """`xs[i]`. El `[` tiene que ir pegado, o `match xs { [] => ys [h, ..t] => h }`
+        se leería como `ys[h, ..t]`: los brazos solo se separan por yuxtaposición."""
+        e = self.primary()
+        while self.at_sym("[") and pegado(self.toks[self.i - 1], self.cur):
+            t = self.advance()
+            idx = self.expr()
+            self.expect_sym("]")
+            e = Index(e, idx, line=t.line, col=t.col)
+        return e
 
     def primary(self) -> Expr:
         t = self.cur

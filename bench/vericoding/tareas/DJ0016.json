@@ -1,0 +1,16 @@
+{
+ "id": "DJ0016",
+ "source": "verified_cogen",
+ "source_id": "proofsynthesis_fib",
+ "fn": "Fibonacci",
+ "sello": "Fibonacci(n: Int) -> List[Int]",
+ "helpers": [
+  "Fibo"
+ ],
+ "notas": [
+  "nat",
+  "requires vacío"
+ ],
+ "esqueleto": "fn Fibo(n: Int) -> Int\n  requires (n == n)\n  ensures (result == (if (n <= 0) then 0 else if (n == 1) then 1 else (Fibo((n - 2)) + Fibo((n - 1)))))\n  ensures (result >= 0)\n  effects pure\n  example (Fibo(0) == 0)\n  example (Fibo(1) == 1)\n{\n  if (n <= 0) then 0 else if (n == 1) then 1 else (Fibo((n - 2)) + Fibo((n - 1)))\n}\n\nfn Fibonacci(n: Int) -> List[Int]\n  requires (Fibo(n) < 2147483648)\n  requires (n >= 2)\n  ensures (len(result) == n)\n  ensures forall i in 2..n: (result[i] == Fibo(i))\n  effects pure\n  example (Fibonacci(0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\nfunction Fibo(n: int): nat\n    decreases n\n{\n    if n <= 0 then 0 else if n == 1 then 1\n    else Fibo(n - 2) + Fibo(n - 1)\n}\n\npredicate FiboFitsI32(n: int) {\n    Fibo(n) < 0x8000_0000\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod Fibonacci(n: int) returns (ret: seq<int>)\n    requires\n        FiboFitsI32(n) &&\n        n >= 2\n    ensures\n        |ret| == n &&\n        (forall i :: 2 <= i < n ==> ret[i] == Fibo(i))\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n}\n// </vc-code>\n"
+}

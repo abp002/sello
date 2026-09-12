@@ -1,0 +1,14 @@
+{
+ "id": "DH0029",
+ "source": "humaneval",
+ "source_id": "humaneval_031",
+ "fn": "is_prime",
+ "sello": "is_prime(n: Int) -> Bool",
+ "helpers": [],
+ "notas": [
+  "div",
+  "requires vacío"
+ ],
+ "esqueleto": "fn is_prime(n: Int) -> Bool\n  requires (n == n)\n  ensures (result == ((n >= 2) and (forall k in 2..n: ((n % k) != 0))))\n  effects pure\n  example (is_prime(0) == true)\n{\n  true\n}",
+ "dafny": "// <vc-preamble>\n\npredicate is_prime_number(n: int)\n{\n    n >= 2 && forall k :: 2 <= k < n ==> n % k != 0\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod is_prime(n: int) returns (result: bool)\n    ensures result <==> is_prime_number(n)\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

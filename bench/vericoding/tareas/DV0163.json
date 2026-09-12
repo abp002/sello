@@ -1,0 +1,13 @@
+{
+ "id": "DV0163",
+ "source": "verina",
+ "source_id": "verina_basic_83_task",
+ "fn": "Concat",
+ "sello": "Concat(a: List[Int], b: List[Int]) -> List[Int]",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn Concat(a: List[Int], b: List[Int]) -> List[Int]\n  requires (len(a) >= 0)\n  ensures (len(result) == (len(a) + len(b)))\n  ensures forall k in 0..len(a): (result[k] == a[k])\n  ensures forall k in 0..len(b): (result[(k + len(a))] == b[k])\n  effects pure\n  example (Concat([], []) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod Concat(a: seq<int>, b: seq<int>) returns (result: seq<int>)\n    ensures |result| == |a| + |b|\n    ensures forall k :: 0 <= k < |a| ==> result[k] == a[k]\n    ensures forall k :: 0 <= k < |b| ==> result[k + |a|] == b[k]\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n    result := a + b;\n}\n// </vc-code>\n"
+}

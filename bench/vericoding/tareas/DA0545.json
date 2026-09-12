@@ -1,0 +1,13 @@
+{
+ "id": "DA0545",
+ "source": "apps",
+ "source_id": "apps_test_4340",
+ "fn": "solve",
+ "sello": "solve(a: List[Int]) -> List[Int]",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn solve(a: List[Int]) -> List[Int]\n  requires (len(a) >= 0)\n  ensures (len(result) == len(a))\n  ensures forall i in 0..len(a): (result[i] == (if ((a[i] % 2) == 0) then (a[i] - 1) else a[i]))\n  effects pure\n  example (solve([]) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\nfunction TransformElement(x: int): int\n{\n    if x % 2 == 0 then x - 1 else x\n}\n\npredicate ValidTransformation(input: seq<int>, output: seq<int>)\n{\n    |output| == |input| &&\n    forall i :: 0 <= i < |input| ==> output[i] == TransformElement(input[i])\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(a: seq<int>) returns (result: seq<int>)\n    ensures ValidTransformation(a, result)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

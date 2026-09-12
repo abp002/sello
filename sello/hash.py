@@ -9,8 +9,8 @@ import hashlib
 
 from .builtins import NAMES as BUILTINS
 from .nodes import (
-    Arm, Binary, BoolLit, Call, Expr, Fn, If, IntLit, ListLit, Match, Name, NoneLit,
-    PCons, PEmpty, PNone, PSome, PWild, Program, Quant, SomeExpr, TextLit, Unary, children,
+    Arm, Binary, BoolLit, Call, Expr, Fn, If, Index, IntLit, ListLit, Match, Name, NoneLit,
+    PCons, PEmpty, PNone, PSome, PWild, Program, Quant, RangeExpr, SomeExpr, TextLit, Unary, children,
 )
 
 Resolve = "callable[[str], str]"
@@ -61,6 +61,10 @@ def canon_expr(e: Expr, env: list[str], resolve) -> str:
     if isinstance(e, Match):
         arms = " ".join(_canon_arm(a, env, resolve) for a in e.arms)
         return f"(match {canon_expr(e.subject, env, resolve)} {arms})"
+    if isinstance(e, Index):
+        return f"(at {canon_expr(e.seq, env, resolve)} {canon_expr(e.idx, env, resolve)})"
+    if isinstance(e, RangeExpr):
+        return f"(range {canon_expr(e.lo, env, resolve)} {canon_expr(e.hi, env, resolve)})"
     if isinstance(e, Quant):
         return (f"({e.kind} {canon_expr(e.subject, env, resolve)} "
                 f"{canon_expr(e.body, env + [e.var], resolve)})")

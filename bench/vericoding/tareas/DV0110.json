@@ -1,0 +1,13 @@
+{
+ "id": "DV0110",
+ "source": "verina",
+ "source_id": "verina_basic_30_task",
+ "fn": "ElementWiseModulo",
+ "sello": "ElementWiseModulo(a: List[Int], b: List[Int]) -> List[Int]",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn ElementWiseModulo(a: List[Int], b: List[Int]) -> List[Int]\n  requires (len(a) == len(b))\n  requires (len(a) > 0)\n  requires forall i in 0..len(b): (b[i] != 0)\n  ensures (len(result) == len(a))\n  ensures forall i in 0..len(result): (result[i] == (a[i] % b[i]))\n  effects pure\n  example (ElementWiseModulo([], []) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod ElementWiseModulo(a: seq<int>, b: seq<int>) returns (result: seq<int>)\n    requires |a| == |b|\n    requires |a| > 0\n    requires forall i :: 0 <= i < |b| ==> b[i] != 0\n    ensures |result| == |a|\n    ensures forall i :: 0 <= i < |result| ==> result[i] == a[i] % b[i]\n// </vc-spec>\n// <vc-code>\n{\n    // impl-start\n    assume {:axiom} false;\n    result := [];\n    // impl-end\n}\n// </vc-code>\n"
+}

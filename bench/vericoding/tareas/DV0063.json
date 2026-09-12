@@ -1,0 +1,13 @@
+{
+ "id": "DV0063",
+ "source": "verina",
+ "source_id": "verina_advanced_64_task",
+ "fn": "RemoveElement",
+ "sello": "RemoveElement(lst: List[Int], target: Int) -> List[Int]",
+ "helpers": [],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn RemoveElement(lst: List[Int], target: Int) -> List[Int]\n  requires forall x in lst: (x >= 0)\n  requires (target >= 0)\n  ensures forall i in 0..len(result): (result[i] != target)\n  ensures forall i in 0..len(result): exists j in 0..len(lst): ((lst[j] == result[i]) and (lst[j] != target))\n  ensures forall i in 0..len(lst): forall j in (i + 1)..len(lst): ((not ((lst[i] != target) and (lst[j] != target))) or (exists k1 in 0..len(result): exists k2 in (k1 + 1)..len(result): ((result[k1] == lst[i]) and (result[k2] == lst[j]))))\n  ensures forall x in result: (x >= 0)\n  effects pure\n  example (RemoveElement([], 0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod RemoveElement(lst: seq<nat>, target: nat) returns (result: seq<nat>)\n    ensures\n        forall i :: 0 <= i < |result| ==> result[i] != target\n    ensures\n        forall i :: 0 <= i < |result| ==> \n            exists j :: 0 <= j < |lst| && lst[j] == result[i] && lst[j] != target\n    ensures\n        forall i, j :: 0 <= i < j < |lst| && lst[i] != target && lst[j] != target ==> \n            (exists k1, k2 :: 0 <= k1 < k2 < |result| && \n            result[k1] == lst[i] && result[k2] == lst[j])\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n    result := [];\n}\n// </vc-code>\n"
+}

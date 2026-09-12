@@ -1,0 +1,11 @@
+{
+ "id": "DD0611",
+ "source": "dafnybench",
+ "source_id": "dafny-language-server_tmp_tmpkir0kenl_Test_tutorial_maximum_Maximum",
+ "fn": "Maximum",
+ "sello": "Maximum(values: List[Int]) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn Maximum(values: List[Int]) -> Int\n  requires (values != [])\n  ensures contains(values, result)\n  ensures forall i in 0..len(values): (values[i] <= result)\n  effects pure\n  example (Maximum([]) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod Maximum(values: seq<int>) returns (max: int)\n  requires values != []\n  ensures max in values\n  ensures forall i | 0 <= i < |values| :: values[i] <= max\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

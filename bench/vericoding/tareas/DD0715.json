@@ -1,0 +1,13 @@
+{
+ "id": "DD0715",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_414_AnyValueExists",
+ "fn": "AnyValueExists",
+ "sello": "AnyValueExists(seq1: List[Int], seq2: List[Int]) -> Bool",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn AnyValueExists(seq1: List[Int], seq2: List[Int]) -> Bool\n  requires (len(seq1) >= 0)\n  ensures (result == (exists i in 0..len(seq1): contains(seq2, seq1[i])))\n  effects pure\n  example (AnyValueExists([], []) == true)\n{\n  true\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod AnyValueExists(seq1: seq<int>, seq2: seq<int>) returns (result: bool)\n    ensures result <==> (exists i :: 0 <= i < |seq1| && seq1[i] in seq2)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

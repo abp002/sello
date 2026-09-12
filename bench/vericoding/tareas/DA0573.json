@@ -1,0 +1,11 @@
+{
+ "id": "DA0573",
+ "source": "apps",
+ "source_id": "apps_test_4413",
+ "fn": "solve",
+ "sello": "solve(skills: List[Int]) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(skills: List[Int]) -> Int\n  requires (len(skills) >= 0)\n  ensures ((result == 1) or (result == 2))\n  ensures ((result == 2) == (exists i in 0..len(skills): exists j in (i + 1)..len(skills): (((skills[i] - skills[j]) == 1) or ((skills[j] - skills[i]) == 1))))\n  ensures ((result == 1) == (not (exists i in 0..len(skills): exists j in (i + 1)..len(skills): (((skills[i] - skills[j]) == 1) or ((skills[j] - skills[i]) == 1)))))\n  effects pure\n  example (solve([]) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(skills: seq<int>)\n{\n    |skills| >= 0\n}\n\npredicate HasAdjacentSkills(skills: seq<int>)\n{\n    exists i, j :: 0 <= i < j < |skills| && (skills[i] - skills[j] == 1 || skills[j] - skills[i] == 1)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(skills: seq<int>) returns (teams: int)\n    requires ValidInput(skills)\n    ensures teams == 1 || teams == 2\n    ensures teams == 2 <==> HasAdjacentSkills(skills)\n    ensures teams == 1 <==> !HasAdjacentSkills(skills)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

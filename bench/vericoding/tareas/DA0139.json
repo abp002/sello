@@ -1,0 +1,11 @@
+{
+ "id": "DA0139",
+ "source": "apps",
+ "source_id": "apps_test_703",
+ "fn": "solve",
+ "sello": "solve(k: Int, a: Int, b: Int, v: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(k: Int, a: Int, b: Int, v: Int) -> Int\n  requires (2 <= k)\n  requires (k <= 1000)\n  requires (1 <= a)\n  requires (a <= 1000)\n  requires (1 <= b)\n  requires (b <= 1000)\n  requires (1 <= v)\n  requires (v <= 1000)\n  ensures (result >= 1)\n  ensures (result <= 1009)\n  ensures (a <= (v * (result + (if (b <= ((k - 1) * result)) then b else ((k - 1) * result)))))\n  ensures ((result == 1) or (not (a <= (v * ((result - 1) + (if (b <= ((k - 1) * (result - 1))) then b else ((k - 1) * (result - 1))))))))\n  ensures exists i in 1..(1009 + 1): (((a <= (v * (i + (if (b <= ((k - 1) * i)) then b else ((k - 1) * i))))) and (result == i)) and (forall j in 1..i: not (a <= (v * (j + (if (b <= ((k - 1) * j)) then b else ((k - 1) * j)))))))\n  effects pure\n  example (solve(0, 0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nfunction min(x: int, y: int): int\n{\n    if x <= y then x else y\n}\n\npredicate ValidInput(k: int, a: int, b: int, v: int)\n{\n    2 <= k <= 1000 && 1 <= a <= 1000 && 1 <= b <= 1000 && 1 <= v <= 1000\n}\n\nfunction BoxCapacity(numBoxes: int, k: int, b: int, v: int): int\n    requires numBoxes >= 0\n{\n    v * (numBoxes + min(b, (k - 1) * numBoxes))\n}\n\npredicate CanStoreNuts(numBoxes: int, k: int, a: int, b: int, v: int)\n    requires numBoxes >= 0\n{\n    a <= BoxCapacity(numBoxes, k, b, v)\n}\n\npredicate IsMinimalSolution(result: int, k: int, a: int, b: int, v: int)\n    requires result >= 1\n{\n    CanStoreNuts(result, k, a, b, v) &&\n    (result == 1 || !CanStoreNuts(result - 1, k, a, b, v))\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(k: int, a: int, b: int, v: int) returns (result: int)\n    requires ValidInput(k, a, b, v)\n    ensures result >= 1\n    ensures result <= 1009\n    ensures IsMinimalSolution(result, k, a, b, v)\n    ensures exists i :: 1 <= i <= 1009 && CanStoreNuts(i, k, a, b, v) && result == i && \n            (forall j :: 1 <= j < i ==> !CanStoreNuts(j, k, a, b, v))\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

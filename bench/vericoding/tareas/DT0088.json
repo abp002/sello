@@ -1,0 +1,15 @@
+{
+ "id": "DT0088",
+ "source": "numpy_triple",
+ "source_id": "bitwise_operations_left_shift",
+ "fn": "LeftShift",
+ "sello": "LeftShift(x1: List[Int], x2: List[Int]) -> List[Int]",
+ "helpers": [
+  "Power"
+ ],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn Power(base: Int, exp: Int) -> Int\n  requires (exp >= 0)\n  ensures (result == (if (exp == 0) then 1 else (base * Power(base, (exp - 1)))))\n  effects pure\n  example (Power(0, 0) == 1)\n  example (Power(0, 1) == 0)\n{\n  if (exp == 0) then 1 else (base * Power(base, (exp - 1)))\n}\n\nfn LeftShift(x1: List[Int], x2: List[Int]) -> List[Int]\n  requires (len(x1) == len(x2))\n  requires forall i in 0..len(x2): (x2[i] >= 0)\n  ensures (len(result) == len(x1))\n  ensures forall i in 0..len(result): (result[i] == (x1[i] * Power(2, x2[i])))\n  ensures forall i in 0..len(result): ((not (x2[i] == 0)) or (result[i] == x1[i]))\n  ensures forall i in 0..len(result): ((not (x1[i] == 0)) or (result[i] == 0))\n  ensures forall i in 0..len(result): ((not ((x1[i] > 0) and (x2[i] > 0))) or (result[i] > x1[i]))\n  ensures forall i in 0..len(result): ((not ((x1[i] < 0) and (x2[i] > 0))) or (result[i] < x1[i]))\n  effects pure\n  example (LeftShift([], []) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// Helper function to compute integer powers\nfunction Power(base: int, exp: nat): int\n{\n  if exp == 0 then 1\n  else base * Power(base, exp - 1)\n}\n\n// Bitwise left shift operation on sequences of integers\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod LeftShift(x1: seq<int>, x2: seq<int>) returns (result: seq<int>)\n  // Input sequences must have the same length\n  requires |x1| == |x2|\n  // All shift amounts must be non-negative\n  requires forall i :: 0 <= i < |x2| ==> x2[i] >= 0\n  \n  // Output has same length as inputs\n  ensures |result| == |x1|\n  // Core behavior: each element is multiplied by 2^shift_amount\n  ensures forall i :: 0 <= i < |result| ==> result[i] == x1[i] * Power(2, x2[i])\n  // Identity property: shifting by 0 returns original value\n  ensures forall i :: 0 <= i < |result| && x2[i] == 0 ==> result[i] == x1[i]\n  // Zero preservation: shifting zero always yields zero\n  ensures forall i :: 0 <= i < |result| && x1[i] == 0 ==> result[i] == 0\n  // Monotonicity for positive values: left shifting increases magnitude\n  ensures forall i :: 0 <= i < |result| && x1[i] > 0 && x2[i] > 0 ==> result[i] > x1[i]\n  // Monotonicity for negative values: left shifting decreases value (more negative)\n  ensures forall i :: 0 <= i < |result| && x1[i] < 0 && x2[i] > 0 ==> result[i] < x1[i]\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

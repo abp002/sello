@@ -1,0 +1,11 @@
+{
+ "id": "DA0070",
+ "source": "apps",
+ "source_id": "apps_test_287",
+ "fn": "solve",
+ "sello": "solve(n: Int, k: Int) -> List[Int]",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(n: Int, k: Int) -> List[Int]\n  requires (n >= 1)\n  requires (k >= 0)\n  requires (k <= n)\n  ensures (len(result) == 2)\n  ensures (result[0] >= 0)\n  ensures (result[1] >= 0)\n  ensures (result[0] <= result[1])\n  ensures (result[0] <= (n - k))\n  ensures (result[1] <= (n - k))\n  ensures (result[0] == (if ((k == 0) or (k == n)) then 0 else 1))\n  ensures (result[1] == (if ((k == 0) or (k == n)) then 0 else if ((n - k) < (k * 2)) then (n - k) else (k * 2)))\n  effects pure\n  example (solve(0, 0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, k: int)\n{\n    n >= 1 && k >= 0 && k <= n\n}\n\npredicate ValidOutput(result: seq<int>, n: int, k: int)\n{\n    |result| == 2 && \n    result[0] >= 0 && \n    result[1] >= 0 && \n    result[0] <= result[1] &&\n    result[0] <= n - k &&\n    result[1] <= n - k\n}\n\nfunction MinGoodApartments(n: int, k: int): int\n    requires ValidInput(n, k)\n{\n    if k == 0 || k == n then 0 else 1\n}\n\nfunction MaxGoodApartments(n: int, k: int): int\n    requires ValidInput(n, k)\n{\n    if k == 0 || k == n then 0\n    else if n - k < k * 2 then n - k\n    else k * 2\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, k: int) returns (result: seq<int>)\n    requires ValidInput(n, k)\n    ensures ValidOutput(result, n, k)\n    ensures result[0] == MinGoodApartments(n, k)\n    ensures result[1] == MaxGoodApartments(n, k)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

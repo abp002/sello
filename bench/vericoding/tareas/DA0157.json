@@ -1,0 +1,11 @@
+{
+ "id": "DA0157",
+ "source": "apps",
+ "source_id": "apps_test_785",
+ "fn": "solve",
+ "sello": "solve(n: Int, a: Int, b: Int) -> List[Int]",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(n: Int, a: Int, b: Int) -> List[Int]\n  requires (n > 0)\n  requires (a > 0)\n  requires (b > 0)\n  ensures (len(result) == 3)\n  ensures (result[0] >= (6 * n))\n  ensures (result[1] > 0)\n  ensures (result[2] > 0)\n  ensures (result[0] == (result[1] * result[2]))\n  ensures (((result[1] >= a) and (result[2] >= b)) or ((result[1] >= b) and (result[2] >= a)))\n  effects pure\n  example (solve(0, 0, 0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, a: int, b: int)\n{\n  n > 0 && a > 0 && b > 0\n}\n\npredicate ValidOutput(result: seq<int>, n: int, a: int, b: int)\n{\n  |result| == 3 &&\n  result[0] >= 6 * n &&\n  result[1] > 0 && result[2] > 0 &&\n  result[0] == result[1] * result[2] &&\n  ((result[1] >= a && result[2] >= b) || (result[1] >= b && result[2] >= a))\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, a: int, b: int) returns (result: seq<int>)\n  requires ValidInput(n, a, b)\n  ensures ValidOutput(result, n, a, b)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

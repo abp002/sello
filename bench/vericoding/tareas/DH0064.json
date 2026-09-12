@@ -1,0 +1,14 @@
+{
+ "id": "DH0064",
+ "source": "humaneval",
+ "source_id": "humaneval_062",
+ "fn": "derivative",
+ "sello": "derivative(xs: List[Int]) -> List[Int]",
+ "helpers": [],
+ "notas": [
+  "cláusula `true` eliminada",
+  "requires vacío"
+ ],
+ "esqueleto": "fn derivative(xs: List[Int]) -> List[Int]\n  requires (len(xs) >= 0)\n  ensures ((not (len(xs) <= 1)) or (result == []))\n  ensures ((not (len(xs) > 1)) or ((len(result) == (len(xs) - 1)) and (forall j in 0..len(result): (result[j] == ((j + 1) * xs[(j + 1)])))))\n  ensures (len(result) == (if (len(xs) <= 1) then 0 else (len(xs) - 1)))\n  effects pure\n  example (derivative([]) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n\npredicate ValidInput(xs: seq<int>)\n{\n    true  // Any sequence of coefficients is valid input\n}\n\nfunction DerivativeLength(xs: seq<int>): nat\n{\n    if |xs| <= 1 then 0 else |xs| - 1\n}\n\npredicate CorrectDerivativeCoefficients(xs: seq<int>, result: seq<int>)\n{\n    (|xs| <= 1 ==> result == []) &&\n    (|xs| > 1 ==> (|result| == |xs| - 1 && \n                  (forall j :: 0 <= j < |result| ==> result[j] == (j + 1) * xs[j + 1])))\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod derivative(xs: seq<int>) returns (result: seq<int>)\n    requires ValidInput(xs)\n    ensures CorrectDerivativeCoefficients(xs, result)\n    ensures |result| == DerivativeLength(xs)\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

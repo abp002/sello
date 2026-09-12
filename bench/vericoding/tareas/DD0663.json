@@ -1,0 +1,11 @@
+{
+ "id": "DD0663",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_95_SmallestListLength",
+ "fn": "SmallestListLength",
+ "sello": "SmallestListLength(s: List[List[Int]]) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn SmallestListLength(s: List[List[Int]]) -> Int\n  requires (len(s) > 0)\n  ensures forall i in 0..len(s): (result <= len(s[i]))\n  ensures exists i in 0..len(s): (result == len(s[i]))\n  effects pure\n  example (SmallestListLength([]) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod SmallestListLength(s: seq<seq<int>>) returns (v: int)\n    requires |s| > 0\n    ensures forall i :: 0 <= i < |s| ==> v <= |s[i]|\n    ensures exists i :: 0 <= i < |s| && v == |s[i]|\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

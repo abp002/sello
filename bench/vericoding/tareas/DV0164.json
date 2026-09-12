@@ -1,0 +1,13 @@
+{
+ "id": "DV0164",
+ "source": "verina",
+ "source_id": "verina_basic_84_task",
+ "fn": "Replace",
+ "sello": "Replace(arr: List[Int], k: Int) -> List[Int]",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn Replace(arr: List[Int], k: Int) -> List[Int]\n  requires (len(arr) >= 0)\n  ensures (len(result) == len(arr))\n  ensures forall i in 0..len(arr): ((not (arr[i] > k)) or (result[i] == -1))\n  ensures forall i in 0..len(arr): ((not (arr[i] <= k)) or (result[i] == arr[i]))\n  effects pure\n  example (Replace([], 0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n/* Helper function to process the replacement loop */\nfunction ReplaceLoopSpec(oldArr: seq<int>, k: int, i: nat, acc: seq<int>): seq<int>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod Replace(arr: seq<int>, k: int) returns (result: seq<int>)\n    ensures\n        |result| == |arr| &&\n        (forall i :: 0 <= i < |arr| ==> (arr[i] > k ==> result[i] == -1)) &&\n        (forall i :: 0 <= i < |arr| ==> (arr[i] <= k ==> result[i] == arr[i]))\n// </vc-spec>\n// <vc-code>\n{\n    // impl-start\n    assume {:axiom} false;\n    result := [];\n    // impl-end\n}\n// </vc-code>\n"
+}

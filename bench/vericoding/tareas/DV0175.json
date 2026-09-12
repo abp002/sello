@@ -1,0 +1,11 @@
+{
+ "id": "DV0175",
+ "source": "verina",
+ "source_id": "verina_basic_95_task",
+ "fn": "swap",
+ "sello": "swap(arr: List[Int], i: Int, j: Int) -> List[Int]",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn swap(arr: List[Int], i: Int, j: Int) -> List[Int]\n  requires (0 <= i)\n  requires (i < len(arr))\n  requires (0 <= j)\n  requires (j < len(arr))\n  ensures (len(result) == len(arr))\n  ensures (result[i] == arr[j])\n  ensures (result[j] == arr[i])\n  ensures forall k in 0..len(arr): ((not ((k != i) and (k != j))) or (result[k] == arr[k]))\n  effects pure\n  example (swap([], 0, 0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod swap(arr: seq<int>, i: int, j: int) returns (result: seq<int>)\n    requires 0 <= i < |arr|\n    requires 0 <= j < |arr|\n    ensures |result| == |arr|\n    ensures result[i] == arr[j]\n    ensures result[j] == arr[i]\n    ensures forall k :: 0 <= k < |arr| && k != i && k != j ==> result[k] == arr[k]\n// </vc-spec>\n// <vc-code>\n{\n    // impl-start\n    assume {:axiom} false;\n    result := [];\n    // impl-end\n}\n// </vc-code>\n"
+}

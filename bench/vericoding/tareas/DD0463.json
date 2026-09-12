@@ -1,0 +1,11 @@
+{
+ "id": "DD0463",
+ "source": "dafnybench",
+ "source_id": "Software-Verification_tmp_tmpv4ueky2d_Contains_Duplicate_contains_duplicate_contains_duplicate",
+ "fn": "contains_duplicate",
+ "sello": "contains_duplicate(nums: List[Int]) -> Bool",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn contains_duplicate(nums: List[Int]) -> Bool\n  requires (1 <= len(nums))\n  requires (len(nums) <= 100000)\n  requires forall i in 0..len(nums): ((-1000000000 <= nums[i]) and (nums[i] <= 1000000000))\n  ensures (result == (forall i in 0..len(nums): forall j in (i + 1)..len(nums): (nums[i] != nums[j])))\n  effects pure\n  example (contains_duplicate([]) == true)\n{\n  true\n}",
+ "dafny": "// <vc-preamble>\npredicate distinct(nums: seq<int>) {\n    forall i, j :: 0 <= i < j < |nums| ==> nums[i] != nums[j]\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod contains_duplicate(nums: seq<int>) returns (result: bool)\n    requires 1 <= |nums| <= 100000\n    requires forall i :: 0 <= i < |nums| ==> -1000000000 <= nums[i] <= 1000000000\n    ensures result <==> distinct(nums)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

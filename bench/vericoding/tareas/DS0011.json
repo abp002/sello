@@ -1,0 +1,11 @@
+{
+ "id": "DS0011",
+ "source": "numpy_simple",
+ "source_id": "NpColumnStack-spec",
+ "fn": "ColumnStack",
+ "sello": "ColumnStack(input: List[List[Int]], m: Int, n: Int) -> List[List[Int]]",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn ColumnStack(input: List[List[Int]], m: Int, n: Int) -> List[List[Int]]\n  requires (n > 0)\n  requires (len(input) == n)\n  requires forall i in 0..n: (len(input[i]) == m)\n  ensures (len(result) == m)\n  ensures forall j in 0..m: (len(result[j]) == n)\n  ensures ((len(result) * n) == (m * n))\n  ensures forall i in 0..n: forall j in 0..m: (result[j][i] == input[i][j])\n  effects pure\n  example (ColumnStack([], 0, 0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod ColumnStack(input: seq<seq<int>>, m: int, n: int) returns (result: seq<seq<int>>)\n    requires \n        n > 0 &&\n        |input| == n &&\n        (forall i :: 0 <= i < n ==> |input[i]| == m)\n    ensures\n        |result| == m &&\n        (forall j :: 0 <= j < m ==> |result[j]| == n) &&\n        |result| * n == m * n &&\n        (forall i, j :: 0 <= i < n && 0 <= j < m ==> \n            result[j][i] == input[i][j])\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n}\n// </vc-code>\n"
+}

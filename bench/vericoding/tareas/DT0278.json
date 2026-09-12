@@ -1,0 +1,11 @@
+{
+ "id": "DT0278",
+ "source": "numpy_triple",
+ "source_id": "logic_functions_logical_or",
+ "fn": "logical_or",
+ "sello": "logical_or(x1: List[Bool], x2: List[Bool]) -> List[Bool]",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn logical_or(x1: List[Bool], x2: List[Bool]) -> List[Bool]\n  requires (len(x1) == len(x2))\n  ensures (len(result) == len(x1))\n  ensures forall i in 0..len(result): (result[i] == (x1[i] or x2[i]))\n  ensures forall i in 0..len(result): ((x1[i] or x2[i]) == (x2[i] or x1[i]))\n  ensures forall i in 0..len(x1): ((x1[i] or false) == x1[i])\n  ensures forall i in 0..len(x1): ((x1[i] or true) == true)\n  ensures forall i in 0..len(x1): ((x1[i] or x1[i]) == x1[i])\n  ensures forall i in 0..len(result): ((not ((x1[i] == true) or (x2[i] == true))) or (result[i] == true))\n  ensures forall i in 0..len(result): ((not ((x1[i] == false) and (x2[i] == false))) or (result[i] == false))\n  effects pure\n  example (logical_or([], []) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod logical_or(x1: seq<bool>, x2: seq<bool>) returns (result: seq<bool>)\n  // Input vectors must have the same length\n  requires |x1| == |x2|\n  \n  // Output vector has the same length as input vectors\n  ensures |result| == |x1|\n  \n  // Core specification: each element is logical OR of corresponding input elements\n  ensures forall i :: 0 <= i < |result| ==> result[i] == (x1[i] || x2[i])\n  \n  // Commutativity property: a ∨ b = b ∨ a\n  ensures forall i :: 0 <= i < |result| ==> (x1[i] || x2[i]) == (x2[i] || x1[i])\n  \n  // Identity with false: a ∨ false = a\n  ensures forall i :: 0 <= i < |x1| ==> (x1[i] || false) == x1[i]\n  \n  // Absorption with true: a ∨ true = true\n  ensures forall i :: 0 <= i < |x1| ==> (x1[i] || true) == true\n  \n  // Idempotent property: a ∨ a = a\n  ensures forall i :: 0 <= i < |x1| ==> (x1[i] || x1[i]) == x1[i]\n  \n  // Result is true if either operand is true\n  ensures forall i :: 0 <= i < |result| ==> \n    (x1[i] == true || x2[i] == true) ==> result[i] == true\n  \n  // Result is false only when both operands are false\n  ensures forall i :: 0 <= i < |result| ==> \n    (x1[i] == false && x2[i] == false) ==> result[i] == false\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

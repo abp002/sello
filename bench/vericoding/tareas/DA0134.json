@@ -1,0 +1,13 @@
+{
+ "id": "DA0134",
+ "source": "apps",
+ "source_id": "apps_test_673",
+ "fn": "solve",
+ "sello": "solve(n: Int, k: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn solve(n: Int, k: Int) -> Int\n  requires (n >= 1)\n  requires (k > 0)\n  ensures (result > n)\n  ensures ((result % k) == 0)\n  ensures forall x in (n + 1)..result: ((x % k) != 0)\n  effects pure\n  example (solve(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, k: int)\n{\n    n >= 1 && k > 0\n}\n\npredicate IsCorrectResult(n: int, k: int, result: int)\n    requires k > 0\n{\n    result > n && result % k == 0 && forall x :: n < x < result ==> x % k != 0\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, k: int) returns (result: int)\n    requires ValidInput(n, k)\n    ensures IsCorrectResult(n, k, result)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

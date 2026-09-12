@@ -1,0 +1,11 @@
+{
+ "id": "DD0762",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_603_LucidNumbers",
+ "fn": "LucidNumbers",
+ "sello": "LucidNumbers(n: Int) -> List[Int]",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn LucidNumbers(n: Int) -> List[Int]\n  requires (n >= 0)\n  ensures forall i in 0..len(result): ((result[i] % 3) == 0)\n  ensures forall i in 0..len(result): (result[i] <= n)\n  ensures forall i in 0..len(result): forall j in (i + 1)..len(result): (result[i] < result[j])\n  effects pure\n  example (LucidNumbers(0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod LucidNumbers(n: int) returns (lucid: seq<int>)\n    requires n >= 0\n    ensures forall i :: 0 <= i < |lucid| ==> lucid[i] % 3 == 0\n    ensures forall i :: 0 <= i < |lucid| ==> lucid[i] <= n\n    ensures forall i, j :: 0 <= i < j < |lucid| ==> lucid[i] < lucid[j]\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

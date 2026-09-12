@@ -1,0 +1,11 @@
+{
+ "id": "DA0405",
+ "source": "apps",
+ "source_id": "apps_test_2220",
+ "fn": "solve",
+ "sello": "solve(n: Int, m: Int, k: Int, emotes: List[Int]) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(n: Int, m: Int, k: Int, emotes: List[Int]) -> Int\n  requires (n >= 2)\n  requires (k >= 1)\n  requires (m >= 1)\n  requires (len(emotes) == n)\n  requires forall i in 0..len(emotes): (emotes[i] >= 1)\n  ensures (result >= 0)\n  effects pure\n  example (solve(0, 0, 0, []) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, m: int, k: int, emotes: seq<int>)\n{\n    n >= 2 && k >= 1 && m >= 1 && |emotes| == n &&\n    forall i :: 0 <= i < |emotes| ==> emotes[i] >= 1\n}\n\nfunction MaxHappiness(n: int, m: int, k: int, emotes: seq<int>): int\n    requires ValidInput(n, m, k, emotes)\n{\n    var k_plus_1 := k + 1;\n    var total := m / k_plus_1;\n    var remainder := m % k_plus_1;\n\n    var max_val := MaxValue(emotes);\n    var second_max_val := SecondMaxValue(emotes);\n    remainder * max_val + max_val * (total * k) + second_max_val * total\n}\n\nfunction MaxValue(s: seq<int>): int\n    requires |s| >= 1\n    requires forall i :: 0 <= i < |s| ==> s[i] >= 1\n    ensures MaxValue(s) >= 1\n    ensures exists i :: 0 <= i < |s| && s[i] == MaxValue(s)\n{\n    if |s| == 1 then s[0]\n    else if s[0] >= MaxValue(s[1..]) then s[0]\n    else MaxValue(s[1..])\n}\n\nfunction SecondMaxValue(s: seq<int>): int\n    requires |s| >= 2\n    requires forall i :: 0 <= i < |s| ==> s[i] >= 1\n{\n    var max_val := MaxValue(s);\n    var filtered := FilterOut(s, max_val, 1);\n    if |filtered| > 0 then MaxValue(filtered) else 1\n}\n\nfunction FilterOut(s: seq<int>, val: int, count: int): seq<int>\n    requires count >= 0\n    requires forall i :: 0 <= i < |s| ==> s[i] >= 1\n    ensures forall i :: 0 <= i < |FilterOut(s, val, count)| ==> FilterOut(s, val, count)[i] >= 1\n{\n    if |s| == 0 || count == 0 then s\n    else if s[0] == val then FilterOut(s[1..], val, count - 1)\n    else [s[0]] + FilterOut(s[1..], val, count)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, m: int, k: int, emotes: seq<int>) returns (result: int)\n    requires ValidInput(n, m, k, emotes)\n    ensures result >= 0\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

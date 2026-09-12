@@ -1,0 +1,13 @@
+{
+ "id": "DJ0125",
+ "source": "verified_cogen",
+ "source_id": "proofsynthesis_task_id_769",
+ "fn": "difference",
+ "sello": "difference(arr1: List[Int], arr2: List[Int]) -> List[Int]",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn difference(arr1: List[Int], arr2: List[Int]) -> List[Int]\n  requires (len(arr1) >= 0)\n  ensures forall i in 0..len(arr1): ((not (not contains(arr2, arr1[i]))) or contains(result, arr1[i]))\n  ensures forall i in 0..len(arr2): ((not (not contains(arr1, arr2[i]))) or contains(result, arr2[i]))\n  ensures forall i in 0..len(result): forall j in (i + 1)..len(result): (result[i] != result[j])\n  effects pure\n  example (difference([], []) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod difference(arr1: seq<int>, arr2: seq<int>) returns (result: seq<int>)\n    ensures\n        (forall i :: 0 <= i < |arr1| ==> (arr1[i] !in arr2 ==> arr1[i] in result)) &&\n        (forall i :: 0 <= i < |arr2| ==> (arr2[i] !in arr1 ==> arr2[i] in result)) &&\n        (forall i, j :: 0 <= i < j < |result| ==> result[i] != result[j])\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n}\n// </vc-code>\n"
+}

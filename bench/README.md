@@ -109,9 +109,11 @@ como contratos de Sello. Tres piezas:
 - `traducir.py`: Dafny → Sello. Los helpers no recursivos se inlinean en las cláusulas; los
   recursivos quedan congelados como `fn` con `ensures result == <cuerpo>` y ejemplos calculados;
   `==>` es `not a or b`, `|s|` es `len(s)`, `x in s` es `contains(s, x)`, `forall x :: x in s ==> P`
-  es `forall x in s: P`, `nat` es `Int` más `>= 0`. Lo que Sello no tiene (índices `s[i]`, tramos,
-  cuantificadores sobre enteros, `array`, `real`, `string`, `set`, `map`, datatypes, varios valores
-  de retorno) no se traduce y se cuenta por qué: `resultados/vericoding-traduccion-*.md`. Las que
+  es `forall x in s: P`, `forall i :: 0 <= i < |s| ==> P` es `forall i in 0..len(s): P` (las cotas
+  se sacan de las premisas; lo que sobra sigue de premisa), `s[i]` es `s[i]`, `nat` es `Int` más
+  `>= 0`. Lo que Sello no tiene (tramos, cuantificadores sin las dos cotas, índices en el cuerpo
+  de un helper recursivo, `array`, `real`, `string`, `set`, `map`, datatypes, varios valores de
+  retorno) no se traduce y se cuenta por qué: `resultados/vericoding-traduccion-*.md`. Las que
   caben van a `vericoding/tareas/<ID>.json` (con la spec Dafny original). Tiene test.
 - `harness4.py`: la condición `sello_contrato` con ese contrato: la principal sin cuerpo ni
   ejemplos y los helpers congelados; el modelo escribe el cuerpo y sus `example` (el benchmark no

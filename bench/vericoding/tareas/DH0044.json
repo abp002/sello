@@ -1,0 +1,14 @@
+{
+ "id": "DH0044",
+ "source": "humaneval",
+ "source_id": "humaneval_042",
+ "fn": "incr_list",
+ "sello": "incr_list(l: List[Int]) -> List[Int]",
+ "helpers": [],
+ "notas": [
+  "cláusula `true` eliminada",
+  "requires vacío"
+ ],
+ "esqueleto": "fn incr_list(l: List[Int]) -> List[Int]\n  requires (len(l) >= 0)\n  ensures (len(result) == len(l))\n  ensures forall i in 0..len(l): (result[i] == (l[i] + 1))\n  effects pure\n  example (incr_list([]) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n\npredicate ValidInput(l: seq<int>)\n{\n    true\n}\n\npredicate CorrectOutput(l: seq<int>, result: seq<int>)\n{\n    |result| == |l| && \n    forall i :: 0 <= i < |l| ==> result[i] == l[i] + 1\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod incr_list(l: seq<int>) returns (result: seq<int>)\n    requires ValidInput(l)\n    ensures CorrectOutput(l, result)\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

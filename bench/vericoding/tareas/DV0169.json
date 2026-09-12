@@ -1,0 +1,13 @@
+{
+ "id": "DV0169",
+ "source": "verina",
+ "source_id": "verina_basic_89_task",
+ "fn": "SetToSeq",
+ "sello": "SetToSeq(s: List[Int]) -> List[Int]",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn SetToSeq(s: List[Int]) -> List[Int]\n  requires (len(s) >= 0)\n  ensures forall i in 0..len(result): forall j in (i + 1)..len(result): (result[i] != result[j])\n  ensures forall i in 0..len(result): exists j in 0..len(s): (s[j] == result[i])\n  ensures forall i in 0..len(s): exists j in 0..len(result): (result[j] == s[i])\n  effects pure\n  example (SetToSeq([]) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod SetToSeq(s: seq<int>) returns (result: seq<int>)\n    ensures\n        // All elements are unique in the result  \n        forall i: int, j: int :: 0 <= i < j < |result| ==> result[i] != result[j]\n    ensures\n        // Every element in result is in s\n        forall i: int :: 0 <= i < |result| ==> \n            exists j: int :: 0 <= j < |s| && s[j] == result[i]\n    ensures\n        // Every element in s is in result\n        forall i: int :: 0 <= i < |s| ==> \n            exists j: int :: 0 <= j < |result| && result[j] == s[i]\n// </vc-spec>\n// <vc-code>\n{\n    // impl-start\n    assume {:axiom} false;\n    result := [];\n    // impl-end\n}\n// </vc-code>\n"
+}

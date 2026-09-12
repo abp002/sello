@@ -1,0 +1,14 @@
+{
+ "id": "DD0158",
+ "source": "dafnybench",
+ "source_id": "DafnyPrograms_tmp_tmp74_f9k_c_prime-database_testPrimeness",
+ "fn": "testPrimeness",
+ "sello": "testPrimeness(n: Int) -> Bool",
+ "helpers": [],
+ "notas": [
+  "div",
+  "nat"
+ ],
+ "esqueleto": "fn testPrimeness(n: Int) -> Bool\n  requires (n >= 0)\n  requires (n >= 0)\n  ensures (result == ((n > 1) and (forall nr in (1 + 1)..n: ((n % nr) != 0))))\n  effects pure\n  example (testPrimeness(0) == true)\n{\n  true\n}",
+ "dafny": "// <vc-preamble>\nghost predicate prime(n: nat)\n\n{ n > 1 && (forall nr | 1 < nr < n :: n % nr != 0) }\n\ndatatype Answer = Yes | No | Unknown\n\nclass {:autocontracts} PrimeMap{\n\n  var database: map<nat, bool>; \n\n  ghost predicate Valid()\n    reads this\n  {\n    forall i | i in database.Keys :: (database[i] == true <==> prime(i)) \n  }\n\n  constructor()\n    ensures database == map[]\n  {\n    database := map[];\n  }\n\nmethod IsPrime?(n: nat) returns (answer: Answer) \n      ensures database.Keys == old(database.Keys)\n      ensures (n in database) && prime(n) <==> answer == Yes \n      ensures (n in database) && !prime(n) <==> answer == No \n      ensures !(n in database) <==> answer == Unknown\n{\n  assume{:axiom} false;\n}\n\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod testPrimeness(n: nat) returns (result: bool) \n      requires n >= 0\n      ensures result <==> prime(n)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

@@ -1,0 +1,11 @@
+{
+ "id": "DA0349",
+ "source": "apps",
+ "source_id": "apps_test_1797",
+ "fn": "solve",
+ "sello": "solve(n: Int, p: List[Int]) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(n: Int, p: List[Int]) -> Int\n  requires (n > 0)\n  requires (len(p) == n)\n  requires forall i in 0..n: ((1 <= p[i]) and (p[i] <= n))\n  requires forall i in 0..n: forall j in (i + 1)..n: (p[i] != p[j])\n  ensures (result > 0)\n  effects pure\n  example (solve(0, []) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, p: seq<int>)\n{\n  n > 0 && |p| == n &&\n  (forall i :: 0 <= i < n ==> 1 <= p[i] <= n) &&\n  (forall i, j :: 0 <= i < j < n ==> p[i] != p[j])\n}\n\nfunction count_true(visited: seq<bool>): int\n  ensures count_true(visited) >= 0\n  ensures count_true(visited) <= |visited|\n{\n  if |visited| == 0 then 0\n  else (if visited[0] then 1 else 0) + count_true(visited[1..])\n}\n\nfunction sum_of_squares(s: seq<int>): int \n{\n  if |s| == 0 then 0 else s[0] * s[0] + sum_of_squares(s[1..])\n}\n\nfunction get_cycle_lengths(n: int, p: seq<int>): seq<int>\n  requires ValidInput(n, p)\n{\n  get_cycles_helper(n, p, seq(n, i => false), [])\n}\n\nfunction get_cycles_helper(n: int, p: seq<int>, visited: seq<bool>, cycles: seq<int>): seq<int>\n  requires n > 0\n  requires |p| == n\n  requires |visited| == n\n  requires forall i :: 0 <= i < n ==> 1 <= p[i] <= n\n  requires forall i, j :: 0 <= i < j < n ==> p[i] != p[j]\n  decreases n - count_true(visited)\n{\n  if count_true(visited) >= n then cycles\n  else\n    var unvisited := find_unvisited(visited);\n    if unvisited == -1 then cycles\n    else if 0 <= unvisited < n then\n      var cycle_length := get_cycle_length(p, visited, unvisited);\n      var new_visited := mark_cycle_visited(p, visited, unvisited);\n      if count_true(new_visited) > count_true(visited) && count_true(new_visited) <= n then\n        get_cycles_helper(n, p, new_visited, cycles + [cycle_length])\n      else\n        cycles + [cycle_length]\n    else\n      cycles\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, p: seq<int>) returns (result: int)\n  requires ValidInput(n, p)\n  ensures result > 0\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

@@ -1,0 +1,13 @@
+{
+ "id": "DJ0137",
+ "source": "verified_cogen",
+ "source_id": "rustbench_array_concat",
+ "fn": "ArrayConcat",
+ "sello": "ArrayConcat(a: List[Int], b: List[Int]) -> List[Int]",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn ArrayConcat(a: List[Int], b: List[Int]) -> List[Int]\n  requires (len(a) >= 0)\n  ensures (len(result) == (len(a) + len(b)))\n  ensures forall i in 0..len(a): (result[i] == a[i])\n  ensures forall i in 0..len(b): (result[(i + len(a))] == b[i])\n  effects pure\n  example (ArrayConcat([], []) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod ArrayConcat(a: seq<int>, b: seq<int>) returns (result: seq<int>)\n    ensures\n        |result| == |a| + |b| &&\n        (forall i :: 0 <= i < |a| ==> result[i] == a[i]) &&\n        (forall i :: 0 <= i < |b| ==> result[i + |a|] == b[i])\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n}\n// </vc-code>\n"
+}

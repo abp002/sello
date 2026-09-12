@@ -17,9 +17,13 @@ Cómo se traduce:
   sobre entradas pequeñas.
 - `==>` -> `not a or b` · `<==>` -> `==` · `|s|` -> `len(s)` · `x in s` -> `contains(s, x)` ·
   `forall x :: x in s ==> P` -> `forall x in s: P` · `exists x :: x in s && P` -> `exists x in s: P`
-  · `+` de secuencias -> `++` · `a <= b < c` -> `a <= b and b < c` · `nat` -> `Int` y `>= 0` en
-  `requires`/`ensures` · un `&&` de primer nivel se parte en cláusulas.
-- Lo que Sello no tiene (índices `s[i]`, tramos, cuantificadores sobre enteros, `array`, `real`,
+  · `forall i :: lo <= i < hi ==> P` -> `forall i in lo..hi: P` (las cotas se sacan de las
+  premisas: `<`/`<=`/`>`/`>=` por cada lado, `nat` sin cota inferior vale `0`, lo que sobra sigue
+  como premisa; con varias variables, `forall i, j :: 0 <= i < j < |s|`, cada rango puede usar
+  las anteriores) · `s[i]` -> `s[i]` · `+` de secuencias -> `++` · `a <= b < c` -> `a <= b and
+  b < c` · `nat` -> `Int` y `>= 0` en `requires`/`ensures` · un `&&` de primer nivel se parte en
+  cláusulas.
+- Lo que Sello no tiene (tramos, cuantificadores sobre enteros sin las dos cotas, `array`, `real`,
   `string`, `set`, `map`, datatypes, varios valores de retorno...) no se traduce: la tarea no
   cabe y se cuenta por qué. `/` y `%` se traducen tal cual: Dafny es euclídeo y Sello redondea
   hacia abajo, coinciden con divisor positivo; si el divisor no es un literal positivo la
@@ -59,8 +63,8 @@ from sello.hash import _sccs  # noqa: E402
 from sello.interp import Interpreter, fmt  # noqa: E402
 from sello.lexer import KEYWORDS  # noqa: E402
 from sello.nodes import (  # noqa: E402
-    BOOL, INT, Binary, BoolLit, Call, Expr, Fn, If, IntLit, ListLit, Name, Param, Program, Quant,
-    TBool, TInt, TList, Type, Unary,
+    BOOL, INT, Binary, BoolLit, Call, Expr, Fn, If, Index, IntLit, ListLit, Name, Param, Program,
+    Quant, RangeExpr, TBool, TInt, TList, Type, Unary,
 )
 from sello.parser import parse, parse_expr  # noqa: E402
 from sello.pretty import unparse_fn  # noqa: E402
@@ -1155,9 +1159,11 @@ class Traductor:
             self.solo_contrato("len")
             return Call("len", [self.expr(e.e, env)])
         if isinstance(e, DIndex):
-            self.motivo("índice s[i]")
-            self.expr(e.e, env); self.expr(e.i, env)
-            return IntLit(0)
+            t = self.dtipo(e.e, env)
+            if t[0] != "seq":
+                self.motivo(self.motivo_tipo(t, "s[i]"))
+            self.solo_contrato("[i]")
+            return Index(self.expr(e.e, env), self.expr(e.i, env))
         if isinstance(e, DSlice):
             self.motivo("tramo s[i..j]")
             self.expr(e.e, env)
@@ -1218,8 +1224,11 @@ class Traductor:
         return IntLit(0)
 
     def cuantificador(self, q: DQuant, env: dict) -> Expr:
-        """Solo las formas con dominio en una secuencia: `forall x :: x in s ==> P`, `exists x ::
-        x in s && P`, `forall x | x in s :: P`, `forall x <- s :: P`, con varias variables anidadas."""
+        """Dos dominios. Una secuencia: `forall x :: x in s ==> P`, `exists x :: x in s && P`,
+        `forall x | x in s :: P`, `forall x <- s :: P`. Un rango de enteros: `forall i :: lo <= i
+        < hi ==> P` y sus variantes (`forall i | 0 <= i < |s| :: P`, `exists i :: 0 <= i && i < |s|
+        && P`), que van a `forall i in lo..hi: P`. Con varias variables, anidadas en orden, y el
+        rango de cada una puede usar las anteriores (`forall i, j :: 0 <= i < j < |s| ==> P`)."""
         self.solo_contrato(q.kind)
         forall = q.kind == "forall"
         premisas = conjuntos(q.rng) if q.rng is not None else []
@@ -1231,34 +1240,123 @@ class Traductor:
         else:
             premisas = premisas + conjuntos(cuerpo)
             cuerpo = None
-        ligadas = {b for b, _, _ in q.binders}
-        sujetos: list[tuple[str, object]] = []
-        for n, t, d in q.binders:
+        nombres = [b for b, _, _ in q.binders]
+        sujetos: list[tuple[str, object]] = []  # (variable, secuencia | ("rango", lo, hi))
+        for k, (n, t, d) in enumerate(q.binders):
+            pendientes = set(nombres[k:])  # esta variable y las siguientes: un dominio no puede usarlas
             if d is not None:
                 sujetos.append((n, d)); continue
-            for k, p in enumerate(premisas):
+            for j, p in enumerate(premisas):
                 if (isinstance(p, DBin) and p.op == "in" and isinstance(p.l, DName) and p.l.n == n
-                        and not (libres(p.r) & ligadas)):
-                    sujetos.append((n, p.r)); premisas.pop(k); break
+                        and not (libres(p.r) & pendientes)):
+                    sujetos.append((n, p.r)); premisas.pop(j); break
             else:
                 acotado = any(isinstance(p, DBin) and p.op in ("<", "<=", ">", ">=") and n in libres(p) for p in premisas)
-                self.motivo("cuantificador sobre enteros" if acotado or (t and t[0] in ("int", "nat")) else "cuantificador sin dominio")
-                return BoolLit(True)
+                restantes = list(premisas)
+                lo, hi = self.cotas(n, restantes, pendientes)
+                if lo is None and t and t[0] == "nat":
+                    lo = DInt(0)
+                if lo is None or hi is None:
+                    self.motivo("cuantificador sobre enteros sin cotas" if acotado or (t and t[0] in ("int", "nat"))
+                                else "cuantificador sin dominio")
+                    return BoolLit(True)
+                premisas = restantes
+                sujetos.append((n, ("rango", lo, hi)))
         if forall:
             resto = conjuncion(premisas)
             cuerpo_d = cuerpo if resto is None else DBin("==>", resto, cuerpo)
         else:
             cuerpo_d = conjuncion(premisas + ([cuerpo] if cuerpo is not None else [])) or DBool(True)
         env2 = dict(env)
-        for n, s in sujetos:
-            st = self.dtipo(s, env)
-            if st[0] != "seq":
-                self.motivo(self.motivo_tipo(st, "in"))
-            env2[n] = (self.nombre_var(n, env2), st[1] if st[0] == "seq" and len(st) > 1 else ("?",))
+        dominios: list[Expr] = []
+        for n, s in sujetos:  # el dominio se traduce con las variables anteriores ya en el entorno
+            if isinstance(s, tuple):
+                dominios.append(RangeExpr(self.expr(s[1], env2), self.expr(s[2], env2)))
+                env2[n] = (self.nombre_var(n, env2), ("int",))
+            else:
+                st = self.dtipo(s, env2)
+                if st[0] != "seq":
+                    self.motivo(self.motivo_tipo(st, "in"))
+                dominios.append(self.expr(s, env2))
+                env2[n] = (self.nombre_var(n, env2), st[1] if st[0] == "seq" and len(st) > 1 else ("?",))
         out = self.expr(cuerpo_d, env2)
-        for n, s in reversed(sujetos):
-            out = Quant(q.kind, env2[n][0], self.expr(s, env), out)
+        for (n, _), dom in zip(reversed(sujetos), reversed(dominios)):
+            out = Quant(q.kind, env2[n][0], dom, out)
         return out
+
+    def cotas(self, n: str, premisas: list, pendientes: set[str]) -> tuple:
+        """Saca de `premisas` la primera cota inferior y la primera superior de `n`, inclusiva la
+        inferior y exclusiva la superior como `lo..hi`: `lo <= n`, `n < hi`, `lo < n` (-> lo + 1),
+        `n <= hi` (-> hi + 1) y sus espejos. Una cota no puede mencionar a `n` ni a las variables
+        que aún no tienen dominio. Las premisas usadas se quitan; las demás siguen como premisa.
+        Si falta una cota directa, vale la de otra variable pendiente que acote a `n` (`0 <= i < j
+        < |s|`: `i` hereda `|s|` de `j`); esa premisa `i < j` no se consume, será la cota de `j`,
+        así que el dominio heredado, aunque más ancho, dice lo mismo."""
+        lo = hi = None
+        for k, p in list(enumerate(premisas)):
+            lado = self.lado(p, n)
+            if lado is None:
+                continue
+            op, otro = lado
+            if libres(otro) & pendientes:
+                continue
+            if op in (">", ">=") and lo is None:
+                lo = otro if op == ">=" else DBin("+", otro, DInt(1))
+            elif op in ("<", "<=") and hi is None:
+                hi = otro if op == "<" else DBin("+", otro, DInt(1))
+            else:
+                continue
+            premisas[k] = None
+        premisas[:] = [p for p in premisas if p is not None]
+        if lo is None:
+            lo = self.cota_heredada(n, premisas, pendientes, inferior=True, vistas={n})
+        if hi is None:
+            hi = self.cota_heredada(n, premisas, pendientes, inferior=False, vistas={n})
+        return lo, hi
+
+    @staticmethod
+    def lado(p, n: str):
+        """`n op otro` si `p` compara a `n` con otra cosa, mirando la comparación desde `n`."""
+        if not (isinstance(p, DBin) and p.op in ("<", "<=", ">", ">=")):
+            return None
+        es_n = lambda x: isinstance(x, DName) and x.n == n
+        if es_n(p.l) and not es_n(p.r):
+            return p.op, p.r
+        if es_n(p.r) and not es_n(p.l):
+            return {"<": ">", "<=": ">=", ">": "<", ">=": "<="}[p.op], p.l
+        return None
+
+    def cota_heredada(self, n: str, premisas: list, pendientes: set[str], inferior: bool, vistas: set[str]):
+        """Una cota de `n` a través de otra variable pendiente `m`: para la superior, `n < m` o
+        `n <= m` y una cota superior de `m` (`m < hi` da `hi`; `m <= hi` da `hi` si `n < m` y
+        `hi + 1` si `n <= m`); simétrico para la inferior. Recursivo, sin ciclos."""
+        for p in premisas:
+            lado = self.lado(p, n)
+            if lado is None:
+                continue
+            op, otro = lado
+            if not (isinstance(otro, DName) and otro.n in pendientes and otro.n not in vistas):
+                continue
+            m = otro.n
+            if inferior and op in (">", ">="):          # n > m  |  n >= m
+                for q in premisas:
+                    l2 = self.lado(q, m)
+                    if l2 and l2[0] in (">", ">=") and not (libres(l2[1]) & pendientes):
+                        lo = l2[1] if l2[0] == ">=" else DBin("+", l2[1], DInt(1))  # m >= lo
+                        return lo if op == ">=" else DBin("+", lo, DInt(1))
+                lo = self.cota_heredada(m, premisas, pendientes, True, vistas | {m})
+                if lo is not None:
+                    return lo if op == ">=" else DBin("+", lo, DInt(1))
+            if not inferior and op in ("<", "<="):      # n < m  |  n <= m
+                for q in premisas:
+                    l2 = self.lado(q, m)
+                    if l2 and l2[0] in ("<", "<=") and not (libres(l2[1]) & pendientes):
+                        hi = l2[1] if l2[0] == "<" else DBin("+", l2[1], DInt(1))  # m < hi
+                        return hi if op == "<" else DBin("+", hi, DInt(1)) if l2[0] == "<=" else hi
+                hi = self.cota_heredada(m, premisas, pendientes, False, vistas | {m})
+                if hi is not None:
+                    return hi
+        return None
 
     # ---- cláusulas ----
     def clausulas(self, exprs: list, env: dict) -> list[Expr]:

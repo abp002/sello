@@ -1,0 +1,16 @@
+{
+ "id": "DT0091",
+ "source": "numpy_triple",
+ "source_id": "bitwise_operations_unpackbits",
+ "fn": "numpy_unpackbits",
+ "sello": "numpy_unpackbits(a: List[Int]) -> List[Int]",
+ "helpers": [
+  "pow2"
+ ],
+ "notas": [
+  "div",
+  "nat"
+ ],
+ "esqueleto": "fn pow2(n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == (if (n == 0) then 1 else (2 * pow2((n - 1)))))\n  ensures (result >= 0)\n  effects pure\n  example (pow2(0) == 1)\n  example (pow2(1) == 2)\n{\n  if (n == 0) then 1 else (2 * pow2((n - 1)))\n}\n\nfn numpy_unpackbits(a: List[Int]) -> List[Int]\n  requires forall x in a: (x >= 0)\n  requires forall i in 0..len(a): (a[i] < 256)\n  ensures (len(result) == (len(a) * 8))\n  ensures forall k in 0..len(result): ((result[k] == 0) or (result[k] == 1))\n  ensures forall i in 0..len(a): forall j in 0..8: (result[((i * 8) + j)] == ((a[i] / pow2((7 - j))) % 2))\n  ensures forall x in result: (x >= 0)\n  effects pure\n  example (numpy_unpackbits([]) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// Helper function for power of 2 calculation\nfunction pow2(n: nat): nat\n{\n    if n == 0 then 1 else 2 * pow2(n - 1)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod numpy_unpackbits(a: seq<nat>) returns (result: seq<nat>)\n    // Precondition: All input elements must be valid uint8 values (< 256)\n    requires forall i :: 0 <= i < |a| ==> a[i] < 256\n    // Postcondition: Output length is 8 times input length\n    ensures |result| == |a| * 8\n    // Postcondition: All output elements are binary (0 or 1)\n    ensures forall k :: 0 <= k < |result| ==> result[k] == 0 || result[k] == 1\n    // Postcondition: Each input element a[i] is unpacked into 8 bits in big-endian order\n    // where bit j of element i is stored at position i*8 + j in the result\n    // The bit extraction follows: (a[i] / (2^(7-j))) % 2\n    ensures forall i :: 0 <= i < |a| ==> \n        forall j {:trigger result[i * 8 + j]} :: 0 <= j < 8 ==> \n            result[i * 8 + j] == (a[i] / pow2(7 - j)) % 2\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

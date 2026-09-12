@@ -1,0 +1,13 @@
+{
+ "id": "DT0177",
+ "source": "numpy_triple",
+ "source_id": "indexing_slicing_indices",
+ "fn": "indices",
+ "sello": "indices(n: Int) -> List[List[Int]]",
+ "helpers": [],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn indices(n: Int) -> List[List[Int]]\n  requires (n >= 0)\n  ensures (len(result) == 1)\n  ensures (len(result[0]) == n)\n  ensures forall i in 0..n: (result[0][i] == i)\n  ensures forall i in 0..n: forall j in (i + 1)..n: (result[0][i] < result[0][j])\n  ensures forall x in result: forall x1 in x: (x1 >= 0)\n  effects pure\n  example (indices(0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// Generate indices for a 1D grid of given size\n// Returns a 2D array where the first dimension has size 1 and contains\n// the indices [0, 1, 2, ..., n-1]\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod indices(n: nat) returns (grid: seq<seq<nat>>)\n    // The output has exactly one row\n    ensures |grid| == 1\n    // The single row has exactly n elements\n    ensures |grid[0]| == n\n    // Each position i contains the value i\n    ensures forall i :: 0 <= i < n ==> grid[0][i] == i\n    // The indices are in ascending order\n    ensures forall i, j :: 0 <= i < j < n ==> grid[0][i] < grid[0][j]\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}
