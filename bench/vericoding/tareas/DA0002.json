@@ -1,0 +1,11 @@
+{
+ "id": "DA0002",
+ "source": "apps",
+ "source_id": "apps_test_10",
+ "fn": "solve",
+ "sello": "solve(n: Int) -> List[Int]",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(n: Int) -> List[Int]\n  requires (n >= 1)\n  ensures (len(result) == 2)\n  ensures (result[0] >= 0)\n  ensures (result[1] >= 0)\n  ensures (result[0] <= result[1])\n  ensures (result[0] <= n)\n  ensures (result[1] <= n)\n  ensures (result[0] == ((2 * (n / 7)) + (if ((n % 7) > 5) then ((n % 7) - 5) else 0)))\n  ensures (result[1] == ((2 * (n / 7)) + (if ((n % 7) < 2) then (n % 7) else 2)))\n  effects pure\n  example (solve(0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int)\n{\n  n >= 1\n}\n\nfunction MinDaysOff(n: int): int\n  requires ValidInput(n)\n{\n  var completeWeeks := n / 7;\n  var remainingDays := n % 7;\n  var minAdditional := if remainingDays > 5 then remainingDays - 5 else 0;\n  2 * completeWeeks + minAdditional\n}\n\nfunction MaxDaysOff(n: int): int\n  requires ValidInput(n)\n{\n  var completeWeeks := n / 7;\n  var remainingDays := n % 7;\n  var maxAdditional := if remainingDays < 2 then remainingDays else 2;\n  2 * completeWeeks + maxAdditional\n}\n\npredicate ValidOutput(result: seq<int>, n: int)\n  requires ValidInput(n)\n{\n  |result| == 2 &&\n  result[0] >= 0 && result[1] >= 0 &&\n  result[0] <= result[1] &&\n  result[0] <= n && result[1] <= n &&\n  result[0] == MinDaysOff(n) &&\n  result[1] == MaxDaysOff(n)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int) returns (result: seq<int>)\n  requires ValidInput(n)\n  ensures ValidOutput(result, n)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

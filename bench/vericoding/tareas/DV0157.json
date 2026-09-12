@@ -1,0 +1,14 @@
+{
+ "id": "DV0157",
+ "source": "verina",
+ "source_id": "verina_basic_77_task",
+ "fn": "ModifyArrayElement",
+ "sello": "ModifyArrayElement(arr: List[List[Int]], index1: Int, index2: Int, val: Int) -> List[List[Int]]",
+ "helpers": [],
+ "notas": [
+  "método del preámbulo ignorado",
+  "nat"
+ ],
+ "esqueleto": "fn ModifyArrayElement(arr: List[List[Int]], index1: Int, index2: Int, val: Int) -> List[List[Int]]\n  requires forall x in arr: forall x1 in x: (x1 >= 0)\n  requires (val >= 0)\n  requires (0 <= index1)\n  requires (index1 < len(arr))\n  requires (0 <= index2)\n  requires (index2 < len(arr[index1]))\n  ensures (len(result) == len(arr))\n  ensures forall i in 0..len(arr): ((not (i != index1)) or (result[i] == arr[i]))\n  ensures (len(result[index1]) == len(arr[index1]))\n  ensures forall j in 0..len(arr[index1]): ((not (j != index2)) or (result[index1][j] == arr[index1][j]))\n  ensures (result[index1][index2] == val)\n  ensures forall x in result: forall x1 in x: (x1 >= 0)\n  effects pure\n  example (ModifyArrayElement([], 0, 0, 0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\nmethod UpdateInner(a: seq<nat>, idx: int, val: nat) returns (result: seq<nat>)\n    requires 0 <= idx < |a|\n    ensures |result| == |a|\n    ensures result[idx] == val\n    ensures forall i :: 0 <= i < |a| && i != idx ==> result[i] == a[i]\n{\n    result := a[idx := val];\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod ModifyArrayElement(arr: seq<seq<nat>>, index1: int, index2: int, val: nat) returns (result: seq<seq<nat>>)\n    requires 0 <= index1 < |arr|\n    requires 0 <= index2 < |arr[index1]|\n    ensures |result| == |arr|\n    ensures forall i :: 0 <= i < |arr| && i != index1 ==> result[i] == arr[i]\n    ensures |result[index1]| == |arr[index1]|\n    ensures forall j :: 0 <= j < |arr[index1]| && j != index2 ==> result[index1][j] == arr[index1][j]\n    ensures result[index1][index2] == val\n// </vc-spec>\n// <vc-code>\n{\n    // impl-start\n    var updatedInner := UpdateInner(arr[index1], index2, val);\n    result := arr[index1 := updatedInner];\n    // impl-end\n}\n// </vc-code>\n"
+}

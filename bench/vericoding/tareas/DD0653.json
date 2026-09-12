@@ -1,0 +1,13 @@
+{
+ "id": "DD0653",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_69_ContainsSequence",
+ "fn": "ContainsSequence",
+ "sello": "ContainsSequence(list: List[List[Int]], sub: List[Int]) -> Bool",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn ContainsSequence(list: List[List[Int]], sub: List[Int]) -> Bool\n  requires (len(list) >= 0)\n  ensures (result == (exists i in 0..len(list): (sub == list[i])))\n  effects pure\n  example (ContainsSequence([], []) == true)\n{\n  true\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod ContainsSequence(list: seq<seq<int>>, sub: seq<int>) returns (result: bool)\n    ensures result <==> (exists i :: 0 <= i < |list| && sub == list[i])\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

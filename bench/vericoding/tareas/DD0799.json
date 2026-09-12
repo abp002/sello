@@ -1,0 +1,13 @@
+{
+ "id": "DD0799",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_790_IsEvenAtIndexEven",
+ "fn": "IsEvenAtIndexEven",
+ "sello": "IsEvenAtIndexEven(lst: List[Int]) -> Bool",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn IsEvenAtIndexEven(lst: List[Int]) -> Bool\n  requires (len(lst) >= 0)\n  ensures (result == (forall i in 0..len(lst): ((not ((i % 2) == 0)) or ((lst[i] % 2) == 0))))\n  effects pure\n  example (IsEvenAtIndexEven([]) == true)\n{\n  true\n}",
+ "dafny": "// <vc-preamble>\npredicate IsEven(n: int)\n{\n    n % 2 == 0\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod IsEvenAtIndexEven(lst: seq<int>) returns (result: bool)\n    ensures result <==> forall i :: 0 <= i < |lst| ==> (IsEven(i) ==> IsEven(lst[i]))\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

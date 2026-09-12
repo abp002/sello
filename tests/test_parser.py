@@ -2,6 +2,8 @@ import pytest
 
 from conftest import MAX
 
+from sello.errors import SelloError
+
 from sello.nodes import INT, Binary, If, Match, PCons, PEmpty, Quant, TList, TOption
 from sello.parser import parse, parse_expr
 from sello.pretty import unparse
@@ -122,3 +124,28 @@ def test_reimprimir_hace_ida_y_vuelta(src):
     e = parse_expr(src)
     otra_vez = parse_expr(unparse(e))
     assert unparse(otra_vez) == unparse(e)
+
+
+def test_indice_y_rango_en_contratos():
+    """`xs[i]` es un índice y `lo..hi` solo existe como dominio de un cuantificador (ALE-108)."""
+    from sello.nodes import Index, Name, RangeExpr, Unary
+    e = parse_expr("forall i in 0..len(xs): xs[i] > 0")
+    assert isinstance(e, Quant) and isinstance(e.subject, RangeExpr)
+    assert unparse(e.subject.hi) == "len(xs)"
+    assert isinstance(e.body.left, Index) and isinstance(e.body.left.seq, Name)
+    assert isinstance(parse_expr("xs[i][j]").seq, Index), "el índice encadena por la izquierda"
+    menos = parse_expr("-xs[i]")
+    assert isinstance(menos, Unary) and isinstance(menos.operand, Index), "el índice liga más que el `-` unario"
+    with pytest.raises(SelloError):
+        parse_expr("0..3")
+
+
+def test_el_corchete_pegado_indexa_y_el_separado_es_un_brazo_de_match():
+    """`match xs { [] => ys [h, ..t] => h }` no puede leerse como `ys[h, ..t]`: los brazos
+    solo se separan por yuxtaposición, así que el índice exige el `[` pegado al operando."""
+    from sello.nodes import Index
+    m = parse_expr("match xs { [] => ys [h, ..t] => h }")
+    assert isinstance(m, Match) and len(m.arms) == 2
+    assert not isinstance(m.arms[0].body, Index)
+    with pytest.raises(SelloError):
+        parse_expr("xs [0]")

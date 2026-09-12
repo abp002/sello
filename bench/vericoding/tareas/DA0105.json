@@ -1,0 +1,13 @@
+{
+ "id": "DA0105",
+ "source": "apps",
+ "source_id": "apps_test_537",
+ "fn": "solve",
+ "sello": "solve(n: Int, k: Int) -> List[Int]",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn solve(n: Int, k: Int) -> List[Int]\n  requires (n >= 0)\n  requires (k >= 0)\n  requires ((k + 1) > 0)\n  ensures (len(result) == 3)\n  ensures (result[0] >= 0)\n  ensures (result[1] >= 0)\n  ensures (result[2] >= 0)\n  ensures (result[1] == (result[0] * k))\n  ensures ((result[0] + result[1]) <= (n / 2))\n  ensures (result[2] == ((n - result[0]) - result[1]))\n  ensures (result[0] == ((n / 2) / (k + 1)))\n  effects pure\n  example (solve(0, 0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, k: int) {\n    n >= 0 && k >= 0 && k + 1 > 0\n}\n\npredicate ValidOutput(result: seq<int>, n: int, k: int) {\n    |result| == 3 &&\n    result[0] >= 0 && result[1] >= 0 && result[2] >= 0 &&\n    result[1] == result[0] * k &&\n    result[0] + result[1] <= n / 2 &&\n    result[2] == n - result[0] - result[1]\n}\n\nfunction OptimalDiplomas(n: int, k: int): int\n    requires ValidInput(n, k)\n{\n    (n / 2) / (k + 1)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, k: int) returns (result: seq<int>)\n    requires ValidInput(n, k)\n    ensures ValidOutput(result, n, k)\n    ensures result[0] == OptimalDiplomas(n, k)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

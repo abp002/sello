@@ -1,0 +1,13 @@
+{
+ "id": "DD0535",
+ "source": "dafnybench",
+ "source_id": "cmsc433_tmp_tmpe3ob3a0o_dafny_project1_p1-assignment-2_IsPrime",
+ "fn": "IsPrime",
+ "sello": "IsPrime(m: Int) -> Bool",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn IsPrime(m: Int) -> Bool\n  requires (m > 0)\n  ensures (result == ((m > 1) and (forall j in 2..m: ((m % j) != 0))))\n  effects pure\n  example (IsPrime(0) == true)\n{\n  true\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod IsPrime (m : int) returns (isPrime : bool)\n    requires m > 0\n    ensures isPrime <==> (m > 1 && forall j : int :: 2 <= j < m ==> m % j != 0)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

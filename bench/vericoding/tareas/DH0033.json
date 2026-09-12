@@ -1,0 +1,13 @@
+{
+ "id": "DH0033",
+ "source": "humaneval",
+ "source_id": "humaneval_034_unique__unique",
+ "fn": "unique",
+ "sello": "unique(s: List[Int]) -> List[Int]",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn unique(s: List[Int]) -> List[Int]\n  requires (len(s) >= 0)\n  ensures forall i in 0..len(result): forall j in (i + 1)..len(result): (result[i] < result[j])\n  ensures forall x in result: contains(s, x)\n  ensures forall x in s: contains(result, x)\n  effects pure\n  example (unique([]) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod unique(s: seq<int>) returns (result: seq<int>)\n\n    ensures forall i, j :: 0 <= i < j < |result| ==> result[i] < result[j]\n    ensures forall x :: x in result ==> x in s\n    ensures forall x :: x in s ==> x in result\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

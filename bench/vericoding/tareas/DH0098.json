@@ -1,0 +1,13 @@
+{
+ "id": "DH0098",
+ "source": "humaneval",
+ "source_id": "humaneval_096",
+ "fn": "count_up_to",
+ "sello": "count_up_to(n: Int) -> List[Int]",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn count_up_to(n: Int) -> List[Int]\n  requires (n >= 0)\n  ensures forall i in 0..len(result): ((result[i] >= 2) and (forall k in 2..result[i]: ((result[i] % k) != 0)))\n  ensures forall i in 0..len(result): (result[i] < n)\n  ensures forall p in 2..n: ((not ((p >= 2) and (forall k in 2..p: ((p % k) != 0)))) or contains(result, p))\n  ensures forall i in 0..len(result): forall j in (i + 1)..len(result): (result[i] < result[j])\n  effects pure\n  example (count_up_to(0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n\npredicate is_prime_number(num: int)\n{\n    num >= 2 && forall k :: 2 <= k < num ==> num % k != 0\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod count_up_to(n: int) returns (result: seq<int>)\n    requires n >= 0\n    ensures forall i :: 0 <= i < |result| ==> is_prime_number(result[i])\n    ensures forall i :: 0 <= i < |result| ==> result[i] < n\n    ensures forall p :: 2 <= p < n && is_prime_number(p) ==> p in result\n    ensures forall i, j :: 0 <= i < j < |result| ==> result[i] < result[j]\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

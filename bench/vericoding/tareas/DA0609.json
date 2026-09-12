@@ -1,0 +1,13 @@
+{
+ "id": "DA0609",
+ "source": "apps",
+ "source_id": "apps_test_4534",
+ "fn": "getRow",
+ "sello": "getRow(k: Int) -> List[Int]",
+ "helpers": [
+  "binomial"
+ ],
+ "notas": [],
+ "esqueleto": "fn binomial(n: Int, k: Int) -> Int\n  requires (0 <= k)\n  requires (k <= n)\n  ensures (result == (if ((k == 0) or (k == n)) then 1 else if (k == 1) then n else (binomial((n - 1), (k - 1)) + binomial((n - 1), k))))\n  effects pure\n  example (binomial(0, 0) == 1)\n  example (binomial(2, 1) == 2)\n{\n  if ((k == 0) or (k == n)) then 1 else if (k == 1) then n else (binomial((n - 1), (k - 1)) + binomial((n - 1), k))\n}\n\nfn getRow(k: Int) -> List[Int]\n  requires (0 <= k)\n  requires (k <= 33)\n  ensures (len(result) == (k + 1))\n  ensures forall i in 0..len(result): (result[i] == binomial(k, i))\n  ensures forall i in 0..len(result): (result[i] > 0)\n  effects pure\n  example (getRow(0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\nfunction binomial(n: int, k: int): int\n    requires 0 <= k <= n\n{\n    if k == 0 || k == n then 1\n    else if k == 1 then n\n    else binomial(n-1, k-1) + binomial(n-1, k)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod getRow(k: int) returns (result: seq<int>)\n    requires 0 <= k <= 33\n    ensures |result| == k + 1\n    ensures forall i :: 0 <= i < |result| ==> result[i] == binomial(k, i)\n    ensures forall i :: 0 <= i < |result| ==> result[i] > 0\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

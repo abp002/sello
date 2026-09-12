@@ -1,0 +1,11 @@
+{
+ "id": "DD0696",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_273_SubtractSequences",
+ "fn": "SubtractSequences",
+ "sello": "SubtractSequences(a: List[Int], b: List[Int]) -> List[Int]",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn SubtractSequences(a: List[Int], b: List[Int]) -> List[Int]\n  requires (len(a) == len(b))\n  ensures (len(result) == len(a))\n  ensures forall i in 0..len(result): (result[i] == (a[i] - b[i]))\n  effects pure\n  example (SubtractSequences([], []) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod SubtractSequences(a: seq<int>, b: seq<int>) returns (result: seq<int>)\n    requires |a| == |b|\n    ensures |result| == |a|\n    ensures forall i :: 0 <= i < |result| ==> result[i] == a[i] - b[i]\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

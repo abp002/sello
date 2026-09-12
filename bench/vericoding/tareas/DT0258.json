@@ -1,0 +1,11 @@
+{
+ "id": "DT0258",
+ "source": "numpy_triple",
+ "source_id": "logic_functions_bitwise_or",
+ "fn": "NumpyBitwiseOr",
+ "sello": "NumpyBitwiseOr(x1: List[Int], x2: List[Int]) -> List[Int]",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn NumpyBitwiseOr(x1: List[Int], x2: List[Int]) -> List[Int]\n  requires (len(x1) == len(x2))\n  ensures (len(result) == len(x1))\n  ensures forall i in 0..len(result): (result[i] == 0)\n  ensures forall i in 0..len(result): (0 == 0)\n  ensures forall i in 0..len(x1): (0 == x1[i])\n  ensures forall i in 0..len(x1): (0 == x1[i])\n  effects pure\n  example (NumpyBitwiseOr([], []) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n/*\n * Dafny specification for numpy.bitwise_or: Compute the bit-wise OR of two arrays element-wise.\n * \n * Computes the bit-wise OR of the underlying binary representation of the integers in the input arrays.\n * For integer inputs, the result is the bitwise OR of the binary representations.\n */\n\n// Axiomatic definition of bitwise OR operation for integers\nfunction BitwiseOr(x: int, y: int): int\n{\n    // Placeholder implementation for compilation\n    0\n}\n\n// Axioms for bitwise OR properties\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nlemma {:axiom} BitwiseOrCommutative(x: int, y: int)\n    ensures BitwiseOr(x, y) == BitwiseOr(y, x)\n\nlemma {:axiom} BitwiseOrIdentity(x: int)\n    ensures BitwiseOr(x, 0) == x\n\nlemma {:axiom} BitwiseOrIdempotent(x: int)\n    ensures BitwiseOr(x, x) == x\n\n// Main method for numpy bitwise_or operation\nmethod NumpyBitwiseOr(x1: seq<int>, x2: seq<int>) returns (result: seq<int>)\n    // Precondition: input sequences must have the same length\n    requires |x1| == |x2|\n    // Postcondition: result has same length as inputs\n    ensures |result| == |x1|\n    // Postcondition: each element is bitwise OR of corresponding input elements\n    ensures forall i :: 0 <= i < |result| ==> result[i] == BitwiseOr(x1[i], x2[i])\n    // Mathematical properties hold for all elements\n    ensures forall i :: 0 <= i < |result| ==> BitwiseOr(x1[i], x2[i]) == BitwiseOr(x2[i], x1[i])\n    ensures forall i :: 0 <= i < |x1| ==> BitwiseOr(x1[i], 0) == x1[i]\n    ensures forall i :: 0 <= i < |x1| ==> BitwiseOr(x1[i], x1[i]) == x1[i]\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

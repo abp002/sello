@@ -1,0 +1,13 @@
+{
+ "id": "DV0062",
+ "source": "verina",
+ "source_id": "verina_advanced_63_task",
+ "fn": "RemoveDuplicates",
+ "sello": "RemoveDuplicates(nums: List[Int]) -> Int",
+ "helpers": [],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn RemoveDuplicates(nums: List[Int]) -> Int\n  requires forall i in 0..len(nums): forall j in (i + 1)..len(nums): (nums[i] <= nums[j])\n  ensures (result <= len(nums))\n  ensures (result >= 0)\n  effects pure\n  example (RemoveDuplicates([]) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod RemoveDuplicates(nums: seq<int>) returns (result: nat)\n    requires forall i, j :: 0 <= i < j < |nums| ==> nums[i] <= nums[j]\n    ensures result <= |nums|\n// </vc-spec>\n// <vc-code>\n{\n    // impl-start\n    assume {:axiom} false;\n    result := 0;\n    // impl-end\n}\n\nlemma RemoveDuplicatesSpecSatisfied(nums: seq<int>)\n    requires forall i, j :: 0 <= i < j < |nums| ==> nums[i] <= nums[j]\n{\n    // TODO: Implement proof\n}\n// </vc-code>\n"
+}

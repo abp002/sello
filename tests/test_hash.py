@@ -92,3 +92,15 @@ def test_una_variable_sombreada_se_refiere_a_la_ligadura_mas_reciente():
     distinta = h(SOMBRA.replace("[x, ..t] => x", "[z, ..t] => x"))["f"]
     assert sombra == alfa, "renombrar la variable del patrón no cambia el significado"
     assert sombra != distinta, "devolver el parámetro en vez de la cabeza sí lo cambia"
+
+
+def test_la_variable_del_rango_es_ligada_y_los_limites_y_el_indice_cuentan():
+    """ALE-108: `forall i in 0..len(xs): xs[i] > 0` tiene el mismo hash con `j`; cambiar un
+    límite del rango o el índice cambia el significado."""
+    base = ("fn f(xs: List[Int]) -> Int\n  requires forall i in 0..len(xs): xs[i] > 0\n"
+            "  ensures 1 == 1\n  effects pure\n  example f([1]) == 0\n{ 0 }")
+    h0 = hash_program(parse(base))["f"]
+    assert hash_program(parse(base.replace("i in 0..len(xs): xs[i]", "j in 0..len(xs): xs[j]")))["f"] == h0
+    assert hash_program(parse(base.replace("0..len(xs)", "1..len(xs)")))["f"] != h0
+    assert hash_program(parse(base.replace("xs[i] > 0", "xs[0] > 0")))["f"] != h0
+    assert hash_program(parse(base.replace("xs[i] > 0", "i > 0")))["f"] != h0

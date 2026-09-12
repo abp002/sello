@@ -1,0 +1,11 @@
+{
+ "id": "DD0773",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_627_SmallestMissingNumber",
+ "fn": "SmallestMissingNumber",
+ "sello": "SmallestMissingNumber(s: List[Int]) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn SmallestMissingNumber(s: List[Int]) -> Int\n  requires forall i in 0..len(s): forall j in (i + 1)..len(s): (s[i] <= s[j])\n  requires forall i in 0..len(s): (s[i] >= 0)\n  ensures (0 <= result)\n  ensures not contains(s, result)\n  ensures forall k in 0..result: contains(s, k)\n  effects pure\n  example (SmallestMissingNumber([]) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod SmallestMissingNumber(s: seq<int>) returns (v: int)\n    requires forall i, j :: 0 <= i < j < |s| ==> s[i] <= s[j]\n    requires forall i :: 0 <= i < |s| ==> s[i] >= 0\n    ensures 0 <= v\n    ensures v !in s\n    ensures forall k :: 0 <= k < v ==> k in s\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

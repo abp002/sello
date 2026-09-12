@@ -1,0 +1,13 @@
+{
+ "id": "DH0079",
+ "source": "humaneval",
+ "source_id": "humaneval_077_iscube__is_cube",
+ "fn": "is_cube",
+ "sello": "is_cube(n: Int) -> Bool",
+ "helpers": [],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn is_cube(n: Int) -> Bool\n  requires (n >= 0)\n  ensures ((not result) or (exists r in 0..(n + 1): (n == ((r * r) * r))))\n  ensures ((not (not result)) or (forall r in 0..(n + 1): (n != ((r * r) * r))))\n  effects pure\n  example (is_cube(0) == true)\n{\n  true\n}",
+ "dafny": "// <vc-preamble>\nfunction cube(n: int): int { n * n * n }\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod is_cube(n: nat) returns (r: bool)\n\n  ensures r ==> exists r :: 0 <= r <= n && n == cube(r)\n  ensures !r ==> forall r :: 0 <= r <= n ==> n != cube(r)\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

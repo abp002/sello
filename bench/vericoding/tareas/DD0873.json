@@ -1,0 +1,13 @@
+{
+ "id": "DD0873",
+ "source": "dafnybench",
+ "source_id": "llm-verified-eval_tmp_tmpd2deqn_i_dafny_5_intersperse",
+ "fn": "intersperse",
+ "sello": "intersperse(numbers: List[Int], delimiter: Int) -> List[Int]",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn intersperse(numbers: List[Int], delimiter: Int) -> List[Int]\n  requires (len(numbers) >= 0)\n  ensures (len(result) == (if (len(numbers) > 0) then ((2 * len(numbers)) - 1) else 0))\n  ensures forall i in 0..len(result): ((not ((i % 2) == 0)) or (result[i] == numbers[(i / 2)]))\n  ensures forall i in 0..len(result): ((not ((i % 2) == 1)) or (result[i] == delimiter))\n  effects pure\n  example (intersperse([], 0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod intersperse(numbers: seq<int>, delimiter: int) returns (interspersed: seq<int>)\n    ensures |interspersed| == if |numbers| > 0 then 2 * |numbers| - 1 else 0\n    ensures forall i :: 0 <= i < |interspersed| ==> i % 2 == 0 ==> \n                interspersed[i] == numbers[i / 2]\n    ensures forall i :: 0 <= i < |interspersed| ==> i % 2 == 1 ==>\n                interspersed[i] == delimiter\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

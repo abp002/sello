@@ -1,0 +1,13 @@
+{
+ "id": "DD0654",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_70_AllSequencesEqualLength",
+ "fn": "AllSequencesEqualLength",
+ "sello": "AllSequencesEqualLength(sequences: List[List[Int]]) -> Bool",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn AllSequencesEqualLength(sequences: List[List[Int]]) -> Bool\n  requires (len(sequences) >= 0)\n  ensures (result == (forall i in 0..len(sequences): forall j in 0..len(sequences): (len(sequences[i]) == len(sequences[j]))))\n  effects pure\n  example (AllSequencesEqualLength([]) == true)\n{\n  true\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod AllSequencesEqualLength(sequences: seq<seq<int>>) returns (result: bool)\n    ensures result <==> forall i, j :: 0 <= i < |sequences| && 0 <= j < |sequences| ==> |sequences[i]| == |sequences[j]|\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

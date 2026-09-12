@@ -1,0 +1,11 @@
+{
+ "id": "DA0285",
+ "source": "apps",
+ "source_id": "apps_test_1357",
+ "fn": "solve",
+ "sello": "solve(n: Int, m: Int, tasks: List[Int]) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(n: Int, m: Int, tasks: List[Int]) -> Int\n  requires (n >= 2)\n  requires (m >= 1)\n  requires (len(tasks) == m)\n  requires forall i in 0..len(tasks): ((1 <= tasks[i]) and (tasks[i] <= n))\n  ensures (result >= 0)\n  ensures ((not (m > 0)) or (result >= (tasks[(m - 1)] - 1)))\n  ensures (result <= ((((m - 1) * n) + tasks[(m - 1)]) - 1))\n  effects pure\n  example (solve(0, 0, []) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, m: int, tasks: seq<int>)\n{\n    n >= 2 && m >= 1 && |tasks| == m && \n    forall i :: 0 <= i < |tasks| ==> 1 <= tasks[i] <= n\n}\n\nfunction MinTimeToComplete(n: int, tasks: seq<int>, currentPos: int, taskIndex: int): int\n    requires n >= 2\n    requires forall i :: 0 <= i < |tasks| ==> 1 <= tasks[i] <= n\n    requires 1 <= currentPos <= n\n    requires 0 <= taskIndex < |tasks|\n{\n    var target := tasks[taskIndex];\n    if target >= currentPos then target - currentPos\n    else (n - currentPos) + target\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, m: int, tasks: seq<int>) returns (result: int)\n    requires ValidInput(n, m, tasks)\n    ensures result >= 0\n    ensures m > 0 ==> result >= tasks[m-1] - 1\n    ensures result <= (m - 1) * n + tasks[m-1] - 1\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

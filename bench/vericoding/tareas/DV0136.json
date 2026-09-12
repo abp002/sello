@@ -1,0 +1,13 @@
+{
+ "id": "DV0136",
+ "source": "verina",
+ "source_id": "verina_basic_56_task",
+ "fn": "Copy",
+ "sello": "Copy(src: List[Int], s_start: Int, dest: List[Int], d_start: Int, len_: Int) -> List[Int]",
+ "helpers": [],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn Copy(src: List[Int], s_start: Int, dest: List[Int], d_start: Int, len_: Int) -> List[Int]\n  requires (s_start >= 0)\n  requires (d_start >= 0)\n  requires (len_ >= 0)\n  requires (len(src) >= (s_start + len_))\n  requires (len(dest) >= (d_start + len_))\n  ensures (len(result) == len(dest))\n  ensures forall i in 0..d_start: (result[i] == dest[i])\n  ensures forall i in (d_start + len_)..len(result): (result[i] == dest[i])\n  ensures forall i in 0..len_: (result[(d_start + i)] == src[(s_start + i)])\n  effects pure\n  example (Copy([], 0, [], 0, 0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod Copy(src: seq<int>, s_start: nat, dest: seq<int>, d_start: nat, len: nat) returns (result: seq<int>)\n    requires \n        |src| >= s_start + len\n    requires\n        |dest| >= d_start + len\n    ensures\n        |result| == |dest|\n    ensures\n        forall i :: 0 <= i < d_start ==> result[i] == dest[i]\n    ensures\n        forall i :: d_start + len <= i < |result| ==> result[i] == dest[i]\n    ensures\n        forall i {:trigger result[d_start + i]} :: 0 <= i < len ==> result[d_start + i] == src[s_start + i]\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n    result := [];\n}\n// </vc-code>\n"
+}

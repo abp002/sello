@@ -1,0 +1,14 @@
+{
+ "id": "DH0005",
+ "source": "humaneval",
+ "source_id": "humaneval_005",
+ "fn": "InsertDelimiter",
+ "sello": "InsertDelimiter(numbers: List[Int], delimiter: Int) -> List[Int]",
+ "helpers": [],
+ "notas": [
+  "cláusula `true` eliminada",
+  "requires vacío"
+ ],
+ "esqueleto": "fn InsertDelimiter(numbers: List[Int], delimiter: Int) -> List[Int]\n  requires (len(numbers) >= 0)\n  ensures if (len(numbers) <= 1) then (result == numbers) else (((len(result) == ((2 * len(numbers)) - 1)) and (forall i in 0..len(numbers): (result[(2 * i)] == numbers[i]))) and (forall i in 0..(len(numbers) - 1): (result[((2 * i) + 1)] == delimiter)))\n  effects pure\n  example (InsertDelimiter([], 0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n\npredicate ValidInput(numbers: seq<int>, delimiter: int)\n{\n    true // Any sequence and delimiter are valid inputs\n}\n\npredicate ValidOutput(numbers: seq<int>, delimiter: int, result: seq<int>)\n{\n    if |numbers| <= 1 then\n        result == numbers\n    else\n        |result| == 2 * |numbers| - 1 &&\n        (forall i :: 0 <= i < |numbers| ==> result[2 * i] == numbers[i]) &&\n        (forall i :: 0 <= i < |numbers| - 1 ==> result[2 * i + 1] == delimiter)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod InsertDelimiter(numbers: seq<int>, delimiter: int) returns (result: seq<int>)\n    requires ValidInput(numbers, delimiter)\n    ensures ValidOutput(numbers, delimiter, result)\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

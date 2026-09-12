@@ -53,8 +53,9 @@ from .errors import SelloError
 from .hash import _sccs, callees
 from .interp import NONE, Interpreter, Some, fmt
 from .nodes import (
+    Index,
     BOOL, INT, Binary, BoolLit, Call, Expr, Fn, If, IntLit, ListLit, Match, Name, NoneLit,
-    PCons, PEmpty, PNone, PSome, PWild, Pattern, Program, Quant, SomeExpr, TAny, TBool, TextLit,
+    PCons, PEmpty, PNone, PSome, PWild, Pattern, Program, Quant, RangeExpr, SomeExpr, TAny, TBool, TextLit,
     TInt, TList, TOption, TText, Type, Unary, unify,
 )
 from .parser import parse
@@ -404,6 +405,14 @@ class Translator:
                          self.expr(e.otherwise, env, path + [z3.Not(c)], t))
         if isinstance(e, Match):
             return self.match(e, env, path, want)
+        if isinstance(e, Index):
+            st = self.type_at(e.seq, env, None)
+            assert isinstance(st, TList)
+            xs = self.expr(e.seq, env, path, st)
+            i = self.expr(e.idx, env, path, INT)
+            self.obligate(path, z3.And(i >= 0, i < z3.Length(xs)), "E500",
+                          f"index out of range in `{unparse(e)}`")
+            return xs[i]
         if isinstance(e, Quant):
             return self.quant(e, env, path)
         raise Unsupported(f"node {type(e).__name__}")
@@ -484,19 +493,29 @@ class Translator:
         return {"patterns": [p]} if self.patterns else {}
 
     def quant(self, e: Quant, env: Env, path: list) -> z3.ExprRef:
-        st = self.type_at(e.subject, env, None)
-        assert isinstance(st, TList)
-        xs = self.expr(e.subject, env, path, st)
         i = z3.Int(self.fresh("i"), self.ctx)
-        guard = z3.And(i >= 0, i < z3.Length(xs))
+        if isinstance(e.subject, RangeExpr):
+            # `forall i in lo..hi`: el índice recorre los enteros de lo a hi, hi excluido.
+            # Sin patrón de instanciación: la variable sola no es un patrón válido, y el término
+            # que la usa (casi siempre `xs[i]`) lo pone el cuerpo.
+            lo = self.expr(e.subject.lo, env, path, INT)
+            hi = self.expr(e.subject.hi, env, path, INT)
+            guard, val, elem = z3.And(i >= lo, i < hi), i, INT
+            pat: dict = {}
+        else:
+            st = self.type_at(e.subject, env, None)
+            assert isinstance(st, TList)
+            xs = self.expr(e.subject, env, path, st)
+            guard, val, elem = z3.And(i >= 0, i < z3.Length(xs)), xs[i], st.elem
+            pat = self.pat(xs[i])
         self.binders.append(Binder(i, guard, len(path)))
         try:
-            body = self.expr(e.body, env.bind(e.var, xs[i], st.elem), path, BOOL)
+            body = self.expr(e.body, env.bind(e.var, val, elem), path, BOOL)
         finally:
             self.binders.pop()
         if e.kind == "forall":
-            return z3.ForAll([i], z3.Implies(guard, body), **self.pat(xs[i]))
-        return z3.Exists([i], z3.And(guard, body), **self.pat(xs[i]))
+            return z3.ForAll([i], z3.Implies(guard, body), **pat)
+        return z3.Exists([i], z3.And(guard, body), **pat)
 
     def match(self, e: Match, env: Env, path: list, want: Type | None) -> z3.ExprRef:
         st = self.type_at(e.subject, env, None)

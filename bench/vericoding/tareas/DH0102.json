@@ -1,0 +1,11 @@
+{
+ "id": "DH0102",
+ "source": "humaneval",
+ "source_id": "humaneval_102",
+ "fn": "ChooseNum",
+ "sello": "ChooseNum(x: Int, y: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn ChooseNum(x: Int, y: Int) -> Int\n  requires (x > 0)\n  requires (y > 0)\n  ensures if (x > y) then (result == -1) else (((result == -1) and (forall i in x..(y + 1): ((i % 2) != 0))) or ((((result % 2) == 0) and ((x <= result) and (result <= y))) and (forall i in x..(y + 1): ((not ((i % 2) == 0)) or (i <= result)))))\n  effects pure\n  example (ChooseNum(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n\npredicate ValidInput(x: int, y: int) {\n    x > 0 && y > 0\n}\n\npredicate NoEvenInRange(x: int, y: int) {\n    forall i :: x <= i <= y ==> i % 2 != 0\n}\n\npredicate IsLargestEvenInRange(x: int, y: int, result: int) {\n    result % 2 == 0 && \n    x <= result <= y && \n    (forall i :: x <= i <= y && i % 2 == 0 ==> i <= result)\n}\n\npredicate CorrectResult(x: int, y: int, result: int) {\n    if x > y then \n        result == -1\n    else\n        (result == -1 && NoEvenInRange(x, y)) ||\n        IsLargestEvenInRange(x, y, result)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod ChooseNum(x: int, y: int) returns (result: int)\n    requires ValidInput(x, y)\n    ensures CorrectResult(x, y, result)\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

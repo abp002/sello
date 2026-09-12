@@ -1,0 +1,11 @@
+{
+ "id": "DA0018",
+ "source": "apps",
+ "source_id": "apps_test_87",
+ "fn": "solve",
+ "sello": "solve(m: Int, d: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(m: Int, d: Int) -> Int\n  requires (1 <= m)\n  requires (m <= 12)\n  requires (1 <= d)\n  requires (d <= 7)\n  ensures (result == (1 + ((((d - 1) + [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][(m - 1)]) - 1) / 7)))\n  ensures (4 <= result)\n  ensures (result <= 6)\n  effects pure\n  example (solve(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(m: int, d: int)\n{\n    1 <= m <= 12 && 1 <= d <= 7\n}\n\nfunction DaysInMonth(m: int): int\n    requires 1 <= m <= 12\n{\n    [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][m-1]\n}\n\nfunction ColumnsNeeded(m: int, d: int): int\n    requires ValidInput(m, d)\n{\n    1 + (d - 1 + DaysInMonth(m) - 1) / 7\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(m: int, d: int) returns (result: int)\n    requires ValidInput(m, d)\n    ensures result == ColumnsNeeded(m, d)\n    ensures 4 <= result <= 6\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

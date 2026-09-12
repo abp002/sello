@@ -1,0 +1,11 @@
+{
+ "id": "DD0809",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_809_IsSmaller",
+ "fn": "IsSmaller",
+ "sello": "IsSmaller(a: List[Int], b: List[Int]) -> Bool",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn IsSmaller(a: List[Int], b: List[Int]) -> Bool\n  requires (len(a) == len(b))\n  ensures (result == (forall i in 0..len(a): (a[i] > b[i])))\n  ensures ((not result) == (exists i in 0..len(a): (a[i] <= b[i])))\n  effects pure\n  example (IsSmaller([], []) == true)\n{\n  true\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod IsSmaller(a: seq<int>, b: seq<int>) returns (result: bool)\n    requires |a| == |b|\n    ensures result <==> forall i :: 0 <= i < |a| ==> a[i] > b[i]\n    ensures !result <==> exists i :: 0 <= i < |a| && a[i] <= b[i]\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

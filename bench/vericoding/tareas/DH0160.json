@@ -1,0 +1,11 @@
+{
+ "id": "DH0160",
+ "source": "humaneval",
+ "source_id": "humaneval_159",
+ "fn": "eat",
+ "sello": "eat(number: Int, need: Int, remaining: Int) -> List[Int]",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn eat(number: Int, need: Int, remaining: Int) -> List[Int]\n  requires (0 <= number)\n  requires (number <= 1000)\n  requires (0 <= need)\n  requires (need <= 1000)\n  requires (0 <= remaining)\n  requires (remaining <= 1000)\n  ensures (len(result) == 2)\n  ensures (result[0] == (number + (if (need <= remaining) then need else remaining)))\n  ensures (result[1] == (remaining - (if (need <= remaining) then need else remaining)))\n  ensures (result[0] >= number)\n  ensures (result[1] >= 0)\n  ensures (result[1] <= remaining)\n  effects pure\n  example (eat(0, 0, 0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n\npredicate ValidInput(number: int, need: int, remaining: int)\n{\n    0 <= number <= 1000 && 0 <= need <= 1000 && 0 <= remaining <= 1000\n}\n\nfunction CanEat(need: int, remaining: int): int\n{\n    if need <= remaining then need else remaining\n}\n\nfunction TotalEaten(number: int, need: int, remaining: int): int\n{\n    number + CanEat(need, remaining)\n}\n\nfunction CarrotsLeft(need: int, remaining: int): int\n{\n    remaining - CanEat(need, remaining)\n}\n\npredicate ValidResult(result: seq<int>, number: int, need: int, remaining: int)\n{\n    |result| == 2 &&\n    result[0] == TotalEaten(number, need, remaining) &&\n    result[1] == CarrotsLeft(need, remaining) &&\n    result[0] >= number &&\n    result[1] >= 0 &&\n    result[1] <= remaining\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod eat(number: int, need: int, remaining: int) returns (result: seq<int>)\n    requires ValidInput(number, need, remaining)\n    ensures ValidResult(result, number, need, remaining)\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

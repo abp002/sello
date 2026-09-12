@@ -1,0 +1,11 @@
+{
+ "id": "DA0180",
+ "source": "apps",
+ "source_id": "apps_test_894",
+ "fn": "solve",
+ "sello": "solve(x: Int, y: Int) -> List[Int]",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(x: Int, y: Int) -> List[Int]\n  requires (x != 0)\n  requires (y != 0)\n  ensures (len(result) == 4)\n  ensures (result[0] < result[2])\n  ensures ((not (((x * y) > 0) and (x < 0))) or (result == [(x + y), 0, 0, (x + y)]))\n  ensures ((not (((x * y) > 0) and (x >= 0))) or (result == [0, (x + y), (x + y), 0]))\n  ensures ((not (((x * y) <= 0) and (x < 0))) or (result == [(x - y), 0, 0, (y - x)]))\n  ensures ((not (((x * y) <= 0) and (x >= 0))) or (result == [0, (y - x), (x - y), 0]))\n  effects pure\n  example (solve(0, 0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(x: int, y: int)\n{\n    x != 0 && y != 0\n}\n\npredicate ValidOutput(result: seq<int>, x: int, y: int)\n{\n    |result| == 4 &&\n    result[0] < result[2] &&\n    (x * y > 0 && x < 0 ==> result == [x + y, 0, 0, x + y]) &&\n    (x * y > 0 && x >= 0 ==> result == [0, x + y, x + y, 0]) &&\n    (x * y <= 0 && x < 0 ==> result == [x - y, 0, 0, y - x]) &&\n    (x * y <= 0 && x >= 0 ==> result == [0, y - x, x - y, 0])\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(x: int, y: int) returns (result: seq<int>)\n    requires ValidInput(x, y)\n    ensures ValidOutput(result, x, y)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

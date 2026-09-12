@@ -1,0 +1,13 @@
+{
+ "id": "DH0055",
+ "source": "humaneval",
+ "source_id": "humaneval_052",
+ "fn": "CheckBelowThreshold",
+ "sello": "CheckBelowThreshold(l: List[Int], t: Int) -> Bool",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn CheckBelowThreshold(l: List[Int], t: Int) -> Bool\n  requires (len(l) >= 0)\n  ensures (result == (forall i in 0..len(l): (l[i] < t)))\n  effects pure\n  example (CheckBelowThreshold([], 0) == true)\n{\n  true\n}",
+ "dafny": "// <vc-preamble>\n\npredicate BelowThreshold(l: seq<int>, t: int)\n{\n    forall i :: 0 <= i < |l| ==> l[i] < t\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod CheckBelowThreshold(l: seq<int>, t: int) returns (result: bool)\n    ensures result == BelowThreshold(l, t)\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

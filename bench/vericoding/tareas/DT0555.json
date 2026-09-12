@@ -1,0 +1,13 @@
+{
+ "id": "DT0555",
+ "source": "numpy_triple",
+ "source_id": "set_operations_unique",
+ "fn": "unique",
+ "sello": "unique(arr: List[Int]) -> List[Int]",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn unique(arr: List[Int]) -> List[Int]\n  requires (len(arr) >= 0)\n  ensures (len(result) <= len(arr))\n  ensures forall i in 0..len(result): forall j in (i + 1)..len(result): (result[i] < result[j])\n  ensures forall i in 0..len(result): contains(arr, result[i])\n  ensures forall i in 0..len(result): forall j in (i + 1)..len(result): (result[i] != result[j])\n  ensures forall x in arr: contains(result, x)\n  ensures forall i in 0..len(arr): contains(result, arr[i])\n  effects pure\n  example (unique([]) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod unique(arr: seq<int>) returns (result: seq<int>)\n    ensures |result| <= |arr|\n    // Result is sorted in ascending order\n    ensures forall i, j :: 0 <= i < j < |result| ==> result[i] < result[j]\n    // Every element in result exists in the input array\n    ensures forall i :: 0 <= i < |result| ==> result[i] in arr\n    // All elements in result are unique (no duplicates)\n    ensures forall i, j :: 0 <= i < j < |result| ==> result[i] != result[j]\n    // Every element in input array appears in the result\n    ensures forall x :: x in arr ==> x in result\n    // Equivalently: every index in input has its value represented in result\n    ensures forall i :: 0 <= i < |arr| ==> arr[i] in result\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

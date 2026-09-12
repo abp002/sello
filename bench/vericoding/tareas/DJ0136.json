@@ -1,0 +1,13 @@
+{
+ "id": "DJ0136",
+ "source": "verified_cogen",
+ "source_id": "rustbench_array_append",
+ "fn": "ArrayAppend",
+ "sello": "ArrayAppend(a: List[Int], b: Int) -> List[Int]",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn ArrayAppend(a: List[Int], b: Int) -> List[Int]\n  requires (len(a) >= 0)\n  ensures (len(result) == (len(a) + 1))\n  ensures forall i in 0..len(result): (result[i] == (if (i < len(a)) then a[i] else b))\n  effects pure\n  example (ArrayAppend([], 0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod ArrayAppend(a: seq<int>, b: int) returns (result: seq<int>)\n    ensures |result| == |a| + 1\n    ensures forall i :: 0 <= i < |result| ==> result[i] == (if i < |a| then a[i] else b)\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n}\n// </vc-code>\n"
+}

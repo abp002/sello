@@ -1,0 +1,11 @@
+{
+ "id": "DJ0171",
+ "source": "verified_cogen",
+ "source_id": "rustbench_wip_transpose_matrix",
+ "fn": "Transpose",
+ "sello": "Transpose(matrix: List[List[Int]]) -> List[List[Int]]",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn Transpose(matrix: List[List[Int]]) -> List[List[Int]]\n  requires (len(matrix) > 0)\n  requires forall i in 0..len(matrix): (len(matrix[i]) == len(matrix[0]))\n  requires forall i in 0..len(matrix): (len(matrix[i]) == len(matrix))\n  ensures (len(result) == len(matrix[0]))\n  ensures forall i in 0..len(result): (len(result[i]) == len(matrix))\n  ensures forall i in 0..len(result): forall j in 0..len(result[i]): (result[i][j] == matrix[j][i])\n  effects pure\n  example (Transpose([]) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod Transpose(matrix: seq<seq<int>>) returns (result: seq<seq<int>>)\n    requires |matrix| > 0\n    requires forall i :: 0 <= i < |matrix| ==> |matrix[i]| == |matrix[0]|\n    requires forall i :: 0 <= i < |matrix| ==> |matrix[i]| == |matrix|\n    ensures |result| == |matrix[0]|\n    ensures forall i :: 0 <= i < |result| ==> |result[i]| == |matrix|\n    ensures forall i, j :: 0 <= i < |result| && 0 <= j < |result[i]| ==> result[i][j] == matrix[j][i]\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n}\n// </vc-code>\n"
+}

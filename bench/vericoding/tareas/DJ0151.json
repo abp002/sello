@@ -1,0 +1,13 @@
+{
+ "id": "DJ0151",
+ "source": "verified_cogen",
+ "source_id": "rustbench_largest_prime_factor",
+ "fn": "LargestPrimeFactor",
+ "sello": "LargestPrimeFactor(n: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn LargestPrimeFactor(n: Int) -> Int\n  requires (2 <= n)\n  requires (n <= 2147483646)\n  ensures (1 <= result)\n  ensures (result <= n)\n  ensures ((result == 1) or ((result > 1) and (forall k in 2..result: ((result % k) != 0))))\n  effects pure\n  example (LargestPrimeFactor(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate IsPrimePred(n: int)\n{\n    forall k :: 2 <= k < n ==> n % k != 0\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod LargestPrimeFactor(n: int) returns (result: int)\n    requires 2 <= n <= 2147483646\n    ensures 1 <= result <= n\n    ensures result == 1 || (result > 1 && IsPrimePred(result))\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n}\n// </vc-code>\n"
+}

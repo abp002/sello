@@ -1,0 +1,11 @@
+{
+ "id": "DA0651",
+ "source": "apps",
+ "source_id": "apps_test_4659",
+ "fn": "generate",
+ "sello": "generate(numRows: Int) -> List[List[Int]]",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn generate(numRows: Int) -> List[List[Int]]\n  requires (numRows >= 0)\n  ensures (len(result) == numRows)\n  ensures ((not (numRows == 0)) or (result == []))\n  ensures ((not (numRows > 0)) or (forall i in 0..len(result): (len(result[i]) == (i + 1))))\n  ensures ((not (numRows > 0)) or (forall i in 0..len(result): ((result[i][0] == 1) and (result[i][(len(result[i]) - 1)] == 1))))\n  ensures ((not (numRows > 1)) or (forall i in 1..len(result): forall j in 1..(len(result[i]) - 1): (result[i][j] == (result[(i - 1)][(j - 1)] + result[(i - 1)][j]))))\n  effects pure\n  example (generate(0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidPascalTriangle(triangle: seq<seq<int>>, numRows: int)\n{\n  |triangle| == numRows &&\n  (numRows == 0 ==> triangle == []) &&\n  (numRows > 0 ==> (\n    forall i :: 0 <= i < |triangle| ==> |triangle[i]| == i + 1\n  )) &&\n  (numRows > 0 ==> (\n    forall i :: 0 <= i < |triangle| ==> triangle[i][0] == 1 && triangle[i][|triangle[i]| - 1] == 1\n  )) &&\n  (numRows > 1 ==> (\n    forall i :: 1 <= i < |triangle| ==> \n      forall j :: 1 <= j < |triangle[i]| - 1 ==> \n        triangle[i][j] == triangle[i-1][j-1] + triangle[i-1][j]\n  ))\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod generate(numRows: int) returns (result: seq<seq<int>>)\n  requires numRows >= 0\n  ensures ValidPascalTriangle(result, numRows)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

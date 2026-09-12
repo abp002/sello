@@ -1,0 +1,11 @@
+{
+ "id": "DA0226",
+ "source": "apps",
+ "source_id": "apps_test_1065",
+ "fn": "solve",
+ "sello": "solve(n: Int, k: Int, M: Int, D: Int) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(n: Int, k: Int, M: Int, D: Int) -> Int\n  requires (2 <= n)\n  requires (2 <= k)\n  requires (k <= n)\n  requires (1 <= M)\n  requires (M <= n)\n  requires (1 <= D)\n  requires (D <= n)\n  requires (((M * D) * k) >= n)\n  ensures (result >= 0)\n  ensures (result <= (M * D))\n  ensures forall x in 1..(M + 1): forall d in 1..(D + 1): ((not ((x * (((d - 1) * k) + 1)) <= n)) or ((x * d) <= result))\n  ensures exists x in 1..(M + 1): exists d in 1..(D + 1): (((x * (((d - 1) * k) + 1)) <= n) and ((x * d) == result))\n  effects pure\n  example (solve(0, 0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, k: int, M: int, D: int) {\n    2 <= n && 2 <= k <= n && 1 <= M <= n && 1 <= D <= n && M * D * k >= n\n}\n\nfunction CandiesUsed(x: int, d: int, k: int): int {\n    x * ((d - 1) * k + 1)\n}\n\npredicate ValidDistribution(x: int, d: int, n: int, k: int, M: int, D: int) {\n    1 <= x <= M && 1 <= d <= D && CandiesUsed(x, d, k) <= n\n}\n\nfunction Person1Candies(x: int, d: int): int {\n    x * d\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, k: int, M: int, D: int) returns (result: int)\n    requires ValidInput(n, k, M, D)\n    ensures result >= 0\n    ensures result <= M * D\n    ensures forall x: int, d: int :: ValidDistribution(x, d, n, k, M, D) ==> Person1Candies(x, d) <= result\n    ensures exists x: int, d: int :: ValidDistribution(x, d, n, k, M, D) && Person1Candies(x, d) == result\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

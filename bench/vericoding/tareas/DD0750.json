@@ -1,0 +1,11 @@
+{
+ "id": "DD0750",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_578_Interleave",
+ "fn": "Interleave",
+ "sello": "Interleave(s1: List[Int], s2: List[Int], s3: List[Int]) -> List[Int]",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn Interleave(s1: List[Int], s2: List[Int], s3: List[Int]) -> List[Int]\n  requires (len(s1) == len(s2))\n  requires (len(s2) == len(s3))\n  ensures (len(result) == (3 * len(s1)))\n  ensures forall i in 0..len(s1): (((result[(3 * i)] == s1[i]) and (result[((3 * i) + 1)] == s2[i])) and (result[((3 * i) + 2)] == s3[i]))\n  effects pure\n  example (Interleave([], [], []) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod Interleave(s1: seq<int>, s2: seq<int>, s3: seq<int>) returns (r: seq<int>)\n    requires |s1| == |s2| && |s2| == |s3|\n    ensures |r| == 3 * |s1|\n    ensures forall i :: 0 <= i < |s1| ==> r[3*i] == s1[i] && r[3*i + 1] == s2[i] && r[3*i + 2] == s3[i]\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

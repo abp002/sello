@@ -1,0 +1,13 @@
+{
+ "id": "DJ0149",
+ "source": "verified_cogen",
+ "source_id": "rustbench_is_non_prime",
+ "fn": "IsNonPrime",
+ "sello": "IsNonPrime(n: Int) -> Bool",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn IsNonPrime(n: Int) -> Bool\n  requires (n >= 2)\n  ensures (result == (exists k in 2..n: ((n % k) == 0)))\n  effects pure\n  example (IsNonPrime(0) == true)\n{\n  true\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod IsNonPrime(n: int) returns (result: bool)\n    requires n >= 2\n    ensures result == exists k :: 2 <= k < n && n % k == 0\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n}\n// </vc-code>\n"
+}

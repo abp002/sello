@@ -1,0 +1,13 @@
+{
+ "id": "DD0668",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_126_SumOfCommonDivisors",
+ "fn": "SumOfCommonDivisors",
+ "sello": "SumOfCommonDivisors(a: Int, b: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn SumOfCommonDivisors(a: Int, b: Int) -> Int\n  requires (a > 0)\n  requires (b > 0)\n  ensures (result >= 0)\n  ensures forall d in 1..(a + 1): ((not ((((1 <= d) and (d <= b)) and ((a % d) == 0)) and ((b % d) == 0))) or (result >= d))\n  effects pure\n  example (SumOfCommonDivisors(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod SumOfCommonDivisors(a: int, b: int) returns (sum: int)\n    requires a > 0 && b > 0\n    ensures sum >= 0\n    ensures forall d :: 1 <= d <= a && 1 <= d <= b && a % d == 0 && b % d == 0 ==> sum >= d\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

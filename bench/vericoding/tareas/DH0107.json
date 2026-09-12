@@ -1,0 +1,13 @@
+{
+ "id": "DH0107",
+ "source": "humaneval",
+ "source_id": "humaneval_105_by_length__reverse",
+ "fn": "reverse",
+ "sello": "reverse(s: List[Int]) -> List[Int]",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn reverse(s: List[Int]) -> List[Int]\n  requires (len(s) >= 0)\n  ensures (len(result) == len(s))\n  ensures forall k in 0..len(s): (result[k] == s[((len(s) - 1) - k)])\n  effects pure\n  example (reverse([]) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\nfunction NumberToName(n: int): string\n  requires 1 <= n <= 9\n{\n  match n\n  case 1 => \"One\"\n  case 2 => \"Two\"\n  case 3 => \"Three\"\n  case 4 => \"Four\"\n  case 5 => \"Five\"\n  case 6 => \"Six\"\n  case 7 => \"Seven\"\n  case 8 => \"Eight\"\n  case 9 => \"Nine\"\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod reverse(s: seq<int>) returns (rev: seq<int>)\n\n  ensures |rev| == |s|\n  ensures forall k :: 0 <= k < |s| ==> rev[k] == s[|s| - 1 - k]\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

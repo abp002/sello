@@ -1,0 +1,15 @@
+{
+ "id": "DH0133",
+ "source": "humaneval",
+ "source_id": "humaneval_130_tri",
+ "fn": "Tribonacci",
+ "sello": "Tribonacci(n: Int) -> List[Int]",
+ "helpers": [
+  "tri"
+ ],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn tri(n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == (if (n == 1) then 3 else if ((n % 2) == 0) then (1 + (n / 2)) else ((tri((n - 1)) + tri((n - 2))) + tri((n + 1)))))\n  ensures (result >= 0)\n  effects pure\n  example (tri(0) == 1)\n  example (tri(1) == 3)\n{\n  if (n == 1) then 3 else if ((n % 2) == 0) then (1 + (n / 2)) else ((tri((n - 1)) + tri((n - 2))) + tri((n + 1)))\n}\n\nfn Tribonacci(n: Int) -> List[Int]\n  requires (n >= 0)\n  ensures (len(result) == (n + 1))\n  ensures forall i in 0..(n + 1): (result[i] == tri(i))\n  ensures forall x in result: (x >= 0)\n  effects pure\n  example (Tribonacci(0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\nfunction tri(n: nat): nat\n  decreases if n % 2 == 0 then 0 else n\n{\n  if n == 1 then 3\n  else if n % 2 == 0 then 1 + n / 2\n  else tri(n - 1) + tri(n - 2) + tri(n + 1)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod Tribonacci(n: nat) returns (result: seq<nat>)\n\n  ensures |result| == n + 1\n  ensures forall i :: 0 <= i <= n ==> result[i] == tri(i)\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

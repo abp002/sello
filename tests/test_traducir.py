@@ -105,8 +105,11 @@ def test_abs_supuesto_y_nota_div():
 
 
 @pytest.mark.parametrize("preambulo, metodo, motivo", [
-    ("", "method f(s: seq<int>) returns (r: int)\n  requires |s| > 0\n  ensures r == s[0]", "índice s[i]"),
-    ("", "method f(s: seq<int>) returns (r: int)\n  ensures forall i :: 0 <= i < |s| ==> r >= 0", "cuantificador sobre enteros"),
+    ("", "method f(s: string) returns (r: int)\n  requires |s| > 0\n  ensures r == s[0]", "tipo: string"),
+    ("", "method f(s: seq<int>) returns (r: int)\n  ensures forall i :: 0 <= i ==> r >= 0", "cuantificador sobre enteros sin cotas"),
+    ("", "method f(s: seq<int>) returns (r: int)\n  ensures forall i: nat :: r >= 0", "cuantificador sobre enteros sin cotas"),
+    ("function sum(s: seq<int>, i: nat): int requires i <= |s| { if i == |s| then 0 else s[i] + sum(s, i + 1) }",
+     "method f(s: seq<int>) returns (r: int)\n  ensures r == sum(s, 0)", "helper recursivo con `[i]` en el cuerpo"),
     ("", "method f(a: array<int>) returns (r: int)\n  ensures r >= 0", "tipo: array"),
     ("", "method f(x: real) returns (r: real)\n  ensures r >= x", "tipo: real"),
     ("", "method f(x: int) returns (r: int, q: int)\n  ensures r >= x", "varios valores de retorno"),
@@ -118,6 +121,26 @@ def test_abs_supuesto_y_nota_div():
 def test_lo_que_no_cabe_dice_por_que(preambulo, metodo, motivo):
     tarea, motivos, _ = T.traducir("DX0009", spec(preambulo, metodo))
     assert tarea is None and motivo in motivos, motivos
+
+
+def test_indice_y_cuantificador_acotado_sobre_enteros():
+    """ALE-108: `forall i :: 0 <= i < |s| ==> P(s[i])` es la forma que bloqueaba 179 specs."""
+    d = spec("", "method f(s: seq<int>, k: nat) returns (r: int)\n  requires |s| > 0 && k < |s|\n"
+                 "  ensures forall i :: 0 <= i < |s| ==> s[i] <= r\n"
+                 "  ensures exists i :: 0 <= i && i < |s| && s[i] == r\n"
+                 "  ensures forall i | 1 <= i <= |s| - 1 :: s[i - 1] <= r\n"
+                 "  ensures forall i, j :: 0 <= i < j < |s| ==> s[i] <= r && s[j] <= r\n"
+                 "  ensures forall i: nat :: i < k ==> s[i] <= r\n"
+                 "  ensures forall i :: 0 <= i < |s| && s[i] > 0 ==> s[i] <= r")
+    t = texto(d)
+    assert "ensures forall i in 0..len(s): (s[i] <= result)" in t
+    assert "ensures exists i in 0..len(s): (s[i] == result)" in t
+    assert "ensures forall i in 1..((len(s) - 1) + 1): (s[(i - 1)] <= result)" in t
+    assert "ensures forall i in 0..len(s): forall j in (i + 1)..len(s): ((s[i] <= result) and (s[j] <= result))" in t
+    assert "ensures forall i in 0..k: (s[i] <= result)" in t, "un `nat` sin cota inferior empieza en 0"
+    assert "ensures forall i in 0..len(s): ((not (s[i] > 0)) or (s[i] <= result))" in t, "lo que no es cota sigue de premisa"
+    # el contrato traducido compila en Sello y admite un cuerpo trivial con un ejemplo que lo cumple
+    assert check_source(t.replace(T.ct.HUECO, "0").replace(T.ct.EJEMPLOS, "  example f([0], 0) == 0"), prover=False)["ok"]
 
 
 def test_nombres_reservados_se_renombran():

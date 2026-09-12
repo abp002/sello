@@ -68,3 +68,17 @@ def test_vocabulario_tipa_sobre_el_elemento_de_la_lista():
 def test_sorted_solo_sobre_listas_de_int():
     src = "fn f(ts: List[Text]) -> Int\n  requires sorted(ts)\n  ensures 1 == 1\n  effects pure\n  example f([]) == 0\n{ 0 }"
     fails_with(src, "E400")
+
+
+def test_indice_y_rango_solo_en_contratos_y_bien_tipados():
+    """ALE-108: `xs[i]` y `forall i in lo..hi` son vocabulario de contrato."""
+    fails_with(CABECERA + "{ xs[0] }", "E401")
+    fails_with(CABECERA.replace("requires 1 == 1", "requires 3[0] == 0") + "{ 0 }", "E400")
+    fails_with(CABECERA.replace("requires 1 == 1", "requires xs[true] == 0") + "{ 0 }", "E400")
+    fails_with(CABECERA.replace("requires 1 == 1", "requires forall i in xs..1: i > 0") + "{ 0 }", "E400")
+    e = fails_with(CABECERA.replace("requires 1 == 1", "requires forall i in 0..len(xs): xs[i]") + "{ 0 }", "E400")
+    assert e.extra == {"expected": "Bool", "actual": "Int"}
+    textos = CABECERA.replace("List[Int]", "List[Text]").replace("requires 1 == 1", "requires forall i in 0..len(xs): xs[i] > 0")
+    fails_with(textos + "{ 0 }", "E400")  # el índice tipa con el elemento de la lista
+    ok = CABECERA.replace("requires 1 == 1", "requires forall i in 0..len(xs): xs[i] >= 0 and i >= 0")
+    assert check_source(ok + "{ 0 }", prover=False)["ok"]  # la variable del rango es Int

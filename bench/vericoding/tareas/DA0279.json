@@ -1,0 +1,11 @@
+{
+ "id": "DA0279",
+ "source": "apps",
+ "source_id": "apps_test_1332",
+ "fn": "solve",
+ "sello": "solve(coins: List[Int]) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(coins: List[Int]) -> Int\n  requires (len(coins) == 5)\n  requires forall i in 0..len(coins): ((0 <= coins[i]) and (coins[i] <= 100))\n  ensures (result == (if ((((((coins[0] + coins[1]) + coins[2]) + coins[3]) + coins[4]) > 0) and ((((((coins[0] + coins[1]) + coins[2]) + coins[3]) + coins[4]) % 5) == 0)) then (((((coins[0] + coins[1]) + coins[2]) + coins[3]) + coins[4]) / 5) else -1))\n  ensures ((not ((((((coins[0] + coins[1]) + coins[2]) + coins[3]) + coins[4]) > 0) and ((((((coins[0] + coins[1]) + coins[2]) + coins[3]) + coins[4]) % 5) == 0))) or (result == (((((coins[0] + coins[1]) + coins[2]) + coins[3]) + coins[4]) / 5)))\n  ensures ((not (not ((((((coins[0] + coins[1]) + coins[2]) + coins[3]) + coins[4]) > 0) and ((((((coins[0] + coins[1]) + coins[2]) + coins[3]) + coins[4]) % 5) == 0)))) or (result == -1))\n  effects pure\n  example (solve([]) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(coins: seq<int>)\n{\n  |coins| == 5 && forall i :: 0 <= i < |coins| ==> 0 <= coins[i] <= 100\n}\n\nfunction TotalCoins(coins: seq<int>): int\n  requires |coins| == 5\n{\n  coins[0] + coins[1] + coins[2] + coins[3] + coins[4]\n}\n\npredicate HasValidSolution(coins: seq<int>)\n  requires ValidInput(coins)\n{\n  var total := TotalCoins(coins);\n  total > 0 && total % 5 == 0\n}\n\nfunction ComputeResult(coins: seq<int>): int\n  requires ValidInput(coins)\n{\n  var total := TotalCoins(coins);\n  if total > 0 && total % 5 == 0 then total / 5 else -1\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(coins: seq<int>) returns (result: int)\n  requires ValidInput(coins)\n  ensures result == ComputeResult(coins)\n  ensures HasValidSolution(coins) ==> result == TotalCoins(coins) / 5\n  ensures !HasValidSolution(coins) ==> result == -1\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

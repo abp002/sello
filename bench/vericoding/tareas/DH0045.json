@@ -1,0 +1,13 @@
+{
+ "id": "DH0045",
+ "source": "humaneval",
+ "source_id": "humaneval_043",
+ "fn": "pairs_sum_to_zero",
+ "sello": "pairs_sum_to_zero(l: List[Int]) -> Bool",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn pairs_sum_to_zero(l: List[Int]) -> Bool\n  requires (len(l) >= 0)\n  ensures (result == (exists i in 0..len(l): exists j in (i + 1)..len(l): ((l[i] + l[j]) == 0)))\n  effects pure\n  example (pairs_sum_to_zero([]) == true)\n{\n  true\n}",
+ "dafny": "// <vc-preamble>\n\npredicate HasPairSumToZero(l: seq<int>)\n{\n    exists i, j :: 0 <= i < j < |l| && l[i] + l[j] == 0\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod pairs_sum_to_zero(l: seq<int>) returns (result: bool)\n    ensures result == HasPairSumToZero(l)\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

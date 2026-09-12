@@ -1,0 +1,11 @@
+{
+ "id": "DH0035",
+ "source": "humaneval",
+ "source_id": "humaneval_035",
+ "fn": "FindMaxElement",
+ "sello": "FindMaxElement(l: List[Int]) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn FindMaxElement(l: List[Int]) -> Int\n  requires (len(l) > 0)\n  ensures contains(l, result)\n  ensures forall i in 0..len(l): (l[i] <= result)\n  effects pure\n  example (FindMaxElement([]) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n\npredicate ValidInput(l: seq<int>)\n{\n    |l| > 0\n}\n\npredicate IsMaxElement(l: seq<int>, max_val: int)\n{\n    max_val in l && forall i :: 0 <= i < |l| ==> l[i] <= max_val\n}\nfunction max_element_func(l: seq<int>): int\n    requires |l| > 0\n    ensures max_element_func(l) in l\n    ensures forall i :: 0 <= i < |l| ==> l[i] <= max_element_func(l)\n{\n    if |l| == 1 then l[0]\n    else\n        var rest_max := max_element_func(l[1..]);\n        if l[0] > rest_max then l[0] else rest_max\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod FindMaxElement(l: seq<int>) returns (max_val: int)\n    requires ValidInput(l)\n    ensures IsMaxElement(l, max_val)\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

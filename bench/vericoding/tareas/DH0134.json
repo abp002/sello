@@ -1,0 +1,13 @@
+{
+ "id": "DH0134",
+ "source": "humaneval",
+ "source_id": "humaneval_132_is_nested",
+ "fn": "is_nested",
+ "sello": "is_nested(s: List[Int]) -> Bool",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn is_nested(s: List[Int]) -> Bool\n  requires (len(s) >= 0)\n  ensures (result == (exists x in 0..len(s): exists y in (x + 1)..len(s): exists z in (y + 1)..len(s): exists w in (z + 1)..len(s): ((((s[x] == 0) and (s[y] == 0)) and (s[z] == 1)) and (s[w] == 1))))\n  effects pure\n  example (is_nested([]) == true)\n{\n  true\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod is_nested(s: seq<int>) returns (res: bool) \n\n    ensures res == exists x, y, z, w :: 0 <= x < y < z < w < |s| && s[x] == 0 && s[y] == 0 && s[z] == 1 && s[w] == 1\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

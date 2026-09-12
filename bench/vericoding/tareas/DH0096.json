@@ -1,0 +1,16 @@
+{
+ "id": "DH0096",
+ "source": "humaneval",
+ "source_id": "humaneval_094",
+ "fn": "skjkasdkd",
+ "sello": "skjkasdkd(lst: List[Int]) -> Int",
+ "helpers": [
+  "sum_of_digits_pure"
+ ],
+ "notas": [
+  "div",
+  "requires vacío"
+ ],
+ "esqueleto": "fn sum_of_digits_pure(n: Int) -> Int\n  requires (n >= 0)\n  ensures (result == (if (n < 10) then n else ((n % 10) + sum_of_digits_pure((n / 10)))))\n  effects pure\n  example (sum_of_digits_pure(0) == 0)\n  example (sum_of_digits_pure(1) == 1)\n{\n  if (n < 10) then n else ((n % 10) + sum_of_digits_pure((n / 10)))\n}\n\nfn skjkasdkd(lst: List[Int]) -> Int\n  requires (len(lst) >= 0)\n  ensures (result >= 0)\n  ensures ((not (forall x in lst: not ((x >= 2) and (forall k in 2..x: ((x % k) != 0))))) or (result == 0))\n  ensures ((not (exists x in lst: ((x >= 2) and (forall k in 2..x: ((x % k) != 0))))) or (exists largest in lst: ((((largest >= 2) and (forall k in 2..largest: ((largest % k) != 0))) and (forall y in lst: ((not ((y >= 2) and (forall k in 2..y: ((y % k) != 0)))) or (y <= largest)))) and (result == sum_of_digits_pure(largest)))))\n  effects pure\n  example (skjkasdkd([]) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n\nfunction is_prime_pure(n: int): bool\n{\n    n >= 2 && (forall k :: 2 <= k < n ==> n % k != 0)\n}\n\nfunction sum_of_digits_pure(n: int): int\n    requires n >= 0\n{\n    if n < 10 then n else (n % 10) + sum_of_digits_pure(n / 10)\n}\n\nfunction sum_of_digits(n: int): int\n    requires n >= 0\n    ensures sum_of_digits(n) == sum_of_digits_pure(n)\n    ensures sum_of_digits(n) >= 0\n{\n    if n < 10 then n\n    else (n % 10) + sum_of_digits(n / 10)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod skjkasdkd(lst: seq<int>) returns (result: int)\n    ensures result >= 0\n    ensures (forall x :: x in lst ==> !is_prime_pure(x)) ==> result == 0\n    ensures (exists x :: x in lst && is_prime_pure(x)) ==> \n        (exists largest :: (largest in lst && is_prime_pure(largest) && \n         (forall y :: y in lst && is_prime_pure(y) ==> y <= largest) &&\n         result == sum_of_digits_pure(largest)))\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

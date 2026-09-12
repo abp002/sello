@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 from .nodes import (
-    Binary, BoolLit, Call, Expr, If, IntLit, ListLit, Match, Name, NoneLit,
-    PCons, PEmpty, PNone, PSome, PWild, Pattern, Quant, SomeExpr, TextLit, Unary,
+    Binary, BoolLit, Call, Expr, If, Index, IntLit, ListLit, Match, Name, NoneLit,
+    PCons, PEmpty, PNone, PSome, PWild, Pattern, Quant, RangeExpr, SomeExpr, TextLit, Unary,
 )
 
 
@@ -35,6 +35,11 @@ def unparse(e: Expr) -> str:
     if isinstance(e, Match):
         arms = " ".join(f"{unparse_pat(a.pattern)} => {unparse(a.body)}" for a in e.arms)
         return f"match {unparse(e.subject)} {{ {arms} }}"
+    if isinstance(e, Index):
+        # Sin espacio antes del `[`: con él, el parser lo leería como otra cosa.
+        return f"{indexable(e.seq)}[{unparse(e.idx)}]"
+    if isinstance(e, RangeExpr):
+        return f"{operando(e.lo)}..{operando(e.hi)}"
     if isinstance(e, Quant):
         # El sujeto se parsea al nivel de `or`: un `if`, `match` o cuantificador ahí necesita paréntesis.
         return f"{e.kind} {e.var} in {operando(e.subject)}: {unparse(e.body)}"
@@ -48,6 +53,14 @@ def operando(e: Expr) -> str:
     `(forall x in xs: p) and q` como `forall x in xs: (p and q)` y `(not a) == b` como
     `not (a == b)`. `-` liga más fuerte que todo y no lo necesita."""
     suelto = isinstance(e, (If, Match, Quant)) or (isinstance(e, Unary) and e.op == "not")
+    return f"({unparse(e)})" if suelto else unparse(e)
+
+
+def indexable(e: Expr) -> str:
+    """Lo que puede llevar `[i]` detrás sin cambiar de significado. Además de lo que `operando`
+    encierra, el `-` unario: el índice liga más fuerte, así que `-xs[i]` es `-(xs[i])` y
+    `Index(Unary("-", xs), i)` tiene que volver como `(-xs)[i]`. Un `Binary` ya trae los suyos."""
+    suelto = isinstance(e, (If, Match, Quant, Unary))
     return f"({unparse(e)})" if suelto else unparse(e)
 
 

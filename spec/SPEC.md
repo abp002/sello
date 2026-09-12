@@ -89,17 +89,23 @@ Inside `requires` and `ensures` **only** (using them in a body or an example is 
 | `contains(xs, x)` | `Bool` | `count(xs, x) > 0` |
 | `distinct(xs)` | `Bool` | no value appears twice in `xs` |
 | `sorted(xs)` | `Bool` | `xs` is non-decreasing (`List[Int]` only) |
+| `xs[i]` | element type | the element at position `i` (from 0); `i` out of range is `E500` |
 | `forall x in xs: P` | `Bool` | `P` holds for every element `x` of `xs` (true for `[]`) |
 | `exists x in xs: P` | `Bool` | `P` holds for some element `x` of `xs` (false for `[]`) |
+| `forall i in a..b: P` | `Bool` | `P` holds for every `Int` `i` with `a <= i < b` (true when `b <= a`) |
+| `exists i in a..b: P` | `Bool` | `P` holds for some `Int` `i` with `a <= i < b` (false when `b <= a`) |
 
 A quantifier may follow `and`, `or` or `not`; its body extends to the end of the clause
-(or to the closing parenthesis). These names are reserved (`E402`).
+(or to the closing parenthesis). `a..b` includes `a` and excludes `b`, and exists only as the
+domain of a quantifier. Write `xs[i]` with no space before `[`. To speak about positions,
+quantify over the range and index: `forall i in 0..len(xs): xs[i] <= result`. To speak about
+values, quantify over the list. These names are reserved (`E402`).
 
 ```
 fn drop(xs: List[Int], k: Int) -> List[Int]
   requires k >= 0 and k <= len(xs)
   ensures len(result) == len(xs) - k
-  ensures forall x in result: contains(xs, x)
+  ensures forall i in 0..len(result): result[i] == xs[i + k]
   effects pure
   example drop([1, 2, 3], 1) == [2, 3]
   example drop([1, 2, 3], 3) == []

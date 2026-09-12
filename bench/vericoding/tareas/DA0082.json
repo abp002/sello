@@ -1,0 +1,11 @@
+{
+ "id": "DA0082",
+ "source": "apps",
+ "source_id": "apps_test_448",
+ "fn": "solve",
+ "sello": "solve(n: Int, m: Int, a: List[Int]) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(n: Int, m: Int, a: List[Int]) -> Int\n  requires (n > 0)\n  requires (m > 0)\n  requires (len(a) == n)\n  requires forall i in 0..len(a): (a[i] > 0)\n  ensures (1 <= result)\n  ensures (result <= n)\n  effects pure\n  example (solve(0, 0, []) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, m: int, a: seq<int>) {\n    n > 0 && m > 0 && |a| == n && forall i :: 0 <= i < |a| ==> a[i] > 0\n}\n\npredicate ValidResult(result: int, n: int) {\n    1 <= result <= n\n}\n\nfunction SumCandiesStillNeeded(queue: seq<seq<int>>): nat\n    requires forall child :: child in queue ==> |child| == 3 && child[0] >= 0 && child[1] > 0\n{\n    if |queue| == 0 then 0\n    else\n        var child := queue[0];\n        var stillNeeded := if child[1] <= child[0] then 0 else child[1] - child[0];\n        stillNeeded + SumCandiesStillNeeded(queue[1..])\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, m: int, a: seq<int>) returns (result: int)\n    requires ValidInput(n, m, a)\n    ensures ValidResult(result, n)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

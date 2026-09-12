@@ -1,0 +1,14 @@
+{
+ "id": "DH0152",
+ "source": "humaneval",
+ "source_id": "humaneval_150_x_or_y",
+ "fn": "x_or_y",
+ "sello": "x_or_y(n: Int, x: Int, y: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "div",
+  "nat"
+ ],
+ "esqueleto": "fn x_or_y(n: Int, x: Int, y: Int) -> Int\n  requires (n >= 0)\n  ensures ((not ((n > 1) and (forall k in 2..n: ((n % k) != 0)))) or (result == x))\n  ensures ((not (not ((n > 1) and (forall k in 2..n: ((n % k) != 0))))) or (result == y))\n  effects pure\n  example (x_or_y(0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nfunction IsPrime(n: nat) : bool\n{\n  n > 1 &&\n  forall k :: 2 <= k < n ==> n % k != 0\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod x_or_y(n: nat, x: int, y: int) returns (result: int)\n\n  ensures IsPrime(n) ==> result == x\n  ensures !IsPrime(n) ==> result == y\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

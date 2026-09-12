@@ -1,0 +1,11 @@
+{
+ "id": "DH0154",
+ "source": "humaneval",
+ "source_id": "humaneval_152",
+ "fn": "compare",
+ "sello": "compare(game: List[Int], guess: List[Int]) -> List[Int]",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn compare(game: List[Int], guess: List[Int]) -> List[Int]\n  requires (len(game) == len(guess))\n  ensures (len(result) == len(game))\n  ensures forall i in 0..len(game): (result[i] == (if ((game[i] - guess[i]) >= 0) then (game[i] - guess[i]) else -(game[i] - guess[i])))\n  ensures forall i in 0..len(result): (result[i] >= 0)\n  effects pure\n  example (compare([], []) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(game: seq<int>, guess: seq<int>)\n{\n  |game| == |guess|\n}\n\npredicate ValidOutput(game: seq<int>, guess: seq<int>, result: seq<int>)\n  requires |game| == |guess|\n{\n  && |result| == |game|\n  && (forall i :: 0 <= i < |game| ==> result[i] == abs(game[i] - guess[i]))\n  && (forall i :: 0 <= i < |result| ==> result[i] >= 0)\n}\nfunction abs(x: int): int\n{\n  if x >= 0 then x else -x\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod compare(game: seq<int>, guess: seq<int>) returns (result: seq<int>)\n  requires ValidInput(game, guess)\n  ensures ValidOutput(game, guess, result)\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

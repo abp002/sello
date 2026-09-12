@@ -1,0 +1,13 @@
+{
+ "id": "DH0040",
+ "source": "humaneval",
+ "source_id": "humaneval_038_encode_cyclic__decode_cyclic",
+ "fn": "decode_cyclic",
+ "sello": "decode_cyclic(s: List[Int]) -> List[Int]",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn decode_cyclic(s: List[Int]) -> List[Int]\n  requires (len(s) >= 0)\n  ensures (len(s) == len(result))\n  ensures forall i in (len(s) - (len(s) % 3))..len(s): (result[i] == s[i])\n  ensures forall i in 0..(len(s) - (len(s) % 3)): ((not ((i % 3) == 0)) or (result[i] == s[(i + 2)]))\n  ensures forall i in 0..(len(s) - (len(s) % 3)): ((not ((i % 3) == 1)) or (result[i] == s[(i - 1)]))\n  effects pure\n  example (decode_cyclic([]) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod decode_cyclic(s: seq<int>) returns (res: seq<int>)\n\n    ensures |s| == |res|\n    ensures forall i :: |s| - |s| % 3 <= i < |s| ==> (res[i] == s[i])\n    ensures forall i :: 0 <= i < |s| - |s| % 3 ==> (i % 3 == 0 ==> res[i] == s[i + 2])\n    ensures forall i :: 0 <= i < |s| - |s| % 3 ==> (i % 3 == 1 ==> res[i] == s[i - 1])\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

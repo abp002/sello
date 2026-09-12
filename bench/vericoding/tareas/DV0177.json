@@ -1,0 +1,13 @@
+{
+ "id": "DV0177",
+ "source": "verina",
+ "source_id": "verina_basic_97_task",
+ "fn": "TestArrayElements",
+ "sello": "TestArrayElements(a: List[Int], j: Int) -> List[Int]",
+ "helpers": [],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn TestArrayElements(a: List[Int], j: Int) -> List[Int]\n  requires (j >= 0)\n  requires (j < len(a))\n  ensures (len(result) == len(a))\n  ensures (result[j] == 60)\n  ensures forall k in 0..len(a): ((not (k != j)) or (result[k] == a[k]))\n  effects pure\n  example (TestArrayElements([], 0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod TestArrayElements(a: seq<int>, j: nat) returns (result: seq<int>)\n    requires j < |a|\n    ensures |result| == |a|\n    ensures result[j] == 60\n    ensures forall k :: 0 <= k < |a| && k != j ==> result[k] == a[k]\n// </vc-spec>\n// <vc-code>\n{\n    // impl-start\n    assume {:axiom} false;\n    result := [];\n    // impl-end\n}\n// </vc-code>\n"
+}

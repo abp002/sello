@@ -1,0 +1,13 @@
+{
+ "id": "DA0144",
+ "source": "apps",
+ "source_id": "apps_test_736",
+ "fn": "solve",
+ "sello": "solve(n: Int, m: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn solve(n: Int, m: Int) -> Int\n  requires (n > 0)\n  requires (n <= 10000)\n  requires (m > 1)\n  requires (m <= 10)\n  ensures ((result == -1) or (((result > 0) and ((result % m) == 0)) and (((if ((n % 2) == 0) then (n / 2) else ((n / 2) + 1)) <= result) and (result <= n))))\n  ensures ((not (result == -1)) or (forall k in (if ((n % 2) == 0) then (n / 2) else ((n / 2) + 1))..(n + 1): ((k % m) != 0)))\n  ensures ((not (result != -1)) or (forall k in (if ((n % 2) == 0) then (n / 2) else ((n / 2) + 1))..(n + 1): ((not (k < result)) or ((k % m) != 0))))\n  effects pure\n  example (solve(0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, m: int)\n{\n  n > 0 && n <= 10000 && m > 1 && m <= 10\n}\n\nfunction MinMoves(n: int): int\n  requires n > 0\n{\n  if n % 2 == 0 then n / 2 else n / 2 + 1\n}\n\npredicate ValidMoveCount(n: int, k: int)\n  requires n > 0\n{\n  MinMoves(n) <= k <= n\n}\n\npredicate IsValidSolution(n: int, m: int, result: int)\n  requires ValidInput(n, m)\n{\n  result == -1 || (result > 0 && result % m == 0 && ValidMoveCount(n, result))\n}\n\npredicate NoSmallerSolution(n: int, m: int, result: int)\n  requires ValidInput(n, m)\n{\n  result == -1 ==> forall k :: (MinMoves(n) <= k <= n) ==> k % m != 0\n}\n\npredicate IsMinimalSolution(n: int, m: int, result: int)\n  requires ValidInput(n, m)\n{\n  result != -1 ==> forall k :: (MinMoves(n) <= k <= n && k < result) ==> k % m != 0\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, m: int) returns (result: int)\n  requires ValidInput(n, m)\n  ensures IsValidSolution(n, m, result)\n  ensures NoSmallerSolution(n, m, result)\n  ensures IsMinimalSolution(n, m, result)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

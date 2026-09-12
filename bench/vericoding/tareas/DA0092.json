@@ -1,0 +1,14 @@
+{
+ "id": "DA0092",
+ "source": "apps",
+ "source_id": "apps_test_486",
+ "fn": "solve",
+ "sello": "solve(n: Int) -> Int",
+ "helpers": [
+  "ProductOfDigits",
+  "MaxProductOfDigitsInRange"
+ ],
+ "notas": [],
+ "esqueleto": "fn ProductOfDigits(x: Int) -> Int\n  requires (x >= 0)\n  ensures (result == (if (x == 0) then 1 else if (x < 10) then x else ((x % 10) * ProductOfDigits((x / 10)))))\n  effects pure\n  example (ProductOfDigits(0) == 1)\n  example (ProductOfDigits(2) == 2)\n{\n  if (x == 0) then 1 else if (x < 10) then x else ((x % 10) * ProductOfDigits((x / 10)))\n}\n\nfn MaxProductOfDigitsInRange(n: Int) -> Int\n  requires (n >= 1)\n  ensures (result == (if (n == 1) then 1 else if (ProductOfDigits(n) > MaxProductOfDigitsInRange((n - 1))) then ProductOfDigits(n) else MaxProductOfDigitsInRange((n - 1))))\n  effects pure\n  example (MaxProductOfDigitsInRange(1) == 1)\n  example (MaxProductOfDigitsInRange(2) == 2)\n{\n  if (n == 1) then 1 else if (ProductOfDigits(n) > MaxProductOfDigitsInRange((n - 1))) then ProductOfDigits(n) else MaxProductOfDigitsInRange((n - 1))\n}\n\nfn solve(n: Int) -> Int\n  requires (n >= 1)\n  ensures (result == MaxProductOfDigitsInRange(n))\n  ensures (result >= 1)\n  ensures forall k in 1..(n + 1): (ProductOfDigits(k) <= result)\n  ensures exists k in 1..(n + 1): (ProductOfDigits(k) == result)\n  effects pure\n  example (solve(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nfunction ProductOfDigits(x: int): int\n  requires x >= 0\n{\n  if x == 0 then 1\n  else if x < 10 then x\n  else (x % 10) * ProductOfDigits(x / 10)\n}\n\nfunction MaxProductOfDigitsInRange(n: int): int\n  requires n >= 1\n{\n  if n == 1 then 1\n  else\n    var current := ProductOfDigits(n);\n    var rest := MaxProductOfDigitsInRange(n - 1);\n    if current > rest then current else rest\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int) returns (result: int)\n  requires n >= 1\n  ensures result == MaxProductOfDigitsInRange(n)\n  ensures result >= 1\n  ensures forall k :: 1 <= k <= n ==> ProductOfDigits(k) <= result\n  ensures exists k :: 1 <= k <= n && ProductOfDigits(k) == result\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

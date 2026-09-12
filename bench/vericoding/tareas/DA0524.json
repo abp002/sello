@@ -1,0 +1,13 @@
+{
+ "id": "DA0524",
+ "source": "apps",
+ "source_id": "apps_test_4297",
+ "fn": "solve",
+ "sello": "solve(n: Int) -> Int",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn solve(n: Int) -> Int\n  requires (n >= 1)\n  ensures (result >= 1)\n  ensures ((result % 2) == 0)\n  ensures ((result % n) == 0)\n  ensures forall k in 1..result: not (((k % 2) == 0) and ((k % n) == 0))\n  ensures ((not ((n % 2) == 0)) or (result == n))\n  ensures ((not ((n % 2) != 0)) or (result == (n * 2)))\n  effects pure\n  example (solve(0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int)\n{\n    n >= 1\n}\n\npredicate DivisibleByBoth(result: int, n: int)\n    requires n >= 1\n{\n    result % 2 == 0 && result % n == 0\n}\n\npredicate IsSmallest(result: int, n: int)\n    requires n >= 1\n{\n    forall k: int :: 1 <= k < result ==> !(k % 2 == 0 && k % n == 0)\n}\n\nfunction LCM(a: int, b: int): int\n    requires a >= 1 && b >= 1\n{\n    if a % b == 0 then a\n    else if b % a == 0 then b\n    else a * b\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int) returns (result: int)\n    requires ValidInput(n)\n    ensures result >= 1\n    ensures DivisibleByBoth(result, n)\n    ensures IsSmallest(result, n)\n    ensures (n % 2 == 0 ==> result == n) && (n % 2 != 0 ==> result == n * 2)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

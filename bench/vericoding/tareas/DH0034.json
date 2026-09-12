@@ -1,0 +1,11 @@
+{
+ "id": "DH0034",
+ "source": "humaneval",
+ "source_id": "humaneval_034_unique__uniqueSorted",
+ "fn": "uniqueSorted",
+ "sello": "uniqueSorted(s: List[Int]) -> List[Int]",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn uniqueSorted(s: List[Int]) -> List[Int]\n  requires forall i in 0..len(s): forall j in (i + 1)..len(s): (s[i] <= s[j])\n  ensures forall i in 0..len(result): forall j in (i + 1)..len(result): (result[i] < result[j])\n  ensures forall x in result: contains(s, x)\n  ensures forall x in s: contains(result, x)\n  effects pure\n  example (uniqueSorted([]) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod uniqueSorted(s: seq<int>) returns (result: seq<int>)\n\n    requires forall i, j :: 0 <= i < j < |s| ==> s[i] <= s[j]\n\n    ensures forall i, j :: 0 <= i < j < |result| ==> result[i] < result[j]\n    ensures forall x :: x in result ==> x in s\n    ensures forall x :: x in s ==> x in result\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

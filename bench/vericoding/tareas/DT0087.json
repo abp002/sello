@@ -1,0 +1,13 @@
+{
+ "id": "DT0087",
+ "source": "numpy_triple",
+ "source_id": "bitwise_operations_invert",
+ "fn": "invert",
+ "sello": "invert(x: List[Int]) -> List[Int]",
+ "helpers": [],
+ "notas": [
+  "requires vacío"
+ ],
+ "esqueleto": "fn invert(x: List[Int]) -> List[Int]\n  requires (len(x) >= 0)\n  ensures (len(result) == len(x))\n  ensures forall i in 0..len(x): (result[i] == -(x[i] + 1))\n  ensures forall i in 0..len(x): ((not (x[i] == 0)) or (result[i] == -1))\n  ensures forall i in 0..len(x): ((not (x[i] == -1)) or (result[i] == 0))\n  ensures forall i in 0..len(x): ((not (x[i] != -1)) or ((x[i] > 0) == (result[i] < 0)))\n  effects pure\n  example (invert([]) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod invert(x: seq<int>) returns (result: seq<int>)\n  // The result has the same length as the input\n  ensures |result| == |x|\n  // Each element follows the two's complement relationship: ~x = -(x + 1)  \n  ensures forall i :: 0 <= i < |x| ==> result[i] == -(x[i] + 1)\n  // Identity property for zero\n  ensures forall i :: 0 <= i < |x| ==> x[i] == 0 ==> result[i] == -1\n  // Identity property for negative one\n  ensures forall i :: 0 <= i < |x| ==> x[i] == -1 ==> result[i] == 0\n  // Sign flipping property\n  ensures forall i :: 0 <= i < |x| ==> x[i] != -1 ==> (x[i] > 0 <==> result[i] < 0)\n  // Identity properties follow from the main relationship:\n  // When x[i] == 0: result[i] == -(0 + 1) == -1\n  // When x[i] == -1: result[i] == -(-1 + 1) == 0\n  // Sign flipping: when x[i] != -1, x[i] > 0 <==> result[i] < 0\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

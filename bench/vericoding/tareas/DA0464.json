@@ -1,0 +1,11 @@
+{
+ "id": "DA0464",
+ "source": "apps",
+ "source_id": "apps_test_2633",
+ "fn": "calculateMinimumHP",
+ "sello": "calculateMinimumHP(dungeon: List[List[Int]]) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn calculateMinimumHP(dungeon: List[List[Int]]) -> Int\n  requires (len(dungeon) > 0)\n  requires forall i in 0..len(dungeon): (len(dungeon[i]) > 0)\n  requires forall i in 0..len(dungeon): (len(dungeon[i]) == len(dungeon[0]))\n  ensures (result >= 1)\n  effects pure\n  example (calculateMinimumHP([]) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidDungeon(dungeon: seq<seq<int>>)\n{\n    |dungeon| > 0 &&\n    (forall i :: 0 <= i < |dungeon| ==> |dungeon[i]| > 0) &&\n    (forall i :: 0 <= i < |dungeon| ==> |dungeon[i]| == |dungeon[0]|)\n}\n\npredicate isValidPath(dungeon: seq<seq<int>>, path: seq<(int, int)>)\n    requires ValidDungeon(dungeon)\n{\n    |path| > 0 &&\n    path[0] == (0, 0) &&\n    path[|path|-1] == (|dungeon|-1, |dungeon[0]|-1) &&\n    (forall i :: 0 <= i < |path| ==> \n        var (r, c) := path[i];\n        0 <= r < |dungeon| && 0 <= c < |dungeon[0]|) &&\n    forall i :: 0 <= i < |path|-1 ==> \n        (path[i].1 == path[i+1].1 && path[i].0 + 1 == path[i+1].0) ||\n        (path[i].0 == path[i+1].0 && path[i].1 + 1 == path[i+1].1)\n}\n\nfunction healthAtStep(dungeon: seq<seq<int>>, path: seq<(int, int)>, step: int, initialHealth: int): int\n    requires ValidDungeon(dungeon)\n    requires isValidPath(dungeon, path)\n    requires 0 <= step < |path|\n    decreases step\n{\n    if step == 0 then \n        var (r, c) := path[0];\n        initialHealth + dungeon[r][c]\n    else\n        var (r, c) := path[step];\n        healthAtStep(dungeon, path, step-1, initialHealth) + dungeon[r][c]\n}\n\npredicate canSurvivePath(dungeon: seq<seq<int>>, path: seq<(int, int)>, initialHealth: int)\n    requires ValidDungeon(dungeon)\n    requires isValidPath(dungeon, path)\n{\n    forall i :: 0 <= i < |path| ==> \n        healthAtStep(dungeon, path, i, initialHealth) > 0\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod calculateMinimumHP(dungeon: seq<seq<int>>) returns (result: int)\n    requires ValidDungeon(dungeon)\n    ensures result >= 1\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

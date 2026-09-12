@@ -1,0 +1,13 @@
+{
+ "id": "DJ0110",
+ "source": "verified_cogen",
+ "source_id": "proofsynthesis_task_id_605",
+ "fn": "PrimeNum",
+ "sello": "PrimeNum(n: Int) -> Bool",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn PrimeNum(n: Int) -> Bool\n  requires (n >= 2)\n  ensures (result == (forall k in 2..n: not ((n % k) == 0)))\n  effects pure\n  example (PrimeNum(0) == true)\n{\n  true\n}",
+ "dafny": "// <vc-preamble>\npredicate IsDivisible(n: int, divisor: int)\n    requires divisor != 0\n{\n    (n % divisor) == 0\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod PrimeNum(n: int) returns (result: bool)\n    requires n >= 2\n    ensures result == (forall k :: 2 <= k < n ==> !IsDivisible(n, k))\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n}\n// </vc-code>\n"
+}

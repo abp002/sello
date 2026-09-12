@@ -1,0 +1,13 @@
+{
+ "id": "DD0785",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_743_RotateRight",
+ "fn": "RotateRight",
+ "sello": "RotateRight(l: List[Int], n: Int) -> List[Int]",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn RotateRight(l: List[Int], n: Int) -> List[Int]\n  requires (n >= 0)\n  ensures (len(result) == len(l))\n  ensures forall i in 0..len(l): (result[i] == l[(((i - n) + len(l)) % len(l))])\n  effects pure\n  example (RotateRight([], 0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod RotateRight(l: seq<int>, n: int) returns (r: seq<int>)\n    requires n >= 0\n    ensures |r| == |l|\n    ensures forall i :: 0 <= i < |l| ==> r[i] == l[(i - n + |l|) % |l|]\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

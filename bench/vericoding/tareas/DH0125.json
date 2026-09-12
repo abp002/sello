@@ -1,0 +1,13 @@
+{
+ "id": "DH0125",
+ "source": "humaneval",
+ "source_id": "humaneval_123_get_odd_collatz__get_odd_collatz",
+ "fn": "get_odd_collatz",
+ "sello": "get_odd_collatz(n: Int) -> List[Int]",
+ "helpers": [],
+ "notas": [
+  "nat"
+ ],
+ "esqueleto": "fn get_odd_collatz(n: Int) -> List[Int]\n  requires (n >= 0)\n  requires (n > 1)\n  ensures forall i in 0..len(result): forall j in (i + 1)..len(result): (result[i] <= result[j])\n  ensures forall i in 0..len(result): ((result[i] % 2) == 1)\n  effects pure\n  example (get_odd_collatz(0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\nfunction iterate_to_odd(n: nat): nat\n  requires n % 2 == 0\n  requires n > 0\n  ensures iterate_to_odd(n) % 2 == 1\n{\n  if (n / 2) % 2 == 1 then n / 2 else iterate_to_odd(n / 2)\n}\nfunction next_odd_collatz(n: nat): nat\n  requires n > 0\n{\n  if n % 2 == 0 then iterate_to_odd(n) else iterate_to_odd(3 * n + 1)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod get_odd_collatz(n: nat) returns (sorted: seq<int>)\n  decreases *\n  requires n > 1\n  ensures forall i, j :: 0 <= i < j < |sorted| ==> sorted[i] <= sorted[j]\n  ensures forall i :: 0 <= i < |sorted| ==> sorted[i] % 2 == 1\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

@@ -1,0 +1,13 @@
+{
+ "id": "DD0753",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_586_SplitAndAppend",
+ "fn": "SplitAndAppend",
+ "sello": "SplitAndAppend(l: List[Int], n: Int) -> List[Int]",
+ "helpers": [],
+ "notas": [
+  "div"
+ ],
+ "esqueleto": "fn SplitAndAppend(l: List[Int], n: Int) -> List[Int]\n  requires (n >= 0)\n  requires (n < len(l))\n  ensures (len(result) == len(l))\n  ensures forall i in 0..len(l): (result[i] == l[((i + n) % len(l))])\n  effects pure\n  example (SplitAndAppend([], 0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod SplitAndAppend(l: seq<int>, n: int) returns (r: seq<int>)\n    requires n >= 0 && n < |l|\n    ensures |r| == |l|\n    ensures forall i :: 0 <= i < |l| ==> r[i] == l[(i + n) % |l|]\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

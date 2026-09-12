@@ -7,8 +7,8 @@ import sys
 from . import builtins
 from .errors import SelloError
 from .nodes import (
-    Binary, BoolLit, Call, Expr, Fn, If, IntLit, ListLit, Match, Name, NoneLit, PCons,
-    PEmpty, PNone, PSome, PWild, Program, Quant, SomeExpr, TextLit, Unary,
+    Binary, BoolLit, Call, Expr, Fn, If, Index, IntLit, ListLit, Match, Name, NoneLit, PCons,
+    PEmpty, PNone, PSome, PWild, Program, Quant, RangeExpr, SomeExpr, TextLit, Unary,
 )
 from .pretty import unparse
 
@@ -140,9 +140,22 @@ class Interpreter:
                 if bound is not None:
                     return self.eval(arm.body, {**env, **bound}, fn)
             raise SelloError("E500", f"no arm matches {fmt(subject)} in `{unparse(e)}`", e.line, e.col, fn)
+        if isinstance(e, Index):
+            xs = self.eval(e.seq, env, fn)
+            i = self.eval(e.idx, env, fn)
+            if not 0 <= i < len(xs):  # type: ignore[arg-type, operator]
+                raise SelloError("E500", f"index {i} out of range in `{unparse(e)}` "
+                                 f"(the list has {len(xs)} elements)",  # type: ignore[arg-type]
+                                 e.line, e.col, fn)
+            return xs[i]  # type: ignore[index]
         if isinstance(e, Quant):
-            xs = self.eval(e.subject, env, fn)
-            holds = (self.eval(e.body, {**env, e.var: x}, fn) for x in xs)  # type: ignore[union-attr]
+            if isinstance(e.subject, RangeExpr):
+                lo = self.eval(e.subject.lo, env, fn)
+                hi = self.eval(e.subject.hi, env, fn)
+                dom: object = range(lo, hi)  # type: ignore[arg-type]
+            else:
+                dom = self.eval(e.subject, env, fn)
+            holds = (self.eval(e.body, {**env, e.var: x}, fn) for x in dom)  # type: ignore[union-attr]
             return all(holds) if e.kind == "forall" else any(holds)
         raise TypeError(f"nodo desconocido: {e!r}")
 

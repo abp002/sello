@@ -1,0 +1,11 @@
+{
+ "id": "DA0080",
+ "source": "apps",
+ "source_id": "apps_test_442",
+ "fn": "solve",
+ "sello": "solve(r: Int) -> List[Int]",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(r: Int) -> List[Int]\n  requires (r > 0)\n  ensures if (len(result) == 0) then true else ((((len(result) == 2) and (result[0] > 0)) and (result[1] > 0)) and (((((result[0] * result[0]) + ((2 * result[0]) * result[1])) + result[0]) + 1) == r))\n  ensures ((len(result) == 0) or (len(result) == 2))\n  ensures ((not (len(result) == 2)) or ((result[0] > 0) and (result[1] > 0)))\n  ensures ((not (len(result) == 2)) or (((((result[0] * result[0]) + ((2 * result[0]) * result[1])) + result[0]) + 1) == r))\n  ensures ((not (r <= 4)) or (len(result) == 0))\n  ensures ((not ((r > 4) and ((r % 2) == 0))) or (len(result) == 0))\n  ensures ((not ((r > 4) and ((r % 2) == 1))) or (((len(result) == 2) and (result[0] == 1)) and (result[1] == ((r - 3) / 2))))\n  effects pure\n  example (solve(0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\nfunction H(x: int, y: int): int\n{\n    x * x + 2 * x * y + x + 1\n}\n\npredicate ValidInput(r: int)\n{\n    r > 0\n}\n\npredicate ValidSolution(result: seq<int>, r: int)\n{\n    if |result| == 0 then\n        true\n    else\n        |result| == 2 && result[0] > 0 && result[1] > 0 && H(result[0], result[1]) == r\n}\n\npredicate HasSolution(r: int)\n{\n    r > 4 && r % 2 == 1\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(r: int) returns (result: seq<int>)\n    requires ValidInput(r)\n    ensures ValidSolution(result, r)\n    ensures |result| == 0 || |result| == 2\n    ensures |result| == 2 ==> result[0] > 0 && result[1] > 0\n    ensures |result| == 2 ==> H(result[0], result[1]) == r\n    ensures r <= 4 ==> |result| == 0\n    ensures r > 4 && r % 2 == 0 ==> |result| == 0\n    ensures r > 4 && r % 2 == 1 ==> |result| == 2 && result[0] == 1 && result[1] == (r - 3) / 2\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

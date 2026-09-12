@@ -1,0 +1,11 @@
+{
+ "id": "DH0137",
+ "source": "humaneval",
+ "source_id": "humaneval_135",
+ "fn": "can_arrange",
+ "sello": "can_arrange(arr: List[Int]) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn can_arrange(arr: List[Int]) -> Int\n  requires forall i in 0..len(arr): forall j in (i + 1)..len(arr): (arr[i] != arr[j])\n  ensures ((result == -1) or ((0 < result) and (result < len(arr))))\n  ensures ((not (result == -1)) or (forall i in 1..len(arr): (arr[i] >= arr[(i - 1)])))\n  ensures ((not (result != -1)) or ((((1 <= result) and (result < len(arr))) and (arr[result] < arr[(result - 1)])) and (forall j in (result + 1)..len(arr): (arr[j] >= arr[(j - 1)]))))\n  ensures ((not (result != -1)) or (exists i in 1..len(arr): (arr[i] < arr[(i - 1)])))\n  effects pure\n  example (can_arrange([]) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\n\npredicate ValidInput(arr: seq<int>) {\n    forall i, j :: 0 <= i < j < |arr| ==> arr[i] != arr[j]\n}\n\npredicate HasDecreaseAt(arr: seq<int>, i: int) {\n    1 <= i < |arr| && arr[i] < arr[i-1]\n}\n\npredicate IsLargestDecreaseIndex(arr: seq<int>, result: int) {\n    HasDecreaseAt(arr, result) && \n    (forall j :: result < j < |arr| ==> arr[j] >= arr[j-1])\n}\n\npredicate IsNonDecreasing(arr: seq<int>) {\n    forall i :: 1 <= i < |arr| ==> arr[i] >= arr[i-1]\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod can_arrange(arr: seq<int>) returns (result: int)\n    requires ValidInput(arr)\n    ensures result == -1 || (0 < result < |arr|)\n    ensures result == -1 ==> IsNonDecreasing(arr)\n    ensures result != -1 ==> IsLargestDecreaseIndex(arr, result)\n    ensures result != -1 ==> (exists i :: HasDecreaseAt(arr, i))\n// </vc-spec>\n// <vc-code>\n{\n    assume {:axiom} false;\n  }\n// </vc-code>\n"
+}

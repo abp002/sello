@@ -1,0 +1,13 @@
+{
+ "id": "DD0769",
+ "source": "dafnybench",
+ "source_id": "dafny-synthesis_task_id_623_PowerOfListElements",
+ "fn": "PowerOfListElements",
+ "sello": "PowerOfListElements(l: List[Int], n: Int) -> List[Int]",
+ "helpers": [
+  "Power"
+ ],
+ "notas": [],
+ "esqueleto": "fn Power(base: Int, exponent: Int) -> Int\n  requires (exponent >= 0)\n  ensures (result == (if (exponent == 0) then 1 else (base * Power(base, (exponent - 1)))))\n  effects pure\n  example (Power(0, 0) == 1)\n  example (Power(0, 1) == 0)\n{\n  if (exponent == 0) then 1 else (base * Power(base, (exponent - 1)))\n}\n\nfn PowerOfListElements(l: List[Int], n: Int) -> List[Int]\n  requires (n >= 0)\n  ensures (len(result) == len(l))\n  ensures forall i in 0..len(l): (result[i] == Power(l[i], n))\n  effects pure\n  example (PowerOfListElements([], 0) == [])\n{\n  []\n}",
+ "dafny": "// <vc-preamble>\nfunction Power(base: int, exponent: int): int\n    requires exponent >= 0\n{\n    if exponent == 0 then 1\n    else base * Power(base, exponent-1)\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod PowerOfListElements(l: seq<int>, n: int) returns (result: seq<int>)\n    requires n >= 0\n    ensures |result| == |l|\n    ensures forall i :: 0 <= i < |l| ==> result[i] == Power(l[i], n)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

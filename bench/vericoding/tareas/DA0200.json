@@ -1,0 +1,11 @@
+{
+ "id": "DA0200",
+ "source": "apps",
+ "source_id": "apps_test_986",
+ "fn": "solve",
+ "sello": "solve(n: Int, k: Int, requests: List[Int]) -> Int",
+ "helpers": [],
+ "notas": [],
+ "esqueleto": "fn solve(n: Int, k: Int, requests: List[Int]) -> Int\n  requires (n >= 1)\n  requires (k >= 1)\n  requires (len(requests) == n)\n  requires forall i in 0..len(requests): ((1 <= requests[i]) and (requests[i] <= n))\n  ensures (n >= 1)\n  ensures (k >= 1)\n  ensures (len(requests) == n)\n  ensures forall i in 0..len(requests): ((1 <= requests[i]) and (requests[i] <= n))\n  ensures (result >= 0)\n  ensures (result <= n)\n  effects pure\n  example (solve(0, 0, []) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\npredicate ValidInput(n: int, k: int, requests: seq<int>)\n{\n    n >= 1 && k >= 1 && |requests| == n &&\n    forall i :: 0 <= i < |requests| ==> 1 <= requests[i] <= n\n}\n\npredicate ValidSolution(n: int, k: int, requests: seq<int>, cost: int)\n{\n    ValidInput(n, k, requests) && cost >= 0 && cost <= n\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(n: int, k: int, requests: seq<int>) returns (cost: int)\n    requires ValidInput(n, k, requests)\n    ensures ValidSolution(n, k, requests, cost)\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}

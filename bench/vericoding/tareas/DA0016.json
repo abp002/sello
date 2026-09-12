@@ -1,0 +1,13 @@
+{
+ "id": "DA0016",
+ "source": "apps",
+ "source_id": "apps_test_73",
+ "fn": "solve",
+ "sello": "solve(c: Int, v0: Int, v1: Int, a: Int, l: Int) -> Int",
+ "helpers": [
+  "computePosition"
+ ],
+ "notas": [],
+ "esqueleto": "fn computePosition(days: Int, v0: Int, v1: Int, a: Int, l: Int) -> Int\n  requires (days >= 0)\n  requires (v0 >= 0)\n  requires (v1 >= v0)\n  requires (a >= 0)\n  requires (l >= 0)\n  ensures (result == (if (days == 0) then 0 else ((if ((computePosition((days - 1), v0, v1, a, l) - l) > 0) then (computePosition((days - 1), v0, v1, a, l) - l) else 0) + (if (v1 < (v0 + (a * (days - 1)))) then v1 else (v0 + (a * (days - 1)))))))\n  effects pure\n  example (computePosition(0, 0, 0, 0, 0) == 0)\n{\n  if (days == 0) then 0 else ((if ((computePosition((days - 1), v0, v1, a, l) - l) > 0) then (computePosition((days - 1), v0, v1, a, l) - l) else 0) + (if (v1 < (v0 + (a * (days - 1)))) then v1 else (v0 + (a * (days - 1)))))\n}\n\nfn solve(c: Int, v0: Int, v1: Int, a: Int, l: Int) -> Int\n  requires (1 <= c)\n  requires (c <= 1000)\n  requires (0 <= l)\n  requires (l < v0)\n  requires (v0 <= v1)\n  requires (v1 <= 1000)\n  requires (0 <= a)\n  requires (a <= 1000)\n  ensures (result >= 1)\n  ensures (computePosition(result, v0, v1, a, l) >= c)\n  ensures forall days in 1..result: (computePosition(days, v0, v1, a, l) < c)\n  effects pure\n  example (solve(0, 0, 0, 0, 0) == 0)\n{\n  0\n}",
+ "dafny": "// <vc-preamble>\nfunction computePosition(days: int, v0: int, v1: int, a: int, l: int): int\n    requires days >= 0\n    requires v0 >= 0 && v1 >= v0 && a >= 0 && l >= 0\n    decreases days\n{\n    if days == 0 then 0\n    else\n        var prevPos := computePosition(days - 1, v0, v1, a, l);\n        var afterReread := if prevPos - l > 0 then prevPos - l else 0;\n        var readToday := if v1 < v0 + a * (days - 1) then v1 else v0 + a * (days - 1);\n        afterReread + readToday\n}\n// </vc-preamble>\n\n// <vc-helpers>\n// </vc-helpers>\n\n// <vc-spec>\nmethod solve(c: int, v0: int, v1: int, a: int, l: int) returns (result: int)\n    requires 1 <= c <= 1000\n    requires 0 <= l < v0 <= v1 <= 1000\n    requires 0 <= a <= 1000\n    ensures result >= 1\n    ensures computePosition(result, v0, v1, a, l) >= c\n    ensures forall days :: 1 <= days < result ==> computePosition(days, v0, v1, a, l) < c\n// </vc-spec>\n// <vc-code>\n{\n  assume {:axiom} false;\n}\n// </vc-code>\n"
+}
