@@ -97,8 +97,15 @@ premisas (con varias variables, cada rango puede usar las anteriores: `0 <= i < 
 Remedida la traducción sin modelo: caben **355 de 2.334 (15 %)**, 156 más y ninguna menos. La
 predicción era 220: las 64 que faltan las tapaba el cuantificador y ahora se ven (20 son
 cuantificadores sin cotas sobre todos los enteros, 29 helpers recursivos que indexan en el
-cuerpo, que Sello prohíbe por diseño, y tramos `s[i..j]`). Pendiente la corrida con modelo sobre
-las specs nuevas, prerregistrada en el vault.
+cuerpo, que Sello prohíbe por diseño, y tramos `s[i..j]`). La corrida con modelo sobre 50 de las
+156 specs nuevas (misma condición, semilla 1, 5 intentos): **sonnet 29/50 (58 %) y haiku 22/50
+(44 %)** en nivel 2 completo, con 1,62 y 2,18 intentos de media; la principal sola queda en 41/50
+y 37/50, y en nivel 1 aceptan 49/50 y 46/50. El criterio prerregistrado (sonnet ≥ 80 % y ≤ 1,5
+intentos) no se cumple, pero no por el índice: de las 21 tareas de sonnet sin probar, 12 son
+aritmética no lineal (`forall j in 2..n: n % j != 0`, la primalidad que el rango dejó entrar y Z3
+no decide), 4 son índices puros, 4 `timeout` y 12 tienen la principal probada y falla un helper
+del modelo. Fricción nueva: 22 rechazos `E401` en sonnet y 30 en haiku (1 y 0 en la corrida
+vieja) por escribir `xs[i]` y `len(xs)` en el cuerpo. Las 199 specs viejas no cambian.
 
     uv sync --extra dev
     uv run sello check ejemplos/basicos.sello     # parse, tipos, ejemplos, probador (nivel 2)
@@ -128,9 +135,10 @@ las specs nuevas, prerregistrada en el vault.
 4. **Benchmark**: ~~contra el conjunto público de vericoding: traductor Dafny → Sello, 199 de
    2.334 specs caben tal cual, primera corrida en condición `sello_contrato`: sonnet 46/50 y
    haiku 44/50 en nivel 2 sobre una muestra de 50.~~ ~~Cuantificadores sobre rangos de enteros
-   e índices `s[i]` en los contratos: 355 de 2.334 caben.~~ Pendiente: la corrida con modelo
-   sobre las 156 specs nuevas (la feature se queda solo si el nivel 2 no baja ni suben los
-   intentos), y una medida de terminación entre funciones para la recursión mutua.
+   e índices `s[i]` en los contratos: 355 de 2.334 caben; sobre las nuevas, sonnet 58 % y haiku
+   44 % en nivel 2 (aritmética no lineal, no el índice, es lo que no se decide).~~ Pendiente:
+   decidir qué hacer con el índice en el cuerpo (`E401` es el error nuevo dominante) y con `%`
+   de divisor variable en Z3, y una medida de terminación entre funciones para la recursión mutua.
 5. **El almacén como dataset**: afinar un modelo abierto con código Sello generado y
    filtrado por el compilador. Solo con Z3 hecho y la sintaxis congelada. Objetivo: que el
    coste de razonamiento baje de 10x a 1x manteniendo aciertos.
