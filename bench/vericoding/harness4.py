@@ -14,6 +14,7 @@ cuántos quedan en nivel 1). Segunda columna: nivel 1 (compila y pasa sus ejempl
 
     uv run python bench/vericoding/harness4.py --model haiku --muestra 50 --semilla 1
     uv run python bench/vericoding/harness4.py --model haiku --only DA0003 DD0042   # humo
+    uv run python bench/vericoding/harness4.py --model sonnet --pool bench/vericoding/nuevas-2026-09-12.txt --muestra 50 --semilla 1
 """
 
 from __future__ import annotations
@@ -285,6 +286,8 @@ def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--model", default="haiku")
     ap.add_argument("--only", nargs="*", help="ids de tareas (humo)")
+    ap.add_argument("--pool", type=Path, help="fichero con ids (uno por línea): solo esas tareas entran en el "
+                    "muestreo; el nombre del fichero va en la etiqueta de la corrida")
     ap.add_argument("--muestra", type=int, help="tantas tareas al azar, con --semilla")
     ap.add_argument("--semilla", type=int, default=1)
     ap.add_argument("--attempts", type=int, default=5)
@@ -293,6 +296,12 @@ def main() -> int:
                     "contestadas y solo se repiten las que quedaron sin respuesta")
     args = ap.parse_args()
     tareas = cargar(args.only)
+    if args.pool:
+        ids = {l.strip() for l in args.pool.read_text().splitlines() if l.strip()}
+        faltan = ids - {t.id for t in tareas}
+        if faltan and not args.only:
+            raise SystemExit(f"no hay tarea traducida para: {', '.join(sorted(faltan))}")
+        tareas = [t for t in tareas if t.id in ids]
     if args.muestra and not args.only:
         tareas = sorted(random.Random(args.semilla).sample(tareas, min(args.muestra, len(tareas))), key=lambda t: t.id)
     previas: dict[str, dict] = {}
@@ -314,7 +323,8 @@ def main() -> int:
                 f"{len(pendientes)} repetidas ahora porque alguna llamada volvió sin respuesta"
                 + (": " + ", ".join(t.id for t in pendientes) if pendientes else "") + ".")
     RESULTADOS.mkdir(exist_ok=True)
-    tag = f"vericoding-{when}-{args.model}" + (f"-muestra{args.muestra}-semilla{args.semilla}" if args.muestra and not args.only else "")
+    tag = (f"vericoding-{when}-{args.model}" + (f"-{args.pool.stem}" if args.pool else "")
+           + (f"-muestra{args.muestra}-semilla{args.semilla}" if args.muestra and not args.only else ""))
     base = RESULTADOS / (tag if not args.only else f"humo-{tag}")
     with open(base.with_suffix(".jsonl"), "w") as f:
         for r in rows:
