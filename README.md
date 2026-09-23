@@ -23,6 +23,9 @@ hasta que compila y pasa los contratos**, comparado con Python sobre el mismo pr
 Si el número baja, Sello funciona. Si no baja, cada intento fallido deja un error
 estructurado que dice qué decisión de diseño está fallando.
 
+**Para una visión de conjunto, lee [docs/v0.1.md](docs/v0.1.md)**: qué se ha medido, qué ha fallado y
+cómo reproducir la demo de un agente que usa Sello por MCP. Lo de abajo es el detalle, fase a fase.
+
 ## Qué hay aquí
 
 | Carpeta | Qué es |
@@ -31,6 +34,7 @@ estructurado que dice qué decisión de diseño está fallando.
 | `sello/` | El compilador, el probador (Z3) y el almacén, en Python |
 | `tests/` | Tests de la lógica: parser, hash, verificador |
 | `bench/` | El experimento: harness, problemas y resultados de cada medición |
+| `demo/` | Un agente de Claude Code que solo tiene el MCP de Sello; guion y transcripciones |
 
 ## Estado
 
@@ -129,7 +133,8 @@ vieja) por escribir `xs[i]` y `len(xs)` en el cuerpo. Las 199 specs viejas no ca
    funciones probadas, 52 % de los mutantes que llegaban a producción muertos en compilación.
    Hechos de cons y concat para la teoría de secuencias: 55 %. La hipótesis de inducción como
    implicación por llamada (bug de solidez destapado por vericoding): 74 % y 58 %.~~ ~~Servidor MCP (`sello mcp`)
-   para que los agentes consulten el almacén.~~ Pendiente: otra codificación de las listas
+   para que los agentes consulten el almacén.~~ ~~Enlace del almacén en `check` y `add`: una
+   función guardada se llama por su nombre sin copiarla y el probador usa su contrato.~~ Pendiente: otra codificación de las listas
    para lo que Z3 no decide (cuantificadores sobre secuencias), guardas en tiempo de ejecución
    para lo no probado (nivel 3).
 4. **Benchmark**: ~~contra el conjunto público de vericoding: traductor Dafny → Sello, 199 de
