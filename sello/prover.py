@@ -817,14 +817,20 @@ def first_error(verdicts: dict[str, Verdict]) -> SelloError | None:
     return next((v.error for v in verdicts.values() if v.error is not None), None)
 
 
-def prove_program(program: Program, program_ms: int | None = None) -> dict[str, Verdict]:
+def prove_program(program: Program, program_ms: int | None = None,
+                  only: set[str] | None = None) -> dict[str, Verdict]:
     """El probador en un proceso hijo, con reloj de pared. Lo que el hijo no llegue a decir
     (cuelgue, segfault, sin memoria) queda en unknown. Un contraejemplo real viene en el
-    veredicto de su función y el hijo para ahí: lo que sigue queda sin intentar."""
+    veredicto de su función y el hijo para ahí: lo que sigue queda sin intentar. Con `only`
+    se prueban solo esas funciones; las demás (las enlazadas del almacén, que ya tienen su
+    certificado) entran solo por su contrato, como cualquier llamada."""
     ms = PROGRAM_MS if program_ms is None else program_ms
     src = "\n\n".join(unparse_fn(f) for f in program.fns)
     cmd = [sys.executable, "-m", "sello.prover", "--program-ms", str(ms), "--fn-ms", str(FN_MS),
            "--query-ms", str(QUERY_MS)]
+    targets = [f for f in program.fns if only is None or f.name in only]
+    if only is not None:
+        cmd += ["--only", ",".join(f.name for f in targets)]
     try:
         r = subprocess.run(cmd, input=src, capture_output=True, text=True, timeout=ms / 1000 + 5,
                            cwd=str(Path(__file__).resolve().parents[1]))
@@ -847,10 +853,10 @@ def prove_program(program: Program, program_ms: int | None = None) -> dict[str, 
             err = SelloError(e["code"], e["detail"], e["line"], e["col"], e["function"], e["extra"])
         verdicts[d["name"]] = Verdict(d["status"], d["reason"], err, d["ms"])
     failed = first_error(verdicts) is not None
-    for fn in program.fns:
+    for fn in targets:
         reason = "not attempted: an earlier function failed" if failed else (fatal or "timeout: the prover did not answer")
         verdicts.setdefault(fn.name, Verdict(UNKNOWN, reason))
-    return {fn.name: verdicts[fn.name] for fn in program.fns}
+    return {fn.name: verdicts[fn.name] for fn in targets}
 
 
 def _main(argv: list[str]) -> int:
@@ -868,7 +874,9 @@ def _main(argv: list[str]) -> int:
     ap.add_argument("--program-ms", type=int, default=PROGRAM_MS)
     ap.add_argument("--fn-ms", type=int, default=FN_MS)
     ap.add_argument("--query-ms", type=int, default=QUERY_MS)
+    ap.add_argument("--only", default=None, help="comma-separated names to prove; the rest enter by contract")
     a = ap.parse_args(argv)
+    only = None if a.only is None else set(filter(None, a.only.split(",")))
     PROGRAM_MS, FN_MS, QUERY_MS = a.program_ms, a.fn_ms, a.query_ms
     try:
         program = parse(sys.stdin.read())
@@ -879,6 +887,8 @@ def _main(argv: list[str]) -> int:
     interp = Interpreter(program)
     budget = Budget()
     for fn in program.fns:
+        if only is not None and fn.name not in only:
+            continue
         v = prove(program, fn, interp, budget)
         print(json.dumps({"name": fn.name, "status": v.status, "reason": v.reason, "ms": v.ms,
                           "error": None if v.error is None else _error_dict(v.error)}, ensure_ascii=False),

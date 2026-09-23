@@ -39,26 +39,34 @@ def run_examples(program: Program, interp: Interpreter) -> int:
     return count
 
 
-def prove(program: Program) -> dict[str, Verdict]:
-    """Nivel 2 sobre todo el programa. Un contraejemplo real (ya ejecutado) se lanza."""
-    verdicts = prove_program(program)
+def prove(program: Program, only: set[str] | None = None) -> dict[str, Verdict]:
+    """Nivel 2 sobre el programa (o solo sobre `only`). Un contraejemplo real (ya ejecutado) se lanza."""
+    verdicts = prove_program(program, only=only)
     e = first_error(verdicts)
     if e is not None:
         raise e
     return verdicts
 
 
-def check_source(src: str, prover: bool = True) -> dict:
-    """Todo el pipeline. Devuelve el resumen que imprime `sello check`."""
-    program, interp = compile_source(src)
-    n = run_examples(program, interp)
-    verdicts = prove(program) if prover else {}
+def check_source(src: str, prover: bool = True, store=None) -> dict:
+    """Todo el pipeline. Devuelve el resumen que imprime `sello check`. Con `store`, lo que el
+    fuente llama y no define se enlaza desde el almacén (`Store.link`); el resumen habla solo
+    de las funciones del fuente."""
+    program = parse(src)
+    names = {f.name for f in program.fns}
+    if store is not None:
+        program, _ = store.link(program)
+    Checker(program).check()
+    interp = Interpreter(program)
+    own = [fn for fn in program.fns if fn.name in names]
+    n = run_examples(Program(own), interp)
+    verdicts = prove(program, only=names) if prover else {}
     out: dict = {
         "ok": True,
         "functions": [
             {"name": fn.name, "signature": signature(fn), "examples": len(fn.examples),
              **(verdicts[fn.name].to_dict() if fn.name in verdicts else {})}
-            for fn in program.fns
+            for fn in own
         ],
         "examples": n,
     }
