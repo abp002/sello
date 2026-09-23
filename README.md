@@ -68,7 +68,8 @@ la tarde, dos hechos sobre secuencias que Z3 no deriva solo (la cola elemento a 
 `++` por tramos) suben a 49/89 y 27/48; los patrones de instanciación explícitos, medidos,
 no entran. `sello mcp` sirve la misma API por MCP. Por la noche, el bug de solidez que destapó el
 benchmark (fase 4) deja la hipótesis de inducción como una implicación por llamada, y la misma
-medición sube a 61/82 y 28/48, con dos bugs reales más (`most_frequent` de haiku).
+medición sube a 61/82 y 28/48, con dos bugs reales más (`most_frequent` de haiku). El 23 de
+septiembre, con el probador aislado por función (un Z3 roto ya no tumba a las siguientes), 61/82 y 29/48.
 
 **Fase 4: el benchmark de vericoding** (6 de septiembre de 2026, tarde): las 2.334 specs Dafny
 sin `qa-issue` del [benchmark de vericoding](https://github.com/Beneficial-AI-Foundation/vericoding-benchmark)
