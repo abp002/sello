@@ -7,6 +7,7 @@ dependencia invalida solo a quien la usa.
 
 from __future__ import annotations
 
+import copy
 import datetime as dt
 import json
 import sqlite3
@@ -133,6 +134,29 @@ class Store:
             alias[r["name"]] = f"f_{short(r['hash'])}"
         return Program(list(fns.values())), alias
 
+    def link(self, program: Program) -> tuple[Program, dict[str, str]]:
+        """Enlaza un fuente con el almacén. Lo que el fuente llama y no define se resuelve por
+        su alias y entra con su cierre de dependencias (`load_closure`, renombrado a f_<hash>).
+        Devuelve el programa para comprobar, ejecutar y probar (lo del almacén más una copia
+        del fuente con esas llamadas reescritas) y el hash completo de cada nombre enlazado,
+        para `hash_program`. El fuente no se toca: se guarda con los nombres que escribió
+        quien lo escribió. Un nombre que tampoco está en el almacén se deja y el checker da E401."""
+        defined = {f.name for f in program.fns}
+        called = sorted({n for f in program.fns for n in callees(f)} - defined)
+        external: dict[str, str] = {}
+        for n in called:
+            row = self.db.execute("SELECT hash FROM names WHERE name = ?", (n,)).fetchone()
+            if row is not None:
+                external[n] = row["hash"]
+        if not external:
+            return program, {}
+        lib, _ = self.load_closure(list(external.values()))
+        own = copy.deepcopy(program.fns)
+        mapping = {n: f"f_{short(h)}" for n, h in external.items()}
+        for fn in own:
+            _rewrite_fn(fn, mapping)
+        return Program(lib.fns + own), external
+
     def program_of_names(self) -> tuple[Program, dict[str, str]]:
         roots = [r["hash"] for r in self.db.execute("SELECT hash FROM names").fetchall()]
         return self.load_closure(roots)
@@ -141,16 +165,18 @@ class Store:
     def add(self, src: str) -> list[dict]:
         """Comprueba el fichero, hashea, verifica lo no certificado y actualiza alias."""
         program = parse(src)
-        Checker(program).check()
-        hashes = hash_program(program)
+        linked, external = self.link(program)
+        Checker(linked).check()
+        own = {f.name: f for f in linked.fns if f.name in {g.name for g in program.fns}}
+        hashes = hash_program(program, external)
         # Se guarda el texto reimpreso, no el original: tiene que ser el mismo programa que
         # el hasheado, o el certificado acreditaría otra función (regresión 2026-09-05: un
         # `forall` operando perdía los paréntesis y `f([])` pasaba a cumplir su ensures).
         reimpreso = parse("\n\n".join(unparse_fn(f) for f in program.fns))
-        for name, h in hash_program(reimpreso).items():
+        for name, h in hash_program(reimpreso, external).items():
             if hashes[name] != h:
                 raise SelloError("E501", f"the canonical text of `{name}` reparses to a different function; nothing was stored")
-        interp = Interpreter(program)
+        interp = Interpreter(linked)
         out: list[dict] = []
         deps_of = {f.name: {n: hashes[n] for n in callees(f)} for f in program.fns}
         verdicts: dict[str, Verdict] | None = None  # el probador, solo si hace falta verificar algo
@@ -167,9 +193,9 @@ class Store:
                 self._alias(fn.name, h)
                 continue
             if verdicts is None:
-                verdicts = prove_program(program)
+                verdicts = prove_program(linked, only=set(own))
             try:
-                self._certify(h, fn, interp, verdicts[fn.name])
+                self._certify(h, own[fn.name], interp, verdicts[fn.name])
                 self._alias(fn.name, h)
                 out.append({"name": fn.name, "hash": short(h), "cached": False, "certificate": self.certificate(h)})
             except SelloError:

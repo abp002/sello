@@ -127,6 +127,11 @@ Names are aliases: renaming a function or a parameter does not change its hash. 
 whose hash already has a certificate is never re-verified. A caller's hash includes its
 callees' hashes, so changing a dependency re-verifies only what uses it.
 
+A file may call any function already in the store by its name, without copying it:
+`check` and `add` link it by hash, and the prover uses its contract, not its body. Read what
+you reuse with `sello sig`. A function defined in the file wins over a stored one of the
+same name.
+
 Reading is an API, not a file. Every command prints JSON:
 
 | Command | Returns |

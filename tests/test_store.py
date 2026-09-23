@@ -186,3 +186,62 @@ def test_un_contraejemplo_del_probador_deja_certificado_fallido_y_no_crea_alias(
     from sello.parser import parse
     cert = store.certificate(hash_program(parse(CLAMP_MAL))["clamp"])
     assert cert["ok"] is False and cert["error"]["found_by"] == "prover"
+
+
+# ---------- enlace: llamar a lo guardado sin copiarlo al fuente (ALE-170) ----------
+
+INC = """
+fn inc(x: Int) -> Int
+  requires x >= 0
+  ensures result == x + 1
+  effects pure
+  example inc(1) == 2
+{ x + 1 }
+"""
+
+INC2 = """
+fn inc2(x: Int) -> Int
+  requires x >= 0
+  ensures result == x + 2
+  effects pure
+  example inc2(3) == 5
+{ inc(inc(x)) }
+"""
+
+
+def test_add_enlaza_una_funcion_del_almacen_con_el_mismo_hash_que_en_el_fuente(tmp_path):
+    junto = Store(tmp_path / "junto.db").add(INC + INC2)
+    separado = Store(tmp_path / "separado.db")
+    separado.add(INC)
+    out = separado.add(INC2)
+    assert [f["name"] for f in out] == ["inc2"]
+    assert out[0]["hash"] == {f["name"]: f for f in junto}["inc2"]["hash"]
+    assert separado.deps("inc2") == [{"name": "inc", "hash": separado.sig("inc")["hash"]}]
+    assert "inc(inc(x))" in separado.view("inc2")["source"]
+
+
+def test_add_enlazado_prueba_con_el_contrato_de_lo_guardado(store):
+    store.add(INC)
+    assert store.add(INC2)[0]["certificate"]["level"] == 2
+
+
+def test_add_enlazado_caza_un_contrato_que_lo_guardado_contradice(store):
+    store.add(INC)
+    with pytest.raises(SelloError) as ei:
+        store.add(INC2.replace("x + 2", "x + 3").replace("inc2(3) == 5", "inc2(3) >= 0"))
+    assert ei.value.code == "E201"
+
+
+def test_check_con_almacen_enlaza_y_solo_informa_del_fuente(store):
+    from sello.compile import check_source
+    store.add(INC)
+    out = check_source(INC2, store=store)
+    assert [f["name"] for f in out["functions"]] == ["inc2"]
+    assert out["functions"][0]["level"] == 2
+
+
+def test_nombre_que_no_esta_ni_en_el_fuente_ni_en_el_almacen_es_E401(store):
+    store.add(INC)
+    with pytest.raises(SelloError) as ei:
+        store.add(INC2.replace("inc(inc(x))", "dec(inc(x))"))
+    assert ei.value.code == "E401"

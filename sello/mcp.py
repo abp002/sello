@@ -60,13 +60,13 @@ def build(store_path: str) -> MCPServer:
     @server.tool()
     @_guard
     def sello_check(source: str) -> dict:
-        """Parse, typecheck, run the examples and prove the contracts of a Sello program (source text). Nothing is stored."""
-        return check_source(source)
+        """Parse, typecheck, run the examples and prove the contracts of a Sello program (source text). A function the source calls but does not define is taken from the store by name (read its contract with sello_sig; do not copy it). Nothing is stored."""
+        return check_source(source, store=store())
 
     @server.tool()
     @_guard
     def sello_add(source: str) -> dict:
-        """Check a Sello program and add its functions to the store, each with its certificate. Names become aliases of the hashes."""
+        """Check a Sello program and add its functions to the store, each with its certificate. Names become aliases of the hashes. Calls to functions already in the store are linked by name, as in sello_check."""
         return {"ok": True, "added": store().add(source)}
 
     @server.tool()

@@ -76,7 +76,8 @@ def _out(d: dict, code: int = 0) -> int:
 def cmd_check(args: argparse.Namespace) -> int:
     src = Path(args.file).read_text()
     try:
-        return _out(check_source(src, prover=not args.no_prover))
+        store = Store(args.store) if args.store else None
+        return _out(check_source(src, prover=not args.no_prover, store=store))
     except SelloError as e:
         return _out({"ok": False, "error": e.to_dict()}, 1)
 
@@ -134,6 +135,7 @@ def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(prog="sello", description="Sello: un lenguaje cuyo usuario es la IA")
     sub = p.add_subparsers(dest="cmd", required=True)
     c = sub.add_parser("check", help="parse, typecheck, run examples and prove contracts"); c.add_argument("file"); c.set_defaults(f=cmd_check)
+    c.add_argument("--store", default=None, help="link calls to functions in this store")
     r = sub.add_parser("run", help="evaluate an expression"); r.add_argument("file"); r.add_argument("expr"); r.set_defaults(f=cmd_run)
     t = sub.add_parser("test", help="run hidden cases"); t.add_argument("file"); t.add_argument("cases"); t.set_defaults(f=cmd_test)
     for sp in (c, r, t):
