@@ -123,8 +123,8 @@ The compiler does not compile files. `sello add FILE` parses, checks and hashes 
 function, runs its examples, tries to prove its contract, and stores it with its contract
 and its **certificate**: which verification level passed (2: proven for every input, given
 what the functions it calls promise; 1: the examples passed), how many examples, when.
-Names are aliases: renaming a function or a parameter does not change its hash. A function
-whose hash already has a certificate is never re-verified. A caller's hash includes its
+Names are aliases: renaming a function or a parameter does not change its hash. A proven
+function (level 2) is never re-verified; a level-1 one is retried on the next `add`. A caller's hash includes its
 callees' hashes, so changing a dependency re-verifies only what uses it.
 
 A file may call any function already in the store by its name, without copying it:

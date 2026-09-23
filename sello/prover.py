@@ -149,11 +149,11 @@ def check(s: z3.Solver, ctx: z3.Context, ms: int, mbqi: bool) -> tuple[z3.CheckS
         t.join(1.0)
         if t.is_alive():
             _ABANDONED.append((ctx, s))
-            raise Stuck()
+            raise Stuck("timeout: the solver did not answer")
         return z3.unknown, None
     if not out or isinstance(out[0], Exception):
-        _ABANDONED.append((ctx, s))
-        raise Stuck()  # el contexto ya no es de fiar
+        _ABANDONED.append((ctx, s))  # el contexto ya no es de fiar, ni el proceso (ALE-171)
+        raise Stuck(f"z3 internal error: {out[0] if out else 'no answer'}")
     r = out[0]
     if r == z3.unsat:
         return r, None
@@ -787,8 +787,8 @@ def prove(program: Program, fn: Fn, interp: Interpreter | None = None,
                 return done(UNKNOWN, "timeout")
             if not t:
                 return done(UNKNOWN, "termination: no argument decreases at every recursive call")
-    except Stuck:
-        return done(UNKNOWN, reason or "timeout: the solver did not answer")
+    except Stuck as st:
+        return done(UNKNOWN, reason or str(st))
     except z3.Z3Exception as z:
         return done(UNKNOWN, f"z3: {str(z).strip()[:120]}")
     return done(PROVEN)
@@ -819,24 +819,53 @@ def first_error(verdicts: dict[str, Verdict]) -> SelloError | None:
 
 def prove_program(program: Program, program_ms: int | None = None,
                   only: set[str] | None = None) -> dict[str, Verdict]:
-    """El probador en un proceso hijo, con reloj de pared. Lo que el hijo no llegue a decir
-    (cuelgue, segfault, sin memoria) queda en unknown. Un contraejemplo real viene en el
-    veredicto de su función y el hijo para ahí: lo que sigue queda sin intentar. Con `only`
-    se prueban solo esas funciones; las demás (las enlazadas del almacén, que ya tienen su
-    certificado) entran solo por su contrato, como cualquier llamada."""
+    """El probador en procesos hijos, con reloj de pared. Un contraejemplo real viene en el
+    veredicto de su función y ahí se para: lo que sigue queda sin intentar. Con `only` se
+    prueban solo esas funciones; las demás (las enlazadas del almacén, que ya tienen su
+    certificado) entran solo por su contrato, como cualquier llamada.
+
+    El veredicto de una función no puede depender de las que la preceden (ALE-171): si Z3 se
+    rompe por dentro, el hijo para tras esa función y otro hijo limpio sigue con el resto; si
+    el hijo muere sin veredicto (segfault, sin memoria), esa función queda en unknown y se
+    sigue igual. Solo el reloj del programa y un contraejemplo cortan la ronda."""
     ms = PROGRAM_MS if program_ms is None else program_ms
+    end = time.monotonic() + ms / 1000
     src = "\n\n".join(unparse_fn(f) for f in program.fns)
+    targets = [f.name for f in program.fns if only is None or f.name in only]
+    verdicts: dict[str, Verdict] = {}
+    pending = list(targets)
+    stop = ""  # por qué lo que quede se queda sin intentar
+    while pending and not stop:
+        left = int((end - time.monotonic()) * 1000)
+        if left <= 0:
+            stop = "timeout: the prover did not answer"
+            break
+        got, fatal, hung = _child(src, pending, left)
+        verdicts.update(got)
+        if first_error(verdicts) is not None:
+            stop = "not attempted: an earlier function failed"
+        elif fatal or hung:
+            stop = fatal or "timeout: the prover did not answer"
+        elif not got:
+            verdicts[pending[0]] = Verdict(UNKNOWN, "the prover crashed on this function")
+        pending = [n for n in pending if n not in verdicts]
+    for n in pending:
+        verdicts[n] = Verdict(UNKNOWN, stop)
+    return {n: verdicts[n] for n in targets}
+
+
+def _child(src: str, names: list[str], ms: int) -> tuple[dict[str, Verdict], str, bool]:
+    """Un hijo sobre `names`: (veredictos que llegó a dar, error fatal, se colgó)."""
     cmd = [sys.executable, "-m", "sello.prover", "--program-ms", str(ms), "--fn-ms", str(FN_MS),
-           "--query-ms", str(QUERY_MS)]
-    targets = [f for f in program.fns if only is None or f.name in only]
-    if only is not None:
-        cmd += ["--only", ",".join(f.name for f in targets)]
+           "--query-ms", str(QUERY_MS), "--only", ",".join(names)]
+    hung = False
     try:
         r = subprocess.run(cmd, input=src, capture_output=True, text=True, timeout=ms / 1000 + 5,
                            cwd=str(Path(__file__).resolve().parents[1]))
         out = r.stdout
     except subprocess.TimeoutExpired as t:
         out = t.stdout.decode() if isinstance(t.stdout, bytes) else (t.stdout or "")
+        hung = True
     verdicts: dict[str, Verdict] = {}
     fatal = ""
     for line in out.splitlines():
@@ -852,11 +881,7 @@ def prove_program(program: Program, program_ms: int | None = None,
             e = d["error"]
             err = SelloError(e["code"], e["detail"], e["line"], e["col"], e["function"], e["extra"])
         verdicts[d["name"]] = Verdict(d["status"], d["reason"], err, d["ms"])
-    failed = first_error(verdicts) is not None
-    for fn in targets:
-        reason = "not attempted: an earlier function failed" if failed else (fatal or "timeout: the prover did not answer")
-        verdicts.setdefault(fn.name, Verdict(UNKNOWN, reason))
-    return {fn.name: verdicts[fn.name] for fn in targets}
+    return verdicts, fatal, hung
 
 
 def _main(argv: list[str]) -> int:
@@ -893,7 +918,7 @@ def _main(argv: list[str]) -> int:
         print(json.dumps({"name": fn.name, "status": v.status, "reason": v.reason, "ms": v.ms,
                           "error": None if v.error is None else _error_dict(v.error)}, ensure_ascii=False),
               flush=True)
-        if v.error is not None:
+        if v.error is not None or _ABANDONED:  # tras un Z3 roto el proceso ya no es de fiar
             break
     return 0
 

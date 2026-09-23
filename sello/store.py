@@ -1,7 +1,7 @@
 """El almacén: funciones por hash, nombres como alias, certificados por hash.
 
-Verificada una vez, verificada para siempre: un hash con certificado ok no se vuelve a
-verificar. Como el hash de un llamador incluye el hash del llamado, cambiar una
+Verificada una vez, verificada para siempre: un hash probado (nivel 2) no se vuelve a
+verificar. Uno de nivel 1 sí se reintenta en cada `add`, por si ahora se prueba (ALE-171). Como el hash de un llamador incluye el hash del llamado, cambiar una
 dependencia invalida solo a quien la usa.
 """
 
@@ -188,7 +188,7 @@ class Store:
                  json.dumps([unparse(r) for r in fn.requires]), json.dumps([unparse(e) for e in fn.ensures]),
                  json.dumps(deps_of[fn.name]), _now()))
             cert = self.certificate(h)
-            if cert and cert["ok"]:
+            if cert and cert["ok"] and cert["level"] >= 2:
                 out.append({"name": fn.name, "hash": short(h), "cached": True, "certificate": cert})
                 self._alias(fn.name, h)
                 continue
