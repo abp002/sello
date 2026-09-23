@@ -336,3 +336,17 @@ def test_un_ensures_falso_con_indice_da_el_contraejemplo_y_un_indice_fuera_de_ra
            "  effects pure\n  example f([1]) == 0\n{ 0 }")
     e = fails_with(src, "E500")
     assert e.extra["found_by"] == "prover" and "f([])" in e.extra["input"]
+
+
+def test_el_veredicto_de_una_funcion_no_depende_de_las_que_la_preceden():
+    """ALE-171: en basicos.sello, Z3 5.1 revienta por dentro probando `dedupe` (UNREACHABLE) y el
+    proceso segfaulteaba en la siguiente, así que `contains_in` salía nivel 1 en el fichero y
+    nivel 2 sola. El veredicto de cada función en el programa es el de probarla sola."""
+    from pathlib import Path
+    from sello.parser import parse
+    from sello.prover import prove_program
+    program = parse((Path(__file__).resolve().parents[1] / "ejemplos" / "basicos.sello").read_text())
+    juntas = prove_program(program)
+    for fn in program.fns:
+        sola = prove_program(program, only={fn.name})[fn.name]
+        assert juntas[fn.name].status == sola.status, (fn.name, juntas[fn.name], sola)

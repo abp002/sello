@@ -245,3 +245,13 @@ def test_nombre_que_no_esta_ni_en_el_fuente_ni_en_el_almacen_es_E401(store):
     with pytest.raises(SelloError) as ei:
         store.add(INC2.replace("inc(inc(x))", "dec(inc(x))"))
     assert ei.value.code == "E401"
+
+
+def test_add_sube_un_certificado_de_nivel_1_si_ahora_se_prueba(store):
+    """ALE-171: un nivel 1 en caché no es definitivo; el add vuelve a intentar el probador."""
+    store.add(INC)
+    store.db.execute("UPDATE certificates SET level = 1")
+    store.db.commit()
+    out = store.add(INC)
+    assert out[0]["cached"] is False
+    assert out[0]["certificate"]["level"] == 2
