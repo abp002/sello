@@ -112,6 +112,18 @@ no decide), 4 son índices puros, 4 `timeout` y 12 tienen la principal probada y
 del modelo. Fricción nueva: 22 rechazos `E401` en sonnet y 30 en haiku (1 y 0 en la corrida
 vieja) por escribir `xs[i]` y `len(xs)` en el cuerpo. Las 199 specs viejas no cambian.
 
+**`/` y `%` con divisor variable** (24 de septiembre de 2026): el probador traduce `a % b` como
+`a - b * (a / b)`, un producto de dos variables que Z3 no decide y que, dentro de un
+cuantificador, le hace abandonar pruebas que no lo necesitan (la primalidad por recursión solo
+necesita partir el rango). Una fase nueva, al final y solo para lo que las exactas no deciden,
+los trata como funciones no interpretadas con axiomas lineales verdaderos
+(`sello/prover.py`, `divmod_uf`). Recomprobando sin modelo los intentos aceptados
+(`bench/vericoding/reprobar.py`): segunda tanda, sonnet de 28/50 a **34/50** y haiku de 20/50 a
+**29/50**; la primera, 47 → 48 y 43 → 43. El criterio prerregistrado (ninguna perdida) no se
+cumplió con la primera versión: construir el traductor nuevo antes de decidir cambiaba el
+E-matching de las fases exactas y perdía una prueba; las tres que siguen apareciendo como
+perdidas oscilan igual en `main`. Números en `bench/resultados/reprobar-2026-09-24-*`.
+
     uv sync --extra dev
     uv run sello check ejemplos/basicos.sello     # parse, tipos, ejemplos, probador (nivel 2)
     uv run sello add ejemplos/basicos.sello       # al almacén, con certificado
