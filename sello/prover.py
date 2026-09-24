@@ -64,19 +64,21 @@ from .pretty import unparse, unparse_fn
 
 # Lo que decide es el trabajo de Z3 (`rlimit`), no el reloj: el mismo programa da el mismo
 # veredicto con cualquier carga de la máquina (ALE-175). Calibrado el 2026-09-24 sobre 10.376
-# consultas de vericoding (bench/resultados/reprobar-2026-09-24-1935-calibra-1): cada tope está
-# un poco por encima de la mediana del trabajo que alcanzaban las consultas que cortaba el reloj
-# viejo (300 ms -> 435.000, 700 ms -> 1.260.000), así que el coste medio no cambia.
-QUERY_WORK = 2_000_000     # por consulta a Z3 (cada fase tiene además su tope en PHASES)
-FN_WORK = 6_000_000        # por función
-PROGRAM_WORK = 60_000_000  # por programa: lo que quede sin probar se queda en nivel 1
+# consultas de vericoding (bench/resultados/reprobar-2026-09-24-1935-calibra-1): el tope de cada
+# fase está un poco por encima de la mediana del trabajo que alcanzaban las consultas que cortaba
+# el reloj viejo (300 ms -> 435.000, 700 ms -> 1.260.000). El de función es el de 3 s al ritmo de
+# las consultas rápidas (hasta ~4.700 por ms): con 6 M, DA0552 y DV0136 se quedaban sin probar.
+QUERY_WORK = 2_000_000      # por consulta a Z3 (cada fase tiene además su tope en PHASES)
+FN_WORK = 15_000_000        # por función
+PROGRAM_WORK = 150_000_000  # por programa: lo que quede sin probar se queda en nivel 1
 # El reloj queda como red de seguridad, con margen: si corta él, el veredicto lo dice
 # ("wall clock"), porque es el único camino que depende de la máquina.
 QUERY_MS = 10_000
-FN_MS = 30_000
-PROGRAM_MS = 180_000
+FN_MS = 20_000
+PROGRAM_MS = 60_000
 MAX_INT = 10 ** 6    # un contraejemplo con enteros mayores no se ejecuta
 MAX_LEN = 64         # ni con listas más largas
+CONFIRM_FUEL = 200_000  # evaluaciones para ejecutar un contraejemplo candidato (ALE-175)
 
 PROVEN, COUNTEREXAMPLE, UNKNOWN = "proven", "counterexample", "unknown"
 
@@ -772,9 +774,12 @@ def confirm(program: Program, fn: Fn, params: list, model: z3.ModelRef,
         return None
     interp = interp or Interpreter(program)
     shown = f"{fn.name}(" + ", ".join(fmt(a) for a in args) + ")"
+    interp.fuel = CONFIRM_FUEL  # sin él, un contrato de coste exponencial colgaba el hijo
     try:
         interp.call(fn.name, args)
     except SelloError as e:
+        if e.code == "E500" and e.detail == "evaluation too long":
+            return None  # no se sabe si es un bug: no se afirma
         if e.code == "E300" and e.extra.get("call") == shown and e.function == fn.name:
             return None  # el modelo no cumple el requires de verdad (cuantificadores): espurio
         if e.code == "E500" and "recursion" in e.detail:
@@ -785,6 +790,8 @@ def confirm(program: Program, fn: Fn, params: list, model: z3.ModelRef,
         return e
     except RecursionError:
         return None
+    finally:
+        interp.fuel = None
     return None
 
 

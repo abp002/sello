@@ -17,6 +17,7 @@ from hypothesis import strategies as st
 
 from sello import prover as pr
 from sello.compile import check_source, compile_source, run_examples
+from sello.errors import SelloError
 from sello.interp import NONE, Some
 from sello.nodes import INT, TEXT, TList, TOption
 
@@ -436,3 +437,27 @@ def test_una_obligacion_que_agota_su_trabajo_da_siempre_el_mismo_veredicto():
     fn = next(f for f in program.fns if f.name == "dedupe")
     vs = {(v.status, v.reason) for v in (pr.prove(program, fn, interp, pr.Budget()) for _ in range(3))}
     assert len(vs) == 1 and "wall clock" not in next(iter(vs))[1]
+
+
+EXPONENCIAL = """
+fn f(n: Int) -> Int
+  requires n >= 0
+  ensures result == (if n == 0 then 0 else f(n - 1) + 1)
+  effects pure
+  example f(3) == 3
+{ if n == 0 then 0 else f(n - 1) + 1 }
+"""
+
+
+def test_confirmar_un_contraejemplo_tiene_combustible_y_no_cuelga_el_probador():
+    """ALE-175: un `ensures` que se llama a sí mismo cuesta 2^n al ejecutarse, y con el `n` que
+    propone Z3 `confirm` no terminaba: colgaba el hijo hasta el reloj del programa (36 s y luego
+    186 s por programa en DA0029, DA0205, DB0020). Con combustible, se corta de forma determinista
+    y la entrada no cuenta como contraejemplo."""
+    import time
+    program, interp = compile_source(EXPONENCIAL)
+    interp.fuel = pr.CONFIRM_FUEL
+    t0 = time.monotonic()
+    with pytest.raises(SelloError) as ei:
+        interp.call("f", [60])
+    assert ei.value.code == "E500" and time.monotonic() - t0 < 10

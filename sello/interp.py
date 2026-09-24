@@ -65,6 +65,9 @@ Env = dict[str, Value]
 class Interpreter:
     def __init__(self, program: Program) -> None:
         self.fns: dict[str, Fn] = {f.name: f for f in program.fns}
+        # Combustible: evaluaciones que quedan, o None sin límite. Lo pone el probador al ejecutar
+        # un contraejemplo candidato, cuyo coste no está acotado (ALE-175).
+        self.fuel: int | None = None
 
     def call(self, name: str, args: list[Value], line: int = 0, col: int = 0,
              caller: str | None = None) -> Value:
@@ -87,6 +90,10 @@ class Interpreter:
         return value
 
     def eval(self, e: Expr, env: Env, fn: str | None = None) -> Value:
+        if self.fuel is not None:
+            self.fuel -= 1
+            if self.fuel < 0:
+                raise SelloError("E500", "evaluation too long", e.line, e.col, fn)
         if isinstance(e, IntLit):
             return e.value
         if isinstance(e, BoolLit):
