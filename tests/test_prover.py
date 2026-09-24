@@ -350,3 +350,54 @@ def test_el_veredicto_de_una_funcion_no_depende_de_las_que_la_preceden():
     for fn in program.fns:
         sola = prove_program(program, only={fn.name})[fn.name]
         assert juntas[fn.name].status == sola.status, (fn.name, juntas[fn.name], sola)
+
+
+# ---------- fase u: `/` y `%` con divisor variable (ALE-169) ----------
+
+PRIMO = """
+fn no_divisor(n: Int, k: Int) -> Bool
+  requires n >= 2
+  requires k >= 2
+  requires k <= n
+  ensures result == (forall j in k..n: n % j != 0)
+  effects pure
+  example no_divisor(7, 2) == true
+  example no_divisor(9, 2) == false
+{ if k == n then true else if n % k == 0 then false else no_divisor(n, k + 1) }
+"""
+
+
+def test_la_primalidad_por_recursion_se_prueba_con_modulo_no_interpretado():
+    """Lo exacto (`n - j * (n / j)`, no lineal) dejaba esta obligación sin decidir."""
+    assert verdict(PRIMO).status == pr.PROVEN
+
+
+def test_la_fase_u_no_prueba_una_afirmacion_falsa_sobre_el_modulo():
+    """Los axiomas de la fase u son verdaderos: lo falso no se prueba. `n % k` puede valer
+    k - 1 (n = 5, k = 3), así que este ensures es falso y el cuerpo lo incumple."""
+    src = """
+fn f(n: Int, k: Int) -> Bool
+  requires n >= 0
+  requires k >= 2
+  ensures result == (n % k < k - 1)
+  effects pure
+  example f(4, 3) == true
+{ true }
+"""
+    v = verdict(src)
+    assert v.status != pr.PROVEN
+    assert v.status == pr.COUNTEREXAMPLE or v.status == pr.UNKNOWN
+
+
+def test_la_fase_u_respeta_el_signo_del_divisor():
+    """Con divisor negativo el resto de Sello (como Python) es <= 0: `n % k >= 0` es falso."""
+    src = """
+fn g(n: Int, k: Int) -> Bool
+  requires k <= -1
+  ensures result == true
+  ensures n % k >= 0
+  effects pure
+  example g(4, -1) == true
+{ true }
+"""
+    assert verdict(src).status != pr.PROVEN

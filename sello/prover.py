@@ -84,7 +84,9 @@ FACTS: frozenset = frozenset({"cons", "concat"})
 # en la medición completa frente a 49/89 y 27/48). Solo en el orden «patrones primero» MBQI
 # encontró un bug real más (find_max_helper([4, 6], [], Some(4)) de most_frequent, haiku), a
 # cambio de 4-7 pruebas menos: se queda documentado, no activado.
-PHASES: tuple = (("s", False, 300), ("s", True, 700))
+PHASES: tuple = (("s", False, 300), ("s", True, 700), ("u", False, 300), ("u", True, 700))
+# Fase u (ALE-169): `/` y `%` con divisor no literal como funciones no interpretadas con axiomas
+# lineales. Solo se intenta si la función los usa y lo exacto no decidió.
 
 
 @dataclass
@@ -248,9 +250,11 @@ class Binder:
 
 class Translator:
     def __init__(self, program: Program, fn: Fn, ctx: z3.Context, patterns: bool = False,
-                 shared: Translator | None = None) -> None:
+                 shared: Translator | None = None, uf_arith: bool = False) -> None:
         self.ctx = ctx
         self.patterns = patterns
+        self.uf_arith = uf_arith
+        self.divmod: dict[str, z3.FuncDeclRef] = {}  # div! y mod! de la fase u
         self.fns = {f.name: f for f in program.fns}
         self.fn = fn
         self.checker = Checker(program)
@@ -428,6 +432,8 @@ class Translator:
             r = self.expr(e.right, env, path, INT)
             if op in ("/", "%"):
                 self.obligate(path, r != 0, "E500", f"division by zero in `{unparse(e)}`")
+                if self.uf_arith and not z3.is_int_value(r):
+                    return self.divmod_uf(op, l, r)
                 q = floordiv(l, r)
                 return q if op == "/" else l - r * q
             return {"+": lambda: l + r, "-": lambda: l - r, "*": lambda: l * r, "<": lambda: l < r,
@@ -487,6 +493,28 @@ class Translator:
             return z3.ForAll([i, j], z3.Implies(z3.And(i >= 0, i < j, j < z3.Length(xs)), xs[i] != xs[j]),
                              **self.pat(z3.MultiPattern(xs[i], xs[j])))
         raise Unsupported(f"builtin {e.name}")
+
+    def divmod_uf(self, op: str, l: z3.ArithRef, r: z3.ArithRef) -> z3.ArithRef:
+        """Fase u (ALE-169): `l / r` y `l % r` con `r` variable como funciones no interpretadas.
+        Lo exacto es `l - r * q`, producto de dos variables: aritmética no lineal que Z3 no
+        decide y que, dentro de un cuantificador, le hace abandonar pruebas que no la necesitan
+        (la primalidad por recursión solo necesita partir el rango). Los axiomas son hechos
+        verdaderos de la semántica de Sello (redondeo hacia abajo, resto con el signo del
+        divisor), así que lo que se prueba aquí vale con la aritmética real; un contraejemplo
+        de esta fase no se cree sin que el intérprete lo reproduzca, como todos."""
+        if not self.divmod:
+            i = z3.IntSort(self.ctx)
+            div, mod = z3.Function("div!", i, i, i), z3.Function("mod!", i, i, i)
+            self.divmod.update({"/": div, "%": mod})
+            a, b = z3.Int("a!", self.ctx), z3.Int("b!", self.ctx)
+            self.facts += [
+                z3.ForAll([a, b], z3.Implies(b > 0, z3.And(mod(a, b) >= 0, mod(a, b) < b)), patterns=[mod(a, b)]),
+                z3.ForAll([a, b], z3.Implies(b < 0, z3.And(mod(a, b) > b, mod(a, b) <= 0)), patterns=[mod(a, b)]),
+                z3.ForAll([a, b], z3.Implies(z3.And(b > 0, a >= 0, a < b), mod(a, b) == a), patterns=[mod(a, b)]),
+                z3.ForAll([a, b], z3.Implies(z3.And(b > 0, a >= 0), z3.And(div(a, b) >= 0, div(a, b) <= a)),
+                          patterns=[div(a, b)]),
+            ]
+        return self.divmod[op](l, r)
 
     def pat(self, p) -> dict:
         """`patterns=` para un cuantificador generado, en el traductor con patrones."""
@@ -752,12 +780,17 @@ def prove(program: Program, fn: Fn, interp: Interpreter | None = None,
         params = [z3.Const(p.name, tr.sort(p.type)) for p in fn.params]
         env = Env({p.name: c for p, c in zip(fn.params, params)}, {p.name: p.type for p in fn.params})
         s = _setup(tr, fn, env)
-        sp, trp = s, tr
+        kinds = {"s": (s, tr)}
         if any(kind == "p" for kind, _, _ in PHASES):
             trp = Translator(program, fn, ctx, patterns=True, shared=tr)
             sp = _setup(trp, fn, env)
-            if len(trp.obligations) != len(tr.obligations):  # no debería pasar: mismo recorrido
-                sp, trp = s, tr
+            if len(trp.obligations) == len(tr.obligations):  # siempre, salvo bug: mismo recorrido
+                kinds["p"] = (sp, trp)
+        if any(kind == "u" for kind, _, _ in PHASES):
+            tru = Translator(program, fn, ctx, shared=tr, uf_arith=True)
+            su = _setup(tru, fn, env)
+            if tru.divmod and len(tru.obligations) == len(tr.obligations):  # solo si hay / o % variable
+                kinds["u"] = (su, tru)
     except Unsupported as u:
         return done(UNKNOWN, f"unsupported: {u}")
     except z3.Z3Exception as z:
@@ -765,10 +798,11 @@ def prove(program: Program, fn: Fn, interp: Interpreter | None = None,
 
     reason = ""
     try:
-        for ob, obp in zip(tr.obligations, trp.obligations):
+        for k, ob in enumerate(tr.obligations):
             if budget.query_ms() <= 0:
                 return done(UNKNOWN, reason or "timeout")
-            runs = [((sp, obp) if kind == "p" else (s, ob)) + (mbqi, cap) for kind, mbqi, cap in PHASES]
+            runs = [(kinds[kind][0], kinds[kind][1].obligations[k], mbqi, cap)
+                    for kind, mbqi, cap in PHASES if kind in kinds]
             valid, err = decide([(sv, o.path, o.prop, mbqi, cap) for sv, o, mbqi, cap in runs], ctx, budget,
                                 lambda m: confirm(program, fn, params, m, interp))
             if valid is False:
