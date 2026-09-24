@@ -401,3 +401,38 @@ fn g(n: Int, k: Int) -> Bool
 { true }
 """
     assert verdict(src).status != pr.PROVEN
+
+
+# ---------- presupuesto de trabajo, no de reloj (ALE-175) ----------
+
+def test_sin_trabajo_es_unknown_no_error_y_no_culpa_al_reloj():
+    program, interp = compile_source(CLAMP_MAL)
+    v = pr.prove(program, program.fns[0], interp, pr.Budget(program_work=0))
+    assert v.status == pr.UNKNOWN and v.error is None
+    assert "wall clock" not in v.reason
+
+
+def test_si_corta_el_reloj_el_veredicto_lo_dice():
+    """El reloj es la red de seguridad y el único camino que depende de la máquina: se ve."""
+    program, interp = compile_source(CLAMP_MAL)
+    v = pr.prove(program, program.fns[0], interp, pr.Budget(program_ms=0))
+    assert v.status == pr.UNKNOWN and "wall clock" in v.reason
+
+
+def test_el_trabajo_gastado_se_descuenta_del_programa_y_la_funcion_empieza_con_su_tope():
+    program, interp = compile_source(FACT)
+    b = pr.Budget(program_work=10 ** 9)
+    assert pr.prove(program, program.fns[0], interp, b).status == pr.PROVEN
+    assert 0 < 10 ** 9 - b.program_left <= pr.FN_WORK
+    b.start_fn()
+    assert b.fn_left == pr.FN_WORK
+
+
+def test_una_obligacion_que_agota_su_trabajo_da_siempre_el_mismo_veredicto():
+    """`dedupe` de basicos agota el trabajo en `distinct(result)`: tres veces, lo mismo."""
+    from pathlib import Path
+    src = (Path(__file__).resolve().parents[1] / "ejemplos" / "basicos.sello").read_text()
+    program, interp = compile_source(src)
+    fn = next(f for f in program.fns if f.name == "dedupe")
+    vs = {(v.status, v.reason) for v in (pr.prove(program, fn, interp, pr.Budget()) for _ in range(3))}
+    assert len(vs) == 1 and "wall clock" not in next(iter(vs))[1]
