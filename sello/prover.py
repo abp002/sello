@@ -765,6 +765,21 @@ def _setup(tr: Translator, fn: Fn, env: Env) -> z3.Solver:
     return s
 
 
+def _var_divisor(program: Program) -> bool:
+    """¿Hay `/` o `%` con divisor no literal en el programa? Se decide antes de traducir: solo
+    construir el traductor de la fase u declara símbolos en el contexto de Z3, y eso basta para
+    que el E-matching de las fases exactas cambie y pierda pruebas (ALE-169: DJ0171 y DV0157,
+    sin `%`, dejaban de probarse)."""
+    from .nodes import children
+
+    def walk(e: Expr) -> bool:
+        if isinstance(e, Binary) and e.op in ("/", "%") and not isinstance(e.right, IntLit):
+            return True
+        return any(walk(c) for c in children(e))
+
+    return any(walk(e) for f in program.fns for e in [*f.requires, *f.ensures, *f.examples, f.body])
+
+
 def prove(program: Program, fn: Fn, interp: Interpreter | None = None,
           budget: Budget | None = None) -> Verdict:
     t0 = time.monotonic()
@@ -786,7 +801,7 @@ def prove(program: Program, fn: Fn, interp: Interpreter | None = None,
             sp = _setup(trp, fn, env)
             if len(trp.obligations) == len(tr.obligations):  # siempre, salvo bug: mismo recorrido
                 kinds["p"] = (sp, trp)
-        if any(kind == "u" for kind, _, _ in PHASES):
+        if any(kind == "u" for kind, _, _ in PHASES) and _var_divisor(program):
             tru = Translator(program, fn, ctx, shared=tr, uf_arith=True)
             su = _setup(tru, fn, env)
             if tru.divmod and len(tru.obligations) == len(tr.obligations):  # solo si hay / o % variable
