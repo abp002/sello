@@ -107,6 +107,14 @@ class Unsupported(Exception):
     """Construcción que el traductor no cubre. Sale como unknown, nunca como error."""
 
 
+class Refuted(Exception):
+    """Contraejemplo real (ya reproducido por el intérprete) de una obligación."""
+
+    def __init__(self, error) -> None:
+        super().__init__()
+        self.error = error
+
+
 class Stuck(Exception):
     """Z3 no atendió ni al timeout ni a la interrupción: su contexto se abandona."""
 
@@ -801,31 +809,43 @@ def prove(program: Program, fn: Fn, interp: Interpreter | None = None,
             sp = _setup(trp, fn, env)
             if len(trp.obligations) == len(tr.obligations):  # siempre, salvo bug: mismo recorrido
                 kinds["p"] = (sp, trp)
-        if any(kind == "u" for kind, _, _ in PHASES) and _var_divisor(program):
-            tru = Translator(program, fn, ctx, shared=tr, uf_arith=True)
-            su = _setup(tru, fn, env)
-            if tru.divmod and len(tru.obligations) == len(tr.obligations):  # solo si hay / o % variable
-                kinds["u"] = (su, tru)
     except Unsupported as u:
         return done(UNKNOWN, f"unsupported: {u}")
     except z3.Z3Exception as z:
         return done(UNKNOWN, f"z3: {str(z).strip()[:120]}")
 
+    def attempt(k: int, phases: list) -> bool | None:
+        """Una obligación con esas fases; un contraejemplo real se lanza como Refuted."""
+        runs = [(kinds[kind][0], kinds[kind][1].obligations[k], mbqi, cap) for kind, mbqi, cap in phases]
+        valid, err = decide([(sv, o.path, o.prop, mbqi, cap) for sv, o, mbqi, cap in runs], ctx, budget,
+                            lambda m: confirm(program, fn, params, m, interp))
+        if valid is False:
+            raise Refuted(err)
+        return valid
+
     reason = ""
     try:
-        for k, ob in enumerate(tr.obligations):
+        undecided: list[int] = []
+        for k in range(len(tr.obligations)):
             if budget.query_ms() <= 0:
-                return done(UNKNOWN, reason or "timeout")
-            runs = [(kinds[kind][0], kinds[kind][1].obligations[k], mbqi, cap)
-                    for kind, mbqi, cap in PHASES if kind in kinds]
-            valid, err = decide([(sv, o.path, o.prop, mbqi, cap) for sv, o, mbqi, cap in runs], ctx, budget,
-                                lambda m: confirm(program, fn, params, m, interp))
-            if valid is False:
-                return done(COUNTEREXAMPLE, error=err)
-            if valid is None:
-                reason = reason or f"undecided: {ob.what}"
-        if reason:
-            return done(UNKNOWN, reason)
+                return done(UNKNOWN, "timeout")
+            if attempt(k, [ph for ph in PHASES if ph[0] in kinds]) is None:
+                undecided.append(k)
+        # La fase u va aparte y al final: el traductor se construye solo si hace falta, cuando
+        # las fases exactas ya decidieron todo lo que iban a decidir. Declarar sus símbolos antes
+        # cambiaba el E-matching de las exactas y perdía pruebas (ALE-169, DJ0171).
+        phases_u = [ph for ph in PHASES if ph[0] == "u"]
+        if undecided and phases_u and _var_divisor(program) and budget.query_ms() > 0:
+            try:
+                tru = Translator(program, fn, ctx, shared=tr, uf_arith=True)
+                su = _setup(tru, fn, env)
+                if tru.divmod and len(tru.obligations) == len(tr.obligations):  # mismo recorrido
+                    kinds["u"] = (su, tru)
+                    undecided = [k for k in undecided if budget.query_ms() <= 0 or attempt(k, phases_u) is None]
+            except Unsupported:
+                pass
+        if undecided:
+            return done(UNKNOWN, reason or f"undecided: {tr.obligations[undecided[0]].what}")
         if _mutual(program, fn):
             return done(UNKNOWN, "mutual recursion: termination not checked")
         if tr.self_calls:
@@ -836,6 +856,8 @@ def prove(program: Program, fn: Fn, interp: Interpreter | None = None,
                 return done(UNKNOWN, "timeout")
             if not t:
                 return done(UNKNOWN, "termination: no argument decreases at every recursive call")
+    except Refuted as r:
+        return done(COUNTEREXAMPLE, error=r.error)
     except Stuck as st:
         return done(UNKNOWN, reason or str(st))
     except z3.Z3Exception as z:
