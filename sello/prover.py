@@ -38,6 +38,7 @@ de pared. Lo que no vuelve se queda en unknown; el compilador nunca cae por culp
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import threading
@@ -61,9 +62,19 @@ from .nodes import (
 from .parser import parse
 from .pretty import unparse, unparse_fn
 
-QUERY_MS = 1000      # por consulta a Z3 (todas sus fases)
-FN_MS = 3000         # por función
-PROGRAM_MS = 30000   # por programa: lo que quede sin probar se queda en nivel 1
+# Lo que decide es el trabajo de Z3 (`rlimit`), no el reloj: el mismo programa da el mismo
+# veredicto con cualquier carga de la máquina (ALE-175). Calibrado el 2026-09-24 sobre 10.376
+# consultas de vericoding (bench/resultados/reprobar-2026-09-24-1935-calibra-1): cada tope está
+# un poco por encima de la mediana del trabajo que alcanzaban las consultas que cortaba el reloj
+# viejo (300 ms -> 435.000, 700 ms -> 1.260.000), así que el coste medio no cambia.
+QUERY_WORK = 2_000_000     # por consulta a Z3 (cada fase tiene además su tope en PHASES)
+FN_WORK = 6_000_000        # por función
+PROGRAM_WORK = 60_000_000  # por programa: lo que quede sin probar se queda en nivel 1
+# El reloj queda como red de seguridad, con margen: si corta él, el veredicto lo dice
+# ("wall clock"), porque es el único camino que depende de la máquina.
+QUERY_MS = 10_000
+FN_MS = 30_000
+PROGRAM_MS = 180_000
 MAX_INT = 10 ** 6    # un contraejemplo con enteros mayores no se ejecuta
 MAX_LEN = 64         # ni con listas más largas
 
@@ -77,14 +88,14 @@ CONTAINS = "exists"   # medido el 2026-09-06 sobre 44 funciones: exists 21, nati
 # Hechos que la teoría de secuencias de Z3 no deriva sola (medidos el 2026-09-06 sobre las 36
 # soluciones: sin hechos 45/92 funciones probadas, cons 50, concat 47, cons+concat 49-50).
 FACTS: frozenset = frozenset({"cons", "concat"})
-# Fases de cada consulta: (solver, mbqi, ms). "s" es el solver sin patrones de instanciación
+# Fases de cada consulta: (solver, mbqi, tope de trabajo). "s" es el solver sin patrones de instanciación
 # explícitos; "p", el que los lleva (`xs[i]` en cada cuantificador). Medido el 2026-09-06 sobre
 # las 36 soluciones: dos fases "s" 52/92 funciones probadas; con patrones bajan las pruebas por
 # E-matching (41/92), y como fases extra no suben ni pruebas ni mutantes muertos (49/89 y 25/48
 # en la medición completa frente a 49/89 y 27/48). Solo en el orden «patrones primero» MBQI
 # encontró un bug real más (find_max_helper([4, 6], [], Some(4)) de most_frequent, haiku), a
 # cambio de 4-7 pruebas menos: se queda documentado, no activado.
-PHASES: tuple = (("s", False, 300), ("s", True, 700), ("u", False, 300), ("u", True, 700))
+PHASES: tuple = (("s", False, 500_000), ("s", True, 1_500_000), ("u", False, 500_000), ("u", True, 1_500_000))
 # Fase u (ALE-169): `/` y `%` con divisor no literal como funciones no interpretadas con axiomas
 # lineales. Solo se intenta si la función los usa y lo exacto no decidió.
 
@@ -123,27 +134,60 @@ _ABANDONED: list = []  # contextos con un hilo dentro: liberarlos segfaultea, se
 
 
 class Budget:
-    """Tiempo por programa y por función; cada consulta a Z3 recibe lo que quede, como
-    mucho QUERY_MS. Los límites se leen al usarse para poder cambiarlos desde bench."""
+    """Trabajo de Z3 por programa y por función: cada consulta recibe lo que quede, como mucho
+    QUERY_WORK, y descuenta lo que gastó. Es lo que decide. El reloj (QUERY_MS, FN_MS,
+    PROGRAM_MS) es solo red de seguridad; `wall_cut` anota si cortó él. Los límites se leen al
+    usarse para poder cambiarlos desde bench."""
 
-    def __init__(self, program_ms: int | None = None) -> None:
+    def __init__(self, program_ms: int | None = None, program_work: int | None = None) -> None:
         self.program_end = time.monotonic() + (PROGRAM_MS if program_ms is None else program_ms) / 1000
         self.fn_end = self.program_end
+        self.program_left = PROGRAM_WORK if program_work is None else program_work
+        self.fn_left = self.program_left
+        self.wall_cut = False
 
     def start_fn(self, fn_ms: int | None = None) -> None:
         self.fn_end = min(self.program_end, time.monotonic() + (FN_MS if fn_ms is None else fn_ms) / 1000)
+        self.fn_left = min(self.program_left, FN_WORK)
+        self.wall_cut = False
 
     def query_ms(self) -> int:
+        """Reloj que queda para una consulta (red de seguridad)."""
         left = int((min(self.fn_end, self.program_end) - time.monotonic()) * 1000)
+        if left <= 0:
+            self.wall_cut = True
         return min(QUERY_MS, left)
 
+    def query_work(self) -> int:
+        """Trabajo que queda para una consulta: lo que decide."""
+        return min(QUERY_WORK, self.fn_left, self.program_left)
 
-def check(s: z3.Solver, ctx: z3.Context, ms: int, mbqi: bool) -> tuple[z3.CheckSatResult, z3.ModelRef | None]:
-    """`s.check()` con reloj de pared y el modelo si lo hay (también el candidato de un unknown:
-    el intérprete dirá si vale). Stuck si Z3 no vuelve ni tras interrumpirlo."""
+    def left(self) -> bool:
+        return self.query_work() > 0 and self.query_ms() > 0
+
+    def spend(self, work: int) -> None:
+        self.fn_left -= work
+        self.program_left -= work
+
+
+def _rcount(s: z3.Solver) -> int:
+    """El contador de trabajo de Z3 (`rlimit count`), acumulado en el contexto."""
+    st = s.statistics()
+    return next((int(st.get_key_value(k)) for k in st.keys() if k == "rlimit count"), 0)
+
+
+def check(s: z3.Solver, ctx: z3.Context, ms: int, mbqi: bool,
+          work: int = 0) -> tuple[z3.CheckSatResult, z3.ModelRef | None]:
+    """`s.check()` con tope de trabajo (`rlimit`, relativo a esta consulta; 0 es sin tope), reloj
+    de pared como red, y el modelo si lo hay (también el candidato de un unknown: el intérprete
+    dirá si vale). Stuck si Z3 no vuelve ni tras interrumpirlo."""
+    s.set("rlimit", work)
     s.set("timeout", ms)
     s.set("smt.mbqi", mbqi)
     out: list = []
+    traza = os.environ.get("SELLO_TRAZA")  # experimento: una línea JSON por consulta
+    if traza:
+        r0, t0 = _rcount(s), time.monotonic()
 
     def run() -> None:
         try:
@@ -165,6 +209,10 @@ def check(s: z3.Solver, ctx: z3.Context, ms: int, mbqi: bool) -> tuple[z3.CheckS
         _ABANDONED.append((ctx, s))  # el contexto ya no es de fiar, ni el proceso (ALE-171)
         raise Stuck(f"z3 internal error: {out[0] if out else 'no answer'}")
     r = out[0]
+    if traza:
+        with open(traza, "a") as fh:
+            fh.write(json.dumps({"cap_ms": ms, "ms": int((time.monotonic() - t0) * 1000), "work": _rcount(s) - r0,
+                                 "r": str(r), "why": s.reason_unknown() if r == z3.unknown else ""}) + "\n")
     if r == z3.unsat:
         return r, None
     try:
@@ -181,8 +229,8 @@ def decide(runs: list, ctx: z3.Context, budget: Budget, confirm_model) -> tuple[
     open_ = None  # solver con la obligación ya apilada: fases seguidas sobre el mismo solver
     try:              # comparten el estado (lo aprendido en la primera sirve a la segunda)
         for s, path, prop, mbqi, cap in runs:
-            ms = min(budget.query_ms(), cap)
-            if ms <= 0:
+            work, ms = min(budget.query_work(), cap), budget.query_ms()
+            if work <= 0 or ms <= 0:
                 return None, None
             if s is not open_:
                 if open_ is not None:
@@ -191,7 +239,12 @@ def decide(runs: list, ctx: z3.Context, budget: Budget, confirm_model) -> tuple[
                 s.add(*path)
                 s.add(z3.Not(prop))
                 open_ = s
-            r, model = check(s, ctx, ms, mbqi)  # si Z3 se atasca, Stuck: el contexto se abandona sin pop
+            before = _rcount(s)
+            r, model = check(s, ctx, ms, mbqi, work)  # si Z3 se atasca, Stuck: el contexto se abandona sin pop
+            spent = _rcount(s) - before
+            budget.spend(spent)
+            if r == z3.unknown and spent < work and s.reason_unknown() in ("canceled", "timeout", ""):
+                budget.wall_cut = True  # paró sin agotar su trabajo: lo cortó el reloj
             if r == z3.unsat:
                 return True, None
             if model is not None:
@@ -643,12 +696,13 @@ class Translator:
         for measure, of in cands:
             ok = True
             for path, args in self.self_calls:
-                ms = budget.query_ms()
-                if ms <= 0:
+                if not budget.left():
                     return None
                 prop = z3.And(of(args) < measure, measure >= 0)
-                valid, _ = decide([(s, path, prop, False, 300), (s, path, prop, True, 700)], self.ctx, budget, lambda m: None)
-                if valid is None and budget.query_ms() <= 0:
+                caps = [cap for kind, _, cap in PHASES if kind == "s"]
+                valid, _ = decide([(s, path, prop, False, caps[0]), (s, path, prop, True, caps[-1])],
+                                  self.ctx, budget, lambda m: None)
+                if valid is None and not budget.left():
                     return None
                 if not valid:
                     ok = False
@@ -795,6 +849,8 @@ def prove(program: Program, fn: Fn, interp: Interpreter | None = None,
     budget.start_fn()
 
     def done(status: str, reason: str = "", error: SelloError | None = None) -> Verdict:
+        if status == UNKNOWN and budget.wall_cut:
+            reason += " (wall clock)"  # lo único que depende de la máquina: que se vea
         return Verdict(status, reason, error, int((time.monotonic() - t0) * 1000))
 
     ctx = z3.Context()
@@ -827,7 +883,7 @@ def prove(program: Program, fn: Fn, interp: Interpreter | None = None,
     try:
         undecided: list[int] = []
         for k in range(len(tr.obligations)):
-            if budget.query_ms() <= 0:
+            if not budget.left():
                 return done(UNKNOWN, "timeout")
             if attempt(k, [ph for ph in PHASES if ph[0] in kinds]) is None:
                 undecided.append(k)
@@ -835,13 +891,13 @@ def prove(program: Program, fn: Fn, interp: Interpreter | None = None,
         # las fases exactas ya decidieron todo lo que iban a decidir. Declarar sus símbolos antes
         # cambiaba el E-matching de las exactas y perdía pruebas (ALE-169, DJ0171).
         phases_u = [ph for ph in PHASES if ph[0] == "u"]
-        if undecided and phases_u and _var_divisor(program) and budget.query_ms() > 0:
+        if undecided and phases_u and _var_divisor(program) and budget.left():
             try:
                 tru = Translator(program, fn, ctx, shared=tr, uf_arith=True)
                 su = _setup(tru, fn, env)
                 if tru.divmod and len(tru.obligations) == len(tr.obligations):  # mismo recorrido
                     kinds["u"] = (su, tru)
-                    undecided = [k for k in undecided if budget.query_ms() <= 0 or attempt(k, phases_u) is None]
+                    undecided = [k for k in undecided if not budget.left() or attempt(k, phases_u) is None]
             except Unsupported:
                 pass
         if undecided:
