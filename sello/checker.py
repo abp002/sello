@@ -153,7 +153,6 @@ class Checker:
         if isinstance(e, Match):
             return self.type_of_match(e, env, fn)
         if isinstance(e, Index):
-            self.only_in_contract("[i]", e, fn)
             st = self.type_of(e.seq, env, fn)
             if not isinstance(st, (TList, TAny)):
                 raise SelloError("E400", f"`[i]` needs a List, got {st} in `{unparse(e.seq)}`",
@@ -186,7 +185,8 @@ class Checker:
                              e.line, e.col, _name(fn), _como_en_el_cuerpo(word))
 
     def type_of_builtin(self, e: Call, env: Env, fn: Fn | None) -> Type:
-        self.only_in_contract(e.name, e, fn)
+        if e.name != "len":  # ALE-168, brazo B: `len` y `xs[i]` valen también en el cuerpo
+            self.only_in_contract(e.name, e, fn)
         arity = BUILTINS[e.name]
         if len(e.args) != arity:
             raise SelloError("E403", f"`{e.name}` takes {arity}, got {len(e.args)}",
@@ -250,24 +250,6 @@ class Checker:
 
 def _como_en_el_cuerpo(word: str) -> dict:
     """ALE-168, brazo A: el E401 de una palabra de contrato enseña cómo se dice en un cuerpo."""
-    if word in ("[i]", "len"):
-        return {
-            "fix": f"`{word}` is a contract word. In a body, walk the list with `match`: the case `[]`, "
-                   "then `[h, ..t]` with a recursive call on the tail `t`. To reach position `i`, recurse "
-                   "on the tail with `i - 1`; to measure the length, add 1 per element. Give the helper "
-                   "a contract that uses the contract word, so it can be proven.",
-            "example": "fn at(xs: List[Int], i: Int) -> Int\n"
-                       "  requires 0 <= i and i < len(xs)\n"
-                       "  ensures result == xs[i]\n"
-                       "  effects pure\n"
-                       "  example at([5, 7], 1) == 7\n"
-                       "{\n"
-                       "  match xs {\n"
-                       "    [] => 0\n"
-                       "    [h, ..t] => if i == 0 then h else at(t, i - 1)\n"
-                       "  }\n"
-                       "}",
-        }
     return {
         "fix": f"`{word}` is a contract word. In a body, write a helper function that walks the list "
                "with `match` (the case `[]`, then `[h, ..t]` with a recursive call on the tail `t`) and "

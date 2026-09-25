@@ -461,3 +461,22 @@ def test_confirmar_un_contraejemplo_tiene_combustible_y_no_cuelga_el_probador():
     with pytest.raises(SelloError) as ei:
         interp.call("f", [60])
     assert ei.value.code == "E500" and time.monotonic() - t0 < 10
+
+
+def test_el_indice_en_el_cuerpo_se_prueba_contra_len_y_fuera_de_rango_es_E500():
+    """ALE-168, brazo B: cada `xs[i]` del cuerpo es una obligación de rango. Con la guarda en
+    `requires` se prueba; sin ella el probador da la entrada que se sale."""
+    cab = "fn at(xs: List[Int], i: Int) -> Int\n  requires {req}\n  ensures result == xs[i]\n  effects pure\n  example at([5, 7], 1) == 7\n{{ xs[i] }}"
+    assert verdict(cab.format(req="0 <= i and i < len(xs)")).status == pr.PROVEN
+    e = fails_with(cab.format(req="i >= 0").replace("result == xs[i]", "result >= 0 or result < 0"), "E500")
+    assert e.extra["found_by"] == "prover" and e.extra["input"].startswith("at([")
+
+
+def test_la_recursion_sobre_un_indice_termina_por_la_distancia_y_se_prueba():
+    """ALE-168, brazo B: el helper de vericoding `sumRange(s, a, b) = s[a] + sumRange(s, a + 1, b)`."""
+    src = ("fn sum_range(s: List[Int], a: Int, b: Int) -> Int\n"
+           "  requires 0 <= a and a <= b and b <= len(s)\n"
+           "  ensures (a == b and result == 0) or (a < b and result == s[a] + sum_range(s, a + 1, b))\n"
+           "  effects pure\n  example sum_range([1, 2, 3], 0, 3) == 6\n"
+           "{ if a == b then 0 else s[a] + sum_range(s, a + 1, b) }")
+    assert verdict(src).status == pr.PROVEN

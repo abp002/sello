@@ -46,7 +46,7 @@ CABECERA = "fn f(xs: List[Int]) -> Int\n  requires 1 == 1\n  ensures 1 == 1\n  e
 
 
 def test_vocabulario_de_listas_solo_en_contratos_es_E401():
-    e = fails_with(CABECERA + "{ len(xs) }", "E401")
+    e = fails_with(CABECERA + "{ count(xs, 1) }", "E401")
     assert "requires" in e.detail and "ensures" in e.detail
     fails_with(CABECERA + "{ if forall x in xs: x > 0 then 1 else 0 }", "E401")
 
@@ -54,7 +54,7 @@ def test_vocabulario_de_listas_solo_en_contratos_es_E401():
 def test_el_E401_de_una_palabra_de_contrato_ensena_a_recorrer_con_match():
     """ALE-168, brazo A: el modelo escribía `xs[i]` y `len(xs)` en el cuerpo y el error no le
     decía cómo hacerlo; ahora trae un helper recursivo con `match` que se prueba."""
-    for cuerpo in ("{ xs[0] }", "{ len(xs) }", "{ if contains(xs, 1) then 1 else 0 }"):
+    for cuerpo in ("{ count(xs, 1) }", "{ if contains(xs, 1) then 1 else 0 }"):
         d = fails_with(CABECERA + cuerpo, "E401").to_dict()
         assert "match" in d["fix"] and "[h, ..t]" in d["example"]
         assert check_source(d["example"])["ok"]  # el ejemplo que se enseña compila y pasa
@@ -79,9 +79,15 @@ def test_sorted_solo_sobre_listas_de_int():
     fails_with(src, "E400")
 
 
-def test_indice_y_rango_solo_en_contratos_y_bien_tipados():
-    """ALE-108: `xs[i]` y `forall i in lo..hi` son vocabulario de contrato."""
-    fails_with(CABECERA + "{ xs[0] }", "E401")
+def test_indice_y_len_valen_en_el_cuerpo():
+    """ALE-168, brazo B: `xs[i]` y `len(xs)` valen también en el cuerpo y en los ejemplos."""
+    src = CABECERA.replace("example f([]) == 0", "example f([4]) == len([4])") + "{ if len(xs) == 0 then 0 else xs[0] - 3 }"
+    assert check_source(src, prover=False)["ok"]
+
+
+def test_indice_y_rango_bien_tipados():
+    """ALE-108: `forall i in lo..hi` es vocabulario de contrato; `xs[i]` tipa sobre listas."""
+    fails_with(CABECERA + "{ if forall i in 0..1: i > 0 then 1 else 0 }", "E401")
     fails_with(CABECERA.replace("requires 1 == 1", "requires 3[0] == 0") + "{ 0 }", "E400")
     fails_with(CABECERA.replace("requires 1 == 1", "requires xs[true] == 0") + "{ 0 }", "E400")
     fails_with(CABECERA.replace("requires 1 == 1", "requires forall i in xs..1: i > 0") + "{ 0 }", "E400")

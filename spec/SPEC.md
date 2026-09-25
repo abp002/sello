@@ -40,8 +40,10 @@ Rules:
 Literals (`42`, `true`, `"text"`, `[1, 2]`, `Some(3)`, `None`) · `if c then a else b` ·
 Int arithmetic `+ - * / %` (`/` is integer division rounding down, like Python `//`) ·
 `and` / `or` short-circuit: the right side is not evaluated when the left decides ·
-`++` concatenates two `List` or two `Text` · comparison `== != < <= > >=` (`<` family on
-Int only) · `and or not` · function call `f(x, y)` · `match` on `Option` and `List`:
+`++` concatenates two `List` or two `Text` · `len(xs)` is the length of a `List` ·
+`xs[i]` is the element at position `i`, from 0 (no space before `[`); an index out of range
+is a runtime error (`E500`), and the prover checks every index against `len` · comparison
+`== != < <= > >=` (`<` family on Int only) · `and or not` · function call `f(x, y)` · `match` on `Option` and `List`:
 
 ```
 match xs {
@@ -80,16 +82,15 @@ making a function. `x / 0` is a runtime error (`E500`); rule it out with `requir
   rejected: the function simply stays at level 1. A recursive function is proven only if some
   argument decreases at every recursive call.
 
-Inside `requires` and `ensures` **only** (using them in a body or an example is `E401`):
+`len(xs)` and `xs[i]` (section 3) work in contracts too. The words below work inside
+`requires` and `ensures` **only** (using them in a body or an example is `E401`):
 
 | Form | Type | Meaning |
 |---|---|---|
-| `len(xs)` | `Int` | length of `xs` |
 | `count(xs, x)` | `Int` | how many elements of `xs` equal `x` |
 | `contains(xs, x)` | `Bool` | `count(xs, x) > 0` |
 | `distinct(xs)` | `Bool` | no value appears twice in `xs` |
 | `sorted(xs)` | `Bool` | `xs` is non-decreasing (`List[Int]` only) |
-| `xs[i]` | element type | the element at position `i` (from 0); `i` out of range is `E500` |
 | `forall x in xs: P` | `Bool` | `P` holds for every element `x` of `xs` (true for `[]`) |
 | `exists x in xs: P` | `Bool` | `P` holds for some element `x` of `xs` (false for `[]`) |
 | `forall i in a..b: P` | `Bool` | `P` holds for every `Int` `i` with `a <= i < b` (true when `b <= a`) |
@@ -97,7 +98,7 @@ Inside `requires` and `ensures` **only** (using them in a body or an example is 
 
 A quantifier may follow `and`, `or` or `not`; its body extends to the end of the clause
 (or to the closing parenthesis). `a..b` includes `a` and excludes `b`, and exists only as the
-domain of a quantifier. Write `xs[i]` with no space before `[`. To speak about positions,
+domain of a quantifier. To speak about positions,
 quantify over the range and index: `forall i in 0..len(xs): xs[i] <= result`. To speak about
 values, quantify over the list. These names are reserved (`E402`).
 
