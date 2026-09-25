@@ -109,7 +109,7 @@ y 37/50, y en nivel 1 aceptan 49/50 y 46/50. El criterio prerregistrado (sonnet 
 intentos) no se cumple, pero no por el índice: de las 21 tareas de sonnet sin probar, 12 son
 aritmética no lineal (`forall j in 2..n: n % j != 0`, la primalidad que el rango dejó entrar y Z3
 no decide), 4 son índices puros, 4 `timeout` y 12 tienen la principal probada y falla un helper
-del modelo. Fricción nueva: 22 rechazos `E401` en sonnet y 30 en haiku (1 y 0 en la corrida
+del modelo. Fricción nueva: 22 rechazos `E401` en sonnet y 30 en haiku (1 y 1 en la corrida
 vieja) por escribir `xs[i]` y `len(xs)` en el cuerpo. Las 199 specs viejas no cambian.
 
 **`/` y `%` con divisor variable** (24 de septiembre de 2026): el probador traduce `a % b` como
@@ -134,6 +134,18 @@ probador hasta su reloj; ahora corre con combustible. Resultado: 162 probadas fr
 minutos por pasada frente a 8, 0 cambios entre pasadas con la misma carga y 2 (marcados) con otra.
 Los dos criterios prerregistrados no se cumplieron del todo (coste en el primero, determinismo con
 otra carga en el segundo); están en `bench/resultados/reprobar-2026-09-24-19*` y `-2*`.
+
+**El índice se queda fuera del cuerpo** (25 de septiembre de 2026): `E401` por escribir `xs[i]` o
+`len(xs)` en un cuerpo era el error nuevo dominante. Experimento prerregistrado con dos brazos
+sobre las mismas 50 tareas, corridos a la vez: A, el lenguaje de siempre con un `E401` que enseña
+a recorrer con `match`; B, A más `xs[i]` y `len` permitidos en el cuerpo (el probador ya comprueba
+cada índice contra `len`). Probadas: sonnet 43 (A) y 42 (B), haiku 36 y 35; B quita los rechazos
+por índice (haiku, de 26 a 0) y baja los intentos de haiku de 1,77 a 1,43, pero cuesta lo mismo y
+no prueba más. El criterio prerregistrado (B no puede probar menos en la suma) no se cumple, así
+que B no entra. Las cuatro tareas que cambian: dos no usan el índice en ningún brazo y las dos que
+sí se compensan. El mensaje nuevo tampoco enseña a haiku, que repite el error igual que antes. Los
+resultados están en `bench/resultados/*ale168*` (`bench/vericoding/palabras_contrato.py` los
+resume).
 
     uv sync --extra dev
     uv run sello check ejemplos/basicos.sello     # parse, tipos, ejemplos, probador (nivel 2)
@@ -165,9 +177,10 @@ otra carga en el segundo); están en `bench/resultados/reprobar-2026-09-24-19*` 
    2.334 specs caben tal cual, primera corrida en condición `sello_contrato`: sonnet 46/50 y
    haiku 44/50 en nivel 2 sobre una muestra de 50.~~ ~~Cuantificadores sobre rangos de enteros
    e índices `s[i]` en los contratos: 355 de 2.334 caben; sobre las nuevas, sonnet 58 % y haiku
-   44 % en nivel 2 (aritmética no lineal, no el índice, es lo que no se decide).~~ Pendiente:
-   decidir qué hacer con el índice en el cuerpo (`E401` es el error nuevo dominante) y con `%`
-   de divisor variable en Z3, y una medida de terminación entre funciones para la recursión mutua.
+   44 % en nivel 2 (aritmética no lineal, no el índice, es lo que no se decide).~~ ~~`%` de
+   divisor variable en Z3.~~ ~~Decidir qué hacer con el índice en el cuerpo: se queda fuera,
+   porque permitirlo no prueba más.~~ Pendiente: una medida de terminación entre funciones para
+   la recursión mutua.
 5. **El almacén como dataset**: afinar un modelo abierto con código Sello generado y
    filtrado por el compilador. Solo con Z3 hecho y la sintaxis congelada. Objetivo: que el
    coste de razonamiento baje de 10x a 1x manteniendo aciertos.
