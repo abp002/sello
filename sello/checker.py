@@ -183,7 +183,7 @@ class Checker:
     def only_in_contract(self, word: str, e: Expr, fn: Fn | None) -> None:
         if not self.in_contract:
             raise SelloError("E401", f"`{word}` is only valid inside `requires` and `ensures`",
-                             e.line, e.col, _name(fn))
+                             e.line, e.col, _name(fn), _como_en_el_cuerpo(word))
 
     def type_of_builtin(self, e: Call, env: Env, fn: Fn | None) -> Type:
         self.only_in_contract(e.name, e, fn)
@@ -246,3 +246,41 @@ class Checker:
             if not isinstance(st, (TList, TOption, TAny)):
                 raise SelloError("E404", f"match on {st} needs `_ =>`", e.line, e.col, _name(fn))
         return result
+
+
+def _como_en_el_cuerpo(word: str) -> dict:
+    """ALE-168, brazo A: el E401 de una palabra de contrato enseña cómo se dice en un cuerpo."""
+    if word in ("[i]", "len"):
+        return {
+            "fix": f"`{word}` is a contract word. In a body, walk the list with `match`: the case `[]`, "
+                   "then `[h, ..t]` with a recursive call on the tail `t`. To reach position `i`, recurse "
+                   "on the tail with `i - 1`; to measure the length, add 1 per element. Give the helper "
+                   "a contract that uses the contract word, so it can be proven.",
+            "example": "fn at(xs: List[Int], i: Int) -> Int\n"
+                       "  requires 0 <= i and i < len(xs)\n"
+                       "  ensures result == xs[i]\n"
+                       "  effects pure\n"
+                       "  example at([5, 7], 1) == 7\n"
+                       "{\n"
+                       "  match xs {\n"
+                       "    [] => 0\n"
+                       "    [h, ..t] => if i == 0 then h else at(t, i - 1)\n"
+                       "  }\n"
+                       "}",
+        }
+    return {
+        "fix": f"`{word}` is a contract word. In a body, write a helper function that walks the list "
+               "with `match` (the case `[]`, then `[h, ..t]` with a recursive call on the tail `t`) and "
+               "give it a contract that uses the contract word, so it can be proven.",
+        "example": "fn has(xs: List[Int], x: Int) -> Bool\n"
+                   "  requires len(xs) >= 0\n"
+                   "  ensures result == contains(xs, x)\n"
+                   "  effects pure\n"
+                   "  example has([1, 2], 2) == true\n"
+                   "{\n"
+                   "  match xs {\n"
+                   "    [] => false\n"
+                   "    [h, ..t] => h == x or has(t, x)\n"
+                   "  }\n"
+                   "}",
+    }

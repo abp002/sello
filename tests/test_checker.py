@@ -51,6 +51,15 @@ def test_vocabulario_de_listas_solo_en_contratos_es_E401():
     fails_with(CABECERA + "{ if forall x in xs: x > 0 then 1 else 0 }", "E401")
 
 
+def test_el_E401_de_una_palabra_de_contrato_ensena_a_recorrer_con_match():
+    """ALE-168, brazo A: el modelo escribía `xs[i]` y `len(xs)` en el cuerpo y el error no le
+    decía cómo hacerlo; ahora trae un helper recursivo con `match` que se prueba."""
+    for cuerpo in ("{ xs[0] }", "{ len(xs) }", "{ if contains(xs, 1) then 1 else 0 }"):
+        d = fails_with(CABECERA + cuerpo, "E401").to_dict()
+        assert "match" in d["fix"] and "[h, ..t]" in d["example"]
+        assert check_source(d["example"])["ok"]  # el ejemplo que se enseña compila y pasa
+
+
 def test_nombres_del_vocabulario_reservados_es_E402():
     fails_with("fn len(xs: List[Int]) -> Int\n  requires 1 == 1\n  ensures 1 == 1\n  effects pure\n  example len([]) == 0\n{ 0 }", "E402")
 
