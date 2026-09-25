@@ -213,7 +213,7 @@ def check(s: z3.Solver, ctx: z3.Context, ms: int, mbqi: bool,
     r = out[0]
     if traza:
         with open(traza, "a") as fh:
-            fh.write(json.dumps({"cap_ms": ms, "ms": int((time.monotonic() - t0) * 1000), "work": _rcount(s) - r0,
+            fh.write(json.dumps({"cap_ms": ms, "cap_work": work, "mbqi": mbqi, "ms": int((time.monotonic() - t0) * 1000), "work": _rcount(s) - r0,
                                  "r": str(r), "why": s.reason_unknown() if r == z3.unknown else ""}) + "\n")
     if r == z3.unsat:
         return r, None
