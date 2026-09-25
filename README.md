@@ -124,6 +124,17 @@ cumplió con la primera versión: construir el traductor nuevo antes de decidir 
 E-matching de las fases exactas y perdía una prueba; las tres que siguen apareciendo como
 perdidas oscilan igual en `main`. Números en `bench/resultados/reprobar-2026-09-24-*`.
 
+**El probador decide por trabajo, no por reloj** (24 de septiembre de 2026): todos los límites
+eran de reloj de pared, así que el mismo programa salía en nivel 1 o 2 según la carga (4 de 200
+tareas oscilaban entre pasadas). Ahora cada consulta, función y programa tiene un tope de trabajo
+de Z3 (`rlimit`), calibrado sobre 10.376 consultas; el reloj queda de red y, si corta él, el
+motivo lo dice (`wall clock`). Midiéndolo apareció otra fuente de ruido y de coste: `confirm`
+ejecutaba el contraejemplo candidato sin límite y un `ensures` recursivo de coste 2^n colgaba el
+probador hasta su reloj; ahora corre con combustible. Resultado: 162 probadas frente a 154-156, 5,5
+minutos por pasada frente a 8, 0 cambios entre pasadas con la misma carga y 2 (marcados) con otra.
+Los dos criterios prerregistrados no se cumplieron del todo (coste en el primero, determinismo con
+otra carga en el segundo); están en `bench/resultados/reprobar-2026-09-24-19*` y `-2*`.
+
     uv sync --extra dev
     uv run sello check ejemplos/basicos.sello     # parse, tipos, ejemplos, probador (nivel 2)
     uv run sello add ejemplos/basicos.sello       # al almacén, con certificado
