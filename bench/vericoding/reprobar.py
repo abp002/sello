@@ -18,7 +18,9 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import os
 import sys
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -55,6 +57,33 @@ def reprobar(fila: dict) -> dict:
             "motivo": "" if proven_at else ultimo_motivo}
 
 
+class Carga:
+    """Load average de la máquina durante la pasada, muestreado cada 10 s. Con carga, el reloj de
+    red del probador corta más y decide resultados (ALE-188: con una compilación ajena en marcha,
+    50 cortes y 3 tareas menos; sin ella, 5 cortes y 0 cambios entre pasadas)."""
+
+    def __init__(self) -> None:
+        self.muestras = [os.getloadavg()[0]]
+        self._fin = threading.Event()
+        self._hilo = threading.Thread(target=self._muestrea, daemon=True)
+        self._hilo.start()
+
+    def _muestrea(self) -> None:
+        while not self._fin.wait(10):
+            self.muestras.append(os.getloadavg()[0])
+
+    def cierra(self) -> list[str]:
+        self._fin.set()
+        self.muestras.append(os.getloadavg()[0])
+        ini, top, fin = self.muestras[0], max(self.muestras), self.muestras[-1]
+        lineas = [f"Carga de la máquina (load average de 1 min): al empezar {ini:.1f}, máximo {top:.1f}, "
+                  f"al acabar {fin:.1f}; {os.cpu_count()} núcleos."]
+        if top > (os.cpu_count() or 1):
+            lineas.append("\n**Aviso: la máquina iba cargada.** El reloj de red del probador pudo decidir "
+                          "resultados: esta pasada no sirve para medir un cambio.")
+        return lineas
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("corridas", nargs="+", type=Path)
@@ -68,6 +97,8 @@ def main() -> int:
           "| Corrida | probadas antes | probadas ahora | principal antes | principal ahora | ganadas | perdidas |",
           "|---|---|---|---|---|---|---|"]
     cambios: list[str] = []
+    reloj = 0
+    carga = Carga()
     with open(f"{base}.jsonl", "w") as out, ThreadPoolExecutor(a.workers) as ex:
         for corrida in a.corridas:
             filas = [json.loads(x) for x in corrida.read_text().splitlines() if x.strip()]
@@ -85,7 +116,9 @@ def main() -> int:
             cambios += [f"- {corrida.stem}: **ganada** {r['problem']} `{r['fn']}` (intento {r['ahora']})" for r in ganadas]
             cambios += [f"- {corrida.stem}: **perdida** {r['problem']} `{r['fn']}`: {motivo(r['motivo'])} ({r['motivo'][:120]})"
                         for r in perdidas]
+            reloj += sum(1 for r in res if "(wall clock)" in r["motivo"])
             print(md[-1], file=sys.stderr, flush=True)
+    md += ["", *carga.cierra(), f"Tareas cuyo motivo final lleva «(wall clock)»: {reloj}."]
     md += ["", "## Cambios", ""] + (cambios or ["Ninguno."])
     Path(f"{base}.md").write_text("\n".join(md) + "\n")
     print(f"{base}.md")
