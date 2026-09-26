@@ -54,6 +54,7 @@ fn dedupe(xs: List[Int]) -> List[Int]
   requires len(xs) >= 0
   ensures distinct(result)
   ensures forall x in xs: contains(result, x)
+  ensures forall x in result: contains(xs, x)
   effects pure
   example dedupe([1, 2, 1, 3]) == [2, 1, 3]
   example dedupe([]) == []

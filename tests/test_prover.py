@@ -485,3 +485,21 @@ fn f(n: Int) -> Int
     assert tr.terminates(st, params, pr.Budget()) is True
     monkeypatch.setattr(pr, "decide", lambda *a, **k: (None, None))
     assert tr.terminates(st, params, pr.Budget()) is None
+
+
+def test_el_contrato_de_dedupe_rechaza_un_resultado_con_elementos_de_fuera():
+    # ALE-193: el contrato de `dedupe` en basicos.sello pedía que el resultado contuviera todo lo
+    # de `xs`, no que solo tuviera cosas de `xs`: `dedupe([42]) == [42, 43]` lo cumplía. Sin esa
+    # cláusula, además, la prueba modular de `distinct` es imposible. Se evalúa el contrato con el
+    # intérprete: que el probador encuentre ese contraejemplo depende de la codificación de
+    # secuencias en Z3, que hoy no lo consigue.
+    from pathlib import Path
+    src = (Path(__file__).resolve().parents[1] / "ejemplos" / "basicos.sello").read_text()
+    program, interp = compile_source(src)
+    fn = next(f for f in program.fns if f.name == "dedupe")
+
+    def cumple(xs, result):
+        return all(interp.eval(c, {"xs": xs, "result": result}, fn.name) for c in fn.ensures)
+
+    assert cumple([42], [42])
+    assert not cumple([42], [42, 43])
