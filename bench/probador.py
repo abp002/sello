@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -36,6 +37,8 @@ from harness3 import CONDS_TODAS  # noqa: E402
 from mutantes import CAZADO, EQUIVALENTE, RUIDOSO, SILENCIOSO  # noqa: E402
 
 TIMEOUT = 120
+if "SELLO_RELOJ" in os.environ:  # experimento (ALE-188): el reloj del programa más margen
+    TIMEOUT = max(TIMEOUT, int(os.environ["SELLO_RELOJ"].split(",")[2]) // 1000 + 60)
 MOTIVOS = ("undecided", "timeout", "termination", "mutual recursion", "unsupported", "not attempted", "z3")
 LLEGAN = (CAZADO, RUIDOSO, SILENCIOSO)
 

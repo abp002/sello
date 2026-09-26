@@ -76,6 +76,8 @@ PROGRAM_WORK = 150_000_000  # por programa: lo que quede sin probar se queda en 
 QUERY_MS = 10_000
 FN_MS = 20_000
 PROGRAM_MS = 60_000
+if "SELLO_RELOJ" in os.environ:  # experimento (ALE-188): "consulta,función,programa" en ms
+    QUERY_MS, FN_MS, PROGRAM_MS = (int(x) for x in os.environ["SELLO_RELOJ"].split(","))
 MAX_INT = 10 ** 6    # un contraejemplo con enteros mayores no se ejecuta
 MAX_LEN = 64         # ni con listas más largas
 CONFIRM_FUEL = 200_000  # evaluaciones para ejecutar un contraejemplo candidato (ALE-175)
