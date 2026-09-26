@@ -147,6 +147,18 @@ sí se compensan. El mensaje nuevo tampoco enseña a haiku, que repite el error 
 resultados están en `bench/resultados/*ale168*` (`bench/vericoding/palabras_contrato.py` los
 resume).
 
+**Los relojes se quedan; el ruido era la carga** (26 de septiembre de 2026): el reloj de red del
+probador seguía decidiendo algunas tareas, y el ritmo de Z3 varía 30 veces entre consultas (de 146
+a unas 4.700 unidades de trabajo por ms). Experimento prerregistrado: subir los relojes de 10/20/60
+s a 60/120/300 s. Con la máquina libre, las cuatro pasadas (una con los relojes de siempre, tres
+con los altos) dan las mismas 163 tareas, en el mismo intento. Los relojes altos no ganan ninguna
+prueba, van de 2 a 3 veces más lentos y no eliminan los cortes: Z3 llegó a pasarse 60 s sin gastar
+su tope de trabajo. El criterio (ningún corte) no se cumple, así que no entran. Lo que sí movía
+los resultados era la carga: con una compilación ajena en marcha, 50 cortes y 3 tareas menos.
+`reprobar.py` anota ahora la carga de la máquina y avisa si iba cargada. Por el camino, la
+terminación dejó de decir «no argument decreases» cuando Z3 solo no llegaba a decidir. Resultados
+en `bench/resultados/*188*`.
+
     uv sync --extra dev
     uv run sello check ejemplos/basicos.sello     # parse, tipos, ejemplos, probador (nivel 2)
     uv run sello add ejemplos/basicos.sello       # al almacén, con certificado
