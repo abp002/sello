@@ -223,11 +223,13 @@ def check(s: z3.Solver, ctx: z3.Context, ms: int, mbqi: bool,
         return r, None
 
 
-def decide(runs: list, ctx: z3.Context, budget: Budget, confirm_model) -> tuple[bool | None, object]:
+def decide(runs: list, ctx: z3.Context, budget: Budget, confirm_model,
+           sat_refutes: bool = False) -> tuple[bool | None, object]:
     """¿Es válida una obligación? `runs` son fases (solver, camino, proposición, mbqi, ms) en
     orden: primero solo E-matching (rápido: decide la mayoría de las pruebas y da candidatos a
     contraejemplo), luego con MBQI. Devuelve (True probada | False refutada | None sin decidir,
-    lo que devolvió confirm_model)."""
+    lo que devolvió confirm_model). Con `sat_refutes`, un `sat` de Z3 basta para refutar: para
+    lo que no se puede ejecutar, como que una medida decrezca."""
     open_ = None  # solver con la obligación ya apilada: fases seguidas sobre el mismo solver
     try:              # comparten el estado (lo aprendido en la primera sirve a la segunda)
         for s, path, prop, mbqi, cap in runs:
@@ -249,6 +251,8 @@ def decide(runs: list, ctx: z3.Context, budget: Budget, confirm_model) -> tuple[
                 budget.wall_cut = True  # paró sin agotar su trabajo: lo cortó el reloj
             if r == z3.unsat:
                 return True, None
+            if r == z3.sat and sat_refutes:
+                return False, None
             if model is not None:
                 found = confirm_model(model)
                 if found is not None:
@@ -683,7 +687,8 @@ class Translator:
     # ---- terminación ----
     def terminates(self, s: z3.Solver, params: list, budget: Budget) -> bool | None:
         """Alguna medida (un Int, la longitud de una lista o la diferencia de dos Int) decrece
-        y no es negativa en todas las llamadas recursivas. None si se acabó el tiempo."""
+        y no es negativa en todas las llamadas recursivas. False solo si Z3 refutó todas; None si
+        alguna quedó sin decidir (ALE-188: DA0476 decía «no decrece» por un unknown)."""
         cands: list[tuple[z3.ArithRef, object]] = []
         ints = [i for i, p in enumerate(self.fn.params) if isinstance(p.type, TInt)]
         for i, p in enumerate(self.fn.params):
@@ -695,6 +700,7 @@ class Translator:
             for j in ints:
                 if i != j:
                     cands.append((params[j] - params[i], lambda args, i=i, j=j: args[j] - args[i]))
+        undecided = False
         for measure, of in cands:
             ok = True
             for path, args in self.self_calls:
@@ -703,15 +709,14 @@ class Translator:
                 prop = z3.And(of(args) < measure, measure >= 0)
                 caps = [cap for kind, _, cap in PHASES if kind == "s"]
                 valid, _ = decide([(s, path, prop, False, caps[0]), (s, path, prop, True, caps[-1])],
-                                  self.ctx, budget, lambda m: None)
-                if valid is None and not budget.left():
-                    return None
+                                  self.ctx, budget, lambda m: None, sat_refutes=True)
                 if not valid:
+                    undecided |= valid is None
                     ok = False
                     break
             if ok:
                 return True
-        return False
+        return None if undecided else False
 
 
 # ---------- del modelo al intérprete ----------
@@ -916,7 +921,7 @@ def prove(program: Program, fn: Fn, interp: Interpreter | None = None,
             st.add(*tr.base)
             t = tr.terminates(st, params, budget)
             if t is None:
-                return done(UNKNOWN, "timeout")
+                return done(UNKNOWN, "termination: undecided" if budget.left() else "timeout")
             if not t:
                 return done(UNKNOWN, "termination: no argument decreases at every recursive call")
     except Refuted as r:
