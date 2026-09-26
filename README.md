@@ -159,6 +159,16 @@ los resultados era la carga: con una compilación ajena en marcha, 50 cortes y 3
 terminación dejó de decir «no argument decreases» cuando Z3 solo no llegaba a decidir. Resultados
 en `bench/resultados/*188*`.
 
+**`dedupe` no llega a nivel 2, y no por su contrato** (26 de septiembre de 2026): el error interno
+de Z3 que la dejaba en nivel 1 ya no aparece (el tope de trabajo corta antes de que Z3 se quede sin
+memoria). Tenía, eso sí, el contrato incompleto: pedía que el resultado contuviera todo lo de `xs`,
+pero no que solo tuviera cosas de `xs`, así que `dedupe([42]) == [42, 43]` lo cumplía y la prueba
+modular de `distinct` era imposible. Arreglado. Aun así no se prueba, porque la teoría de
+secuencias de Z3 no cierra con `seq.nth` una deducción de dos pasos que con arrays es inmediata
+(`bench/seq_nth.py`: timeout frente a 0,00 s, en todas las versiones de Z3 desde la 4.12). Siguiente
+paso, prerregistrado aparte: codificar el índice como función no interpretada, como hace Dafny
+(ALE-225).
+
     uv sync --extra dev
     uv run sello check ejemplos/basicos.sello     # parse, tipos, ejemplos, probador (nivel 2)
     uv run sello add ejemplos/basicos.sello       # al almacén, con certificado
