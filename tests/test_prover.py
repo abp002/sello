@@ -461,3 +461,27 @@ def test_confirmar_un_contraejemplo_tiene_combustible_y_no_cuelga_el_probador():
     with pytest.raises(SelloError) as ei:
         interp.call("f", [60])
     assert ei.value.code == "E500" and time.monotonic() - t0 < 10
+
+
+def test_terminacion_sin_decidir_no_es_medida_que_no_decrece(monkeypatch):
+    # ALE-188, DA0476 (haiku): Z3 no decidía ninguna medida de `findMinYears` en su trabajo y el
+    # motivo decía «no argument decreases», que es otra cosa: sin decidir no es refutada.
+    src = """
+fn f(n: Int) -> Int
+  requires n >= 0
+  ensures result >= 0
+  effects pure
+  example f(2) == 0
+{ if n == 0 then 0 else f(n - 1) }
+"""
+    program, _ = compile_source(src)
+    fn = program.fns[0]
+    ctx = z3.Context()
+    tr = pr.Translator(program, fn, ctx)
+    params = [z3.Const(p.name, tr.sort(p.type)) for p in fn.params]
+    pr._setup(tr, fn, pr.Env({p.name: c for p, c in zip(fn.params, params)}, {p.name: p.type for p in fn.params}))
+    st = z3.Solver(ctx=ctx)
+    st.add(*tr.base)
+    assert tr.terminates(st, params, pr.Budget()) is True
+    monkeypatch.setattr(pr, "decide", lambda *a, **k: (None, None))
+    assert tr.terminates(st, params, pr.Budget()) is None
