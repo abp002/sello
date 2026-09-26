@@ -334,6 +334,8 @@ class Translator:
         # el mismo.
         self.options: dict[str, z3.DatatypeSortRef] = shared.options if shared else {}
         self.counts: dict[str, z3.FuncDeclRef] = shared.counts if shared else {}
+        self.ats: dict[str, z3.FuncDeclRef] = shared.ats if shared else {}
+        self.at_axioms: set[str] = set()  # sorts cuyos axiomas de `at` ya están en los hechos de este traductor
         self.ufs: dict[str, z3.FuncDeclRef | z3.ExprRef] = shared.ufs if shared else {}
         self.n = shared.n if shared else 0
         self.obligations: list[Obligation] = []
@@ -381,16 +383,43 @@ class Translator:
             return self.options[key]
         raise Unsupported(f"type {t}")
 
+    def at_fn(self, elem: z3.SortRef) -> z3.FuncDeclRef:
+        """`xs[i]` como función no interpretada, no `seq.nth` (ALE-225): con `seq.nth` la teoría de
+        secuencias de Z3 no cierra deducciones de dos pasos que con arrays son inmediatas
+        (bench/seq_nth.py). Como Dafny con `Seq#Index`: lo que Z3 sabe de `at` son axiomas
+        verdaderos de la semántica de Sello, por tipo de elemento, y los hechos de cada término."""
+        key = str(elem)
+        if key not in self.ats:
+            self.ats[key] = z3.Function(f"at[{key}]", z3.SeqSort(elem), z3.IntSort(self.ctx), elem)
+        at = self.ats[key]
+        if key not in self.at_axioms:
+            self.at_axioms.add(key)
+            seq = z3.SeqSort(elem)
+            x, i = z3.Const(f"x[{key}]!at", elem), z3.Int(f"i[{key}]!at", self.ctx)
+            a, b = z3.Const(f"a[{key}]!at", seq), z3.Const(f"b[{key}]!at", seq)
+            self.facts += [
+                z3.ForAll([x], at(z3.Unit(x), self.int(0)) == x, patterns=[z3.Unit(x)]),
+                z3.ForAll([a, b, i], z3.Implies(z3.And(i >= 0, i < z3.Length(a) + z3.Length(b)),
+                                                at(z3.Concat(a, b), i) == z3.If(i < z3.Length(a), at(a, i),
+                                                                                at(b, i - z3.Length(a)))),
+                          patterns=[at(z3.Concat(a, b), i)]),
+            ]
+        return at
+
+    def at(self, xs: z3.ExprRef, i) -> z3.ExprRef:
+        return self.at_fn(xs.sort().basis())(xs, i)
+
     def count_fn(self, elem: z3.SortRef) -> z3.FuncDeclRef:
         """`count(xs, x)` como función recursiva de Z3 sobre la secuencia."""
         key = str(elem)
+        at = self.at_fn(elem)  # también si `count` ya existe: sus axiomas van en cada traductor
         if key not in self.counts:
             seq = z3.SeqSort(elem)
             f = z3.RecFunction(f"count[{key}]", seq, elem, z3.IntSort(self.ctx))
             s, x = z3.Const(f"s[{key}]", seq), z3.Const(f"x[{key}]", elem)
             z3.RecAddDefinition(f, [s, x], z3.If(
                 z3.Length(s) == 0, self.int(0),
-                z3.If(s[0] == x, self.int(1), self.int(0)) + f(z3.SubSeq(s, self.int(1), z3.Length(s) - 1), x)))
+                z3.If(at(s, self.int(0)) == x, self.int(1), self.int(0)) + f(z3.SubSeq(s, self.int(1), z3.Length(s) - 1), x)))
             self.counts[key] = f
         return self.counts[key]
 
@@ -461,7 +490,10 @@ class Translator:
             items = [z3.Unit(self.expr(x, env, path, t.elem)) for x in e.items]
             if not items:
                 return z3.Empty(self.sort(t))
-            return items[0] if len(items) == 1 else z3.Concat(*items)
+            out = items[-1]
+            for u in reversed(items[:-1]):  # binaria y anidada: el axioma de `at` es sobre `a ++ b`
+                out = z3.Concat(u, out)
+            return out
         if isinstance(e, Name):
             return env.vals[e.id]
         if isinstance(e, Call):
@@ -485,7 +517,7 @@ class Translator:
             i = self.expr(e.idx, env, path, INT)
             self.obligate(path, z3.And(i >= 0, i < z3.Length(xs)), "E500",
                           f"index out of range in `{unparse(e)}`")
-            return xs[i]
+            return self.at(xs, i)
         if isinstance(e, Quant):
             return self.quant(e, env, path)
         raise Unsupported(f"node {type(e).__name__}")
@@ -550,17 +582,20 @@ class Translator:
                     return self.count_fn(self.sort(st.elem))(xs, x) > 0
                 if CONTAINS == "exists":
                     i = z3.Int(self.fresh("i"), self.ctx)
-                    return z3.Exists([i], z3.And(i >= 0, i < z3.Length(xs), xs[i] == x), **self.pat(xs[i]))
+                    xi = self.at(xs, i)
+                    return z3.Exists([i], z3.And(i >= 0, i < z3.Length(xs), xi == x), **self.pat(xi))
                 return z3.Contains(xs, z3.Unit(x))
             return self.count_fn(self.sort(st.elem))(xs, x)
         i = z3.Int(self.fresh("i"), self.ctx)
         if e.name == "sorted":
-            return z3.ForAll([i], z3.Implies(z3.And(i >= 0, i + 1 < z3.Length(xs)), xs[i] <= xs[i + 1]),
-                             **self.pat(xs[i]))
+            xi = self.at(xs, i)
+            return z3.ForAll([i], z3.Implies(z3.And(i >= 0, i + 1 < z3.Length(xs)), xi <= self.at(xs, i + 1)),
+                             **self.pat(xi))
         if e.name == "distinct":
             j = z3.Int(self.fresh("j"), self.ctx)
-            return z3.ForAll([i, j], z3.Implies(z3.And(i >= 0, i < j, j < z3.Length(xs)), xs[i] != xs[j]),
-                             **self.pat(z3.MultiPattern(xs[i], xs[j])))
+            xi, xj = self.at(xs, i), self.at(xs, j)
+            return z3.ForAll([i, j], z3.Implies(z3.And(i >= 0, i < j, j < z3.Length(xs)), xi != xj),
+                             **self.pat(z3.MultiPattern(xi, xj)))
         raise Unsupported(f"builtin {e.name}")
 
     def divmod_uf(self, op: str, l: z3.ArithRef, r: z3.ArithRef) -> z3.ArithRef:
@@ -603,8 +638,8 @@ class Translator:
             st = self.type_at(e.subject, env, None)
             assert isinstance(st, TList)
             xs = self.expr(e.subject, env, path, st)
-            guard, val, elem = z3.And(i >= 0, i < z3.Length(xs)), xs[i], st.elem
-            pat = self.pat(xs[i])
+            guard, val, elem = z3.And(i >= 0, i < z3.Length(xs)), self.at(xs, i), st.elem
+            pat = self.pat(val)
         self.binders.append(Binder(i, guard, len(path)))
         try:
             body = self.expr(e.body, env.bind(e.var, val, elem), path, BOOL)
@@ -637,7 +672,7 @@ class Translator:
             return z3.Length(s) == 0, {}
         if isinstance(p, PCons):
             assert isinstance(st, TList)
-            head, tail = s[0], z3.SubSeq(s, self.int(1), z3.Length(s) - 1)
+            head, tail = self.at(s, self.int(0)), z3.SubSeq(s, self.int(1), z3.Length(s) - 1)
             # `s == [h] ++ t` es un teorema de la teoría, pero dicho así Z3 lo usa para partir
             # los cuantificadores sobre `s` en el elemento y la cola (la forma de la inducción).
             # Probado el 2026-09-06 con h y t como constantes nuevas en vez de términos: no ayuda.
@@ -670,10 +705,11 @@ class Translator:
         n = z3.Length(s)
         i = z3.Int(self.fresh("i"), self.ctx)
         self.facts.append(z3.Implies(n > 0, z3.Length(tail) == n - 1))
-        self.facts.append(z3.ForAll([i], z3.Implies(z3.And(n > 0, i >= 0, i < z3.Length(tail)), tail[i] == s[i + 1]),
-                                    **self.pat(tail[i])))
-        self.facts.append(z3.ForAll([i], z3.Implies(z3.And(i >= 1, i < n), s[i] == tail[i - 1]),
-                                    **self.pat(s[i])))
+        ti, si = self.at(tail, i), self.at(s, i)
+        self.facts.append(z3.ForAll([i], z3.Implies(z3.And(n > 0, i >= 0, i < z3.Length(tail)), ti == self.at(s, i + 1)),
+                                    **self.pat(ti)))
+        self.facts.append(z3.ForAll([i], z3.Implies(z3.And(i >= 1, i < n), si == self.at(tail, i - 1)),
+                                    **self.pat(si)))
 
     def facts_concat(self, a: z3.ExprRef, b: z3.ExprRef, ab: z3.ExprRef) -> None:
         """Longitud e índices de `a ++ b` por tramos."""
@@ -682,9 +718,10 @@ class Translator:
         la, lb = z3.Length(a), z3.Length(b)
         i = z3.Int(self.fresh("i"), self.ctx)
         self.facts.append(z3.Length(ab) == la + lb)
-        self.facts.append(z3.ForAll([i], z3.Implies(z3.And(i >= 0, i < la), ab[i] == a[i]), **self.pat(ab[i])))
-        self.facts.append(z3.ForAll([i], z3.Implies(z3.And(i >= la, i < la + lb), ab[i] == b[i - la]), **self.pat(ab[i])))
-        self.facts.append(z3.ForAll([i], z3.Implies(z3.And(i >= 0, i < lb), ab[la + i] == b[i]), **self.pat(b[i])))
+        abi, bi = self.at(ab, i), self.at(b, i)
+        self.facts.append(z3.ForAll([i], z3.Implies(z3.And(i >= 0, i < la), abi == self.at(a, i)), **self.pat(abi)))
+        self.facts.append(z3.ForAll([i], z3.Implies(z3.And(i >= la, i < la + lb), abi == self.at(b, i - la)), **self.pat(abi)))
+        self.facts.append(z3.ForAll([i], z3.Implies(z3.And(i >= 0, i < lb), self.at(ab, la + i) == bi), **self.pat(bi)))
 
     # ---- terminación ----
     def terminates(self, s: z3.Solver, params: list, budget: Budget) -> bool | None:
