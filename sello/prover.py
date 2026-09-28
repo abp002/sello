@@ -336,6 +336,8 @@ class Translator:
         self.counts: dict[str, z3.FuncDeclRef] = shared.counts if shared else {}
         self.ats: dict[str, z3.FuncDeclRef] = shared.ats if shared else {}
         self.at_axioms: set[str] = set()  # sorts cuyos axiomas de `at` ya están en los hechos de este traductor
+        self.cats: dict[str, z3.FuncDeclRef] = shared.cats if shared else {}
+        self.cat_axioms: set[str] = set()  # lo mismo para el axioma de `cat!`
         self.ufs: dict[str, z3.FuncDeclRef | z3.ExprRef] = shared.ufs if shared else {}
         self.n = shared.n if shared else 0
         self.obligations: list[Obligation] = []
@@ -387,7 +389,8 @@ class Translator:
         """`xs[i]` como función no interpretada, no `seq.nth` (ALE-225): con `seq.nth` la teoría de
         secuencias de Z3 no cierra deducciones de dos pasos que con arrays son inmediatas
         (bench/seq_nth.py). Como Dafny con `Seq#Index`: lo que Z3 sabe de `at` son axiomas
-        verdaderos de la semántica de Sello, por tipo de elemento, y los hechos de cada término."""
+        verdaderos de la semántica de Sello, por tipo de elemento, y los hechos de cada término.
+        El de la concatenación se engancha a `cat!`, no a `seq.++` (ALE-253: ver `cat`)."""
         key = str(elem)
         if key not in self.ats:
             self.ats[key] = z3.Function(f"at[{key}]", z3.SeqSort(elem), z3.IntSort(self.ctx), elem)
@@ -395,19 +398,43 @@ class Translator:
         if key not in self.at_axioms:
             self.at_axioms.add(key)
             seq = z3.SeqSort(elem)
+            cat = self.cat_fn(elem)
             x, i = z3.Const(f"x[{key}]!at", elem), z3.Int(f"i[{key}]!at", self.ctx)
             a, b = z3.Const(f"a[{key}]!at", seq), z3.Const(f"b[{key}]!at", seq)
             self.facts += [
                 z3.ForAll([x], at(z3.Unit(x), self.int(0)) == x, patterns=[z3.Unit(x)]),
                 z3.ForAll([a, b, i], z3.Implies(z3.And(i >= 0, i < z3.Length(a) + z3.Length(b)),
-                                                at(z3.Concat(a, b), i) == z3.If(i < z3.Length(a), at(a, i),
-                                                                                at(b, i - z3.Length(a)))),
-                          patterns=[at(z3.Concat(a, b), i)]),
+                                                at(cat(a, b), i) == z3.If(i < z3.Length(a), at(a, i),
+                                                                          at(b, i - z3.Length(a)))),
+                          patterns=[at(cat(a, b), i)]),
             ]
         return at
 
     def at(self, xs: z3.ExprRef, i) -> z3.ExprRef:
         return self.at_fn(xs.sort().basis())(xs, i)
+
+    def cat_fn(self, elem: z3.SortRef) -> z3.FuncDeclRef:
+        key = str(elem)
+        if key not in self.cats:
+            seq = z3.SeqSort(elem)
+            self.cats[key] = z3.Function(f"cat![{key}]", seq, seq, seq)
+        return self.cats[key]
+
+    def cat(self, a: z3.ExprRef, b: z3.ExprRef) -> z3.ExprRef:
+        """`a ++ b` de Sello como `cat!(a, b)`, no interpretada y igual a `seq.++` por axioma
+        (ALE-253). La teoría de secuencias de Z3 descompone cada lista por su cuenta
+        (`l = unit(nth_i(l, 0)) ++ tail(l, 0)`) y E-matching trabaja módulo igualdad: un patrón sobre
+        `seq.++` casaba con cualquier `at(l, j)` (más de 5.000 instancias en DD0753). Sobre `cat!`
+        solo casa con lo que escribe el programa: `++`, las listas literales y `[h, ..t]`."""
+        elem = a.sort().basis()
+        key = str(elem)
+        cat = self.cat_fn(elem)
+        if key not in self.cat_axioms:
+            self.cat_axioms.add(key)
+            seq = z3.SeqSort(elem)
+            x, y = z3.Const(f"x[{key}]!cat", seq), z3.Const(f"y[{key}]!cat", seq)
+            self.facts.append(z3.ForAll([x, y], cat(x, y) == z3.Concat(x, y), patterns=[cat(x, y)]))
+        return cat(a, b)
 
     def count_fn(self, elem: z3.SortRef) -> z3.FuncDeclRef:
         """`count(xs, x)` como función recursiva de Z3 sobre la secuencia."""
@@ -491,8 +518,8 @@ class Translator:
             if not items:
                 return z3.Empty(self.sort(t))
             out = items[-1]
-            for u in reversed(items[:-1]):  # binaria y anidada: el axioma de `at` es sobre `a ++ b`
-                out = z3.Concat(u, out)
+            for u in reversed(items[:-1]):  # binaria y anidada: el axioma de `at` es sobre `cat!(a, b)`
+                out = self.cat(u, out)
             return out
         if isinstance(e, Name):
             return env.vals[e.id]
@@ -548,7 +575,7 @@ class Translator:
         if op == "++":
             t = self.type_at(e, env, want)
             a, b = self.expr(e.left, env, path, t), self.expr(e.right, env, path, t)
-            ab = z3.Concat(a, b)
+            ab = self.cat(a, b)
             if isinstance(t, TList):
                 self.facts_concat(a, b, ab)
             return ab
@@ -680,7 +707,7 @@ class Translator:
             # los cuantificadores sobre `s` en el elemento y la cola (la forma de la inducción).
             # Probado el 2026-09-06 con h y t como constantes nuevas en vez de términos: no ayuda.
             if self.collect:
-                self.facts.append(z3.Implies(z3.Length(s) > 0, s == z3.Concat(z3.Unit(head), tail)))
+                self.facts.append(z3.Implies(z3.Length(s) > 0, s == self.cat(z3.Unit(head), tail)))
                 self.facts_cons(s, tail)
             binds = {}
             if p.head != "_":

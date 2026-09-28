@@ -600,3 +600,45 @@ def test_un_dedupe_que_mete_elementos_de_fuera_es_E201_del_probador():
     assert brazo in src
     e = fails_with(src.replace(brazo, "[h, ..t] => if h == 42 then [42, 43] else " + brazo.removeprefix("[h, ..t] => ")), "E201")
     assert e.extra["found_by"] == "prover" and e.function == "dedupe", e.to_dict()
+
+
+@settings(max_examples=300, deadline=None)
+@given(st.lists(st.integers(-3, 3), max_size=4), st.lists(st.integers(-3, 3), max_size=4),
+       st.integers(-2, 9), st.integers(-3, 3))
+def test_los_axiomas_globales_de_las_listas_son_verdad_con_la_semantica_de_sello(xs, ys, i, x):
+    """`at` es indexar y `cat!` es concatenar (ALE-225, ALE-253). Cada axioma global del traductor,
+    instanciado con listas concretas, tiene que ser verdad: uno falso hace que el probador certifique
+    una función que falla."""
+    program, _ = compile_source(FACT)
+    ctx = z3.Context()
+    tr = pr.Translator(program, program.fns[0], ctx)
+    elem, seq = z3.IntSort(ctx), z3.SeqSort(z3.IntSort(ctx))
+    at, cat = tr.at_fn(elem), tr.cat_fn(elem)
+    tr.cat(z3.Empty(seq), z3.Empty(seq))
+
+    def lista(vs: list[int]) -> z3.SeqRef:
+        return z3.Concat(*[z3.Unit(z3.IntVal(v, ctx)) for v in vs]) if len(vs) > 1 else (
+            z3.Unit(z3.IntVal(vs[0], ctx)) if vs else z3.Empty(seq))
+
+    def evalua(t: z3.ExprRef) -> z3.ExprRef:
+        """`cat!` como `++` y `at` como el índice de Python, de dentro afuera. Un `at` fuera de rango
+        se queda sin evaluar: solo puede aparecer en la rama que no se toma."""
+        if not z3.is_app(t) or t.num_args() == 0:
+            return t
+        args = [evalua(c) for c in t.children()]
+        if t.decl() == cat:
+            return z3.simplify(z3.Concat(*args))
+        if t.decl() == at:
+            s, k = z3.simplify(args[0]), z3.simplify(args[1])
+            vs = pr.value(s, TList(INT))
+            if z3.is_int_value(k) and 0 <= k.as_long() < len(vs):
+                return z3.IntVal(vs[k.as_long()], ctx)
+        return t.decl()(*args)
+
+    valores = {"x[Int]!at": z3.IntVal(x, ctx), "i[Int]!at": z3.IntVal(i, ctx),
+               "a[Int]!at": lista(xs), "b[Int]!at": lista(ys), "x[Int]!cat": lista(xs), "y[Int]!cat": lista(ys)}
+    assert len(tr.facts) == 3, "un axioma global nuevo tiene que entrar en este test"
+    for q in tr.facts:
+        n = q.num_vars()
+        inst = z3.substitute_vars(q.body(), *[valores[q.var_name(n - 1 - j)] for j in range(n)])
+        assert z3.is_true(z3.simplify(evalua(z3.simplify(inst)))), (xs, ys, i, x, q)
