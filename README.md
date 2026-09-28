@@ -182,6 +182,18 @@ nada. El prerregistro no se cumple por una tarea: `DD0753` (`drop(l, n) ++ take(
 tiene issue propio (ALE-249). `intersect` con `count` (ALE-172) sigue sin decidirse. Resultados en
 `bench/resultados/*225*`.
 
+**`DD0753` vuelve con el resto a una vuelta del rango** (28 de septiembre de 2026): la pérdida de
+ALE-225 la explicaba la aritmética, no los patrones. `(i + n) % len(l)` con divisor variable es no
+lineal: con `seq.nth`, MBQI la cerraba dentro de su tope; con `at`, el mismo cálculo toma otro
+camino y no cierra. Los patrones sí forman un bucle de instanciación, y el axioma global de `at`
+sobre `++` casa además con las concatenaciones que crea la teoría de secuencias al descomponer cada
+lista (ALE-253), pero quitarlos no basta. La fase `u` sabía que `a % b == a` si `0 <= a < b`, pero
+no cuánto vale el resto a una vuelta del rango, que es lo que usa una rotación. Con dos axiomas
+lineales más (`b <= a < 2b` y `-b <= a < 0`), la prueba sale con 4.071 de trabajo. Sin modelo,
+**174** de 200 (dos pasadas idénticas tarea a tarea, ninguna perdida: prerregistro cumplido).
+`bench/patrones.py` enseña cuántas veces se instancia cada cuantificador y con qué patrones trabaja
+Z3. Resultados en `bench/resultados/*249*`.
+
     uv sync --extra dev
     uv run sello check ejemplos/basicos.sello     # parse, tipos, ejemplos, probador (nivel 2)
     uv run sello add ejemplos/basicos.sello       # al almacén, con certificado
@@ -207,7 +219,7 @@ tiene issue propio (ALE-249). `intersect` con `count` (ALE-172) sigue sin decidi
    para que los agentes consulten el almacén.~~ ~~Enlace del almacén en `check` y `add`: una
    función guardada se llama por su nombre sin copiarla y el probador usa su contrato.~~ ~~El
    índice de las listas como función no interpretada, como `Seq#Index` en Dafny: de 163 a 173
-   de 200 sin modelo.~~ Pendiente: lo que Z3 sigue sin decidir sobre secuencias (`count` en
+   de 200 sin modelo.~~ ~~El resto de `%` a una vuelta del rango en la fase u: 174.~~ Pendiente: lo que Z3 sigue sin decidir sobre secuencias (`count` en
    `intersect`), guardas en tiempo de ejecución para lo no probado (nivel 3).
 4. **Benchmark**: ~~contra el conjunto público de vericoding: traductor Dafny → Sello, 199 de
    2.334 specs caben tal cual, primera corrida en condición `sello_contrato`: sonnet 46/50 y
