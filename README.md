@@ -169,6 +169,19 @@ secuencias de Z3 no cierra con `seq.nth` una deducción de dos pasos que con arr
 paso, prerregistrado aparte: codificar el índice como función no interpretada, como hace Dafny
 (ALE-225).
 
+**El índice va a Z3 como función opaca, y `dedupe` llega a nivel 2** (28 de septiembre de 2026):
+`xs[i]`, y todo lo que se traducía con `seq.nth` (`contains`, `sorted`, `distinct`, los
+cuantificadores sobre listas, la cabeza de `[h, ..t]` y `count`), pasa a ser una función no
+interpretada `at(xs, i)`, como `Seq#Index` en Dafny, con dos axiomas por tipo de elemento: el de la
+lista de un elemento y el de la concatenación por tramos. Las listas siguen siendo secuencias de Z3
+para la longitud, `++` y la igualdad. Sin modelo, las mismas 200 tareas pasan de 163 a **173**
+probadas (dos pasadas idénticas tarea a tarea, 3 min 30 s cada una), `dedupe` llega a nivel 2 y un
+cuerpo que mete elementos de fuera sale E201 con la entrada que lo rompe, cosa que antes no cazaba
+nada. El prerregistro no se cumple por una tarea: `DD0753` (`drop(l, n) ++ take(l, n)` con el
+índice `(i + n) % len(l)`) se probaba siempre y ahora nunca. El cambio se queda, y esa pérdida
+tiene issue propio (ALE-249). `intersect` con `count` (ALE-172) sigue sin decidirse. Resultados en
+`bench/resultados/*225*`.
+
     uv sync --extra dev
     uv run sello check ejemplos/basicos.sello     # parse, tipos, ejemplos, probador (nivel 2)
     uv run sello add ejemplos/basicos.sello       # al almacén, con certificado
@@ -192,9 +205,10 @@ paso, prerregistrado aparte: codificar el índice como función no interpretada,
    Hechos de cons y concat para la teoría de secuencias: 55 %. La hipótesis de inducción como
    implicación por llamada (bug de solidez destapado por vericoding): 74 % y 58 %.~~ ~~Servidor MCP (`sello mcp`)
    para que los agentes consulten el almacén.~~ ~~Enlace del almacén en `check` y `add`: una
-   función guardada se llama por su nombre sin copiarla y el probador usa su contrato.~~ Pendiente: otra codificación de las listas
-   para lo que Z3 no decide (cuantificadores sobre secuencias), guardas en tiempo de ejecución
-   para lo no probado (nivel 3).
+   función guardada se llama por su nombre sin copiarla y el probador usa su contrato.~~ ~~El
+   índice de las listas como función no interpretada, como `Seq#Index` en Dafny: de 163 a 173
+   de 200 sin modelo.~~ Pendiente: lo que Z3 sigue sin decidir sobre secuencias (`count` en
+   `intersect`), guardas en tiempo de ejecución para lo no probado (nivel 3).
 4. **Benchmark**: ~~contra el conjunto público de vericoding: traductor Dafny → Sello, 199 de
    2.334 specs caben tal cual, primera corrida en condición `sello_contrato`: sonnet 46/50 y
    haiku 44/50 en nivel 2 sobre una muestra de 50.~~ ~~Cuantificadores sobre rangos de enteros

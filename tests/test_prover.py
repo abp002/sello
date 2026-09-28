@@ -491,8 +491,8 @@ def test_el_contrato_de_dedupe_rechaza_un_resultado_con_elementos_de_fuera():
     # ALE-193: el contrato de `dedupe` en basicos.sello pedía que el resultado contuviera todo lo
     # de `xs`, no que solo tuviera cosas de `xs`: `dedupe([42]) == [42, 43]` lo cumplía. Sin esa
     # cláusula, además, la prueba modular de `distinct` es imposible. Se evalúa el contrato con el
-    # intérprete: que el probador encuentre ese contraejemplo depende de la codificación de
-    # secuencias en Z3, que hoy no lo consigue.
+    # intérprete, sin el probador: que el probador encuentre ese contraejemplo lo comprueba
+    # test_un_dedupe_que_mete_elementos_de_fuera_es_E201_del_probador (ALE-225).
     from pathlib import Path
     src = (Path(__file__).resolve().parents[1] / "ejemplos" / "basicos.sello").read_text()
     program, interp = compile_source(src)
@@ -503,3 +503,23 @@ def test_el_contrato_de_dedupe_rechaza_un_resultado_con_elementos_de_fuera():
 
     assert cumple([42], [42])
     assert not cumple([42], [42, 43])
+
+
+def test_dedupe_de_basicos_se_prueba_en_nivel_2():
+    # ALE-225: la prueba modular de `distinct([h] ++ r)` relaciona `([h] ++ r)[j]` con `r[j - 1]`, y
+    # con `seq.nth` Z3 no cerraba esa deducción de dos pasos (bench/seq_nth.py). Con el índice como
+    # función no interpretada `at`, como `Seq#Index` en Dafny, sí. Las demás de basicos, también.
+    from pathlib import Path
+    r = check_source((Path(__file__).resolve().parents[1] / "ejemplos" / "basicos.sello").read_text())
+    assert r["ok"] and r["proven"] == len(r["functions"]), r
+
+
+def test_un_dedupe_que_mete_elementos_de_fuera_es_E201_del_probador():
+    # ALE-225: el cuerpo malo de ALE-193 pasa los ejemplos (ninguno lleva un 42) y con `seq.nth` se
+    # quedaba en nivel 1 sin que nada lo cazara. Con `at`, el probador encuentra la entrada.
+    from pathlib import Path
+    src = (Path(__file__).resolve().parents[1] / "ejemplos" / "basicos.sello").read_text()
+    brazo = "[h, ..t] => if contains_in(t, h) then dedupe(t) else [h] ++ dedupe(t)"
+    assert brazo in src
+    e = fails_with(src.replace(brazo, "[h, ..t] => if h == 42 then [42, 43] else " + brazo.removeprefix("[h, ..t] => ")), "E201")
+    assert e.extra["found_by"] == "prover" and e.function == "dedupe", e.to_dict()
