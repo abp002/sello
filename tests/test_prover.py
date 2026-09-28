@@ -404,6 +404,83 @@ fn g(n: Int, k: Int) -> Bool
     assert verdict(src).status != pr.PROVEN
 
 
+def _axiomas_u() -> tuple[list, z3.FuncDeclRef, z3.FuncDeclRef, z3.Context]:
+    program, _ = compile_source(PRIMO)
+    ctx = z3.Context()
+    tr = pr.Translator(program, program.fns[0], ctx, uf_arith=True)
+    tr.divmod_uf("%", z3.IntVal(1, ctx), z3.Int("k", ctx))
+    return tr.facts, tr.divmod["/"], tr.divmod["%"], ctx
+
+
+@settings(max_examples=400, deadline=None)
+@given(st.integers(-60, 60), st.integers(-15, 15).filter(lambda b: b != 0))
+def test_los_axiomas_de_la_fase_u_son_verdad_con_la_aritmetica_de_python(a, b):
+    """Lo que la fase u prueba vale con la aritmética real solo si cada axioma de `div!` y `mod!`
+    se cumple con la `//` y el `%` de Python, que son los de Sello. Un axioma falso en un solo
+    punto hace que el probador certifique una función que falla."""
+    facts, div, mod, ctx = _axiomas_u()
+    for q in facts:
+        valores = {"a!": z3.IntVal(a, ctx), "b!": z3.IntVal(b, ctx)}
+        n = q.num_vars()
+        # índices de De Bruijn: la variable 0 es la última declarada
+        inst = z3.substitute_vars(q.body(), *[valores[q.var_name(n - 1 - j)] for j in range(n)])
+        inst = z3.substitute(inst, (mod(valores["a!"], valores["b!"]), z3.IntVal(a % b, ctx)),
+                             (div(valores["a!"], valores["b!"]), z3.IntVal(a // b, ctx)))
+        assert z3.is_true(z3.simplify(inst)), (a, b, q)
+
+
+# ---------- ALE-249: el resto a una vuelta del rango (rotaciones) ----------
+
+ROTAR = """
+fn drop(xs: List[Int], k: Int) -> List[Int]
+  requires k >= 0 and k <= len(xs)
+  ensures len(result) == len(xs) - k
+  ensures forall i in 0..len(result): result[i] == xs[i + k]
+  effects pure
+  example drop([1, 2, 3], 1) == [2, 3]
+  example drop([1, 2, 3], 3) == []
+{
+  if k == 0 then xs else match xs {
+    [] => []
+    [_, ..t] => drop(t, k - 1)
+  }
+}
+
+fn take(xs: List[Int], k: Int) -> List[Int]
+  requires k >= 0 and k <= len(xs)
+  ensures len(result) == k
+  ensures forall i in 0..len(result): result[i] == xs[i]
+  effects pure
+  example take([1, 2, 3], 2) == [1, 2]
+  example take([1, 2, 3], 0) == []
+{
+  if k == 0 then [] else match xs {
+    [] => []
+    [h, ..t] => [h] ++ take(t, k - 1)
+  }
+}
+
+fn SplitAndAppend(l: List[Int], n: Int) -> List[Int]
+  requires (n >= 0)
+  requires (n < len(l))
+  ensures (len(result) == len(l))
+  ensures forall i in 0..len(l): (result[i] == l[((i + n) % len(l))])
+  effects pure
+  example SplitAndAppend([1, 2, 3, 4], 1) == [2, 3, 4, 1]
+  example SplitAndAppend([1, 2, 3, 4], 3) == [4, 1, 2, 3]
+{
+  drop(l, n) ++ take(l, n)
+}
+"""
+
+
+def test_la_rotacion_con_resto_de_una_vuelta_se_prueba_en_nivel_2():
+    # ALE-249: DD0753 de vericoding (sonnet 09-12, intento 1), en nivel 2 con a52e7f2 y en nivel 1
+    # desde el índice como función opaca (0466525). `(i + n) % len(l)` con `0 <= i + n < 2 * len(l)`:
+    # lo exacto es no lineal, y la fase u no sabía cuánto vale el resto a una vuelta del rango.
+    assert verdict(ROTAR, "SplitAndAppend").status == pr.PROVEN
+
+
 # ---------- presupuesto de trabajo, no de reloj (ALE-175) ----------
 
 def test_sin_trabajo_es_unknown_no_error_y_no_culpa_al_reloj():

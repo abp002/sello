@@ -604,8 +604,9 @@ class Translator:
         decide y que, dentro de un cuantificador, le hace abandonar pruebas que no la necesitan
         (la primalidad por recursión solo necesita partir el rango). Los axiomas son hechos
         verdaderos de la semántica de Sello (redondeo hacia abajo, resto con el signo del
-        divisor), así que lo que se prueba aquí vale con la aritmética real; un contraejemplo
-        de esta fase no se cree sin que el intérprete lo reproduzca, como todos."""
+        divisor, y cuánto vale el resto a menos de una vuelta del rango: lo que usa una rotación
+        `(i + n) % len(xs)`, ALE-249), así que lo que se prueba aquí vale con la aritmética real;
+        un contraejemplo de esta fase no se cree sin que el intérprete lo reproduzca, como todos."""
         if not self.divmod:
             i = z3.IntSort(self.ctx)
             div, mod = z3.Function("div!", i, i, i), z3.Function("mod!", i, i, i)
@@ -615,6 +616,8 @@ class Translator:
                 z3.ForAll([a, b], z3.Implies(b > 0, z3.And(mod(a, b) >= 0, mod(a, b) < b)), patterns=[mod(a, b)]),
                 z3.ForAll([a, b], z3.Implies(b < 0, z3.And(mod(a, b) > b, mod(a, b) <= 0)), patterns=[mod(a, b)]),
                 z3.ForAll([a, b], z3.Implies(z3.And(b > 0, a >= 0, a < b), mod(a, b) == a), patterns=[mod(a, b)]),
+                z3.ForAll([a, b], z3.Implies(z3.And(b > 0, a >= b, a < 2 * b), mod(a, b) == a - b), patterns=[mod(a, b)]),
+                z3.ForAll([a, b], z3.Implies(z3.And(b > 0, a >= -b, a < 0), mod(a, b) == a + b), patterns=[mod(a, b)]),
                 z3.ForAll([a, b], z3.Implies(z3.And(b > 0, a >= 0), z3.And(div(a, b) >= 0, div(a, b) <= a)),
                           patterns=[div(a, b)]),
             ]
