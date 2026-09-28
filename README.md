@@ -194,6 +194,16 @@ lineales más (`b <= a < 2b` y `-b <= a < 0`), la prueba sale con 4.071 de traba
 `bench/patrones.py` enseña cuántas veces se instancia cada cuantificador y con qué patrones trabaja
 Z3. Resultados en `bench/resultados/*249*`.
 
+**El axioma de la concatenación solo casa con lo que escribe el programa** (28 de septiembre de
+2026): el `++` de Sello va a Z3 como `cat!(a, b)`, una función no interpretada igual a `seq.++` por
+axioma, y el axioma de `at` por tramos se engancha a `cat!`. Antes se enganchaba a `seq.++`, y como
+la teoría de secuencias descompone cada lista por su cuenta, se disparaba sobre cualquier índice: en
+`DD0753`, 5.071 instancias; ahora, 467. Un test de propiedad contrasta los tres axiomas globales de
+las listas con la semántica de Sello. Sin modelo: gana `DH0104` en las dos pasadas (**175**). El
+prerregistro no se cumple, porque la segunda pasada pierde `DH0021`, una tarea sin listas que decide
+el reloj con la máquina cargada (el probador de antes la pierde igual). El cambio se queda.
+Resultados en `bench/resultados/*253*`.
+
     uv sync --extra dev
     uv run sello check ejemplos/basicos.sello     # parse, tipos, ejemplos, probador (nivel 2)
     uv run sello add ejemplos/basicos.sello       # al almacén, con certificado
@@ -219,7 +229,8 @@ Z3. Resultados en `bench/resultados/*249*`.
    para que los agentes consulten el almacén.~~ ~~Enlace del almacén en `check` y `add`: una
    función guardada se llama por su nombre sin copiarla y el probador usa su contrato.~~ ~~El
    índice de las listas como función no interpretada, como `Seq#Index` en Dafny: de 163 a 173
-   de 200 sin modelo.~~ ~~El resto de `%` a una vuelta del rango en la fase u: 174.~~ Pendiente: lo que Z3 sigue sin decidir sobre secuencias (`count` en
+   de 200 sin modelo.~~ ~~El resto de `%` a una vuelta del rango en la fase u: 174.~~ ~~El axioma de `++` solo sobre
+   las concatenaciones del programa: 175.~~ Pendiente: lo que Z3 sigue sin decidir sobre secuencias (`count` en
    `intersect`), guardas en tiempo de ejecución para lo no probado (nivel 3).
 4. **Benchmark**: ~~contra el conjunto público de vericoding: traductor Dafny → Sello, 199 de
    2.334 specs caben tal cual, primera corrida en condición `sello_contrato`: sonnet 46/50 y
