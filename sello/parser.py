@@ -5,7 +5,7 @@ from __future__ import annotations
 from .errors import SelloError
 from .lexer import Token, lex, pegado
 from .nodes import (
-    ANY, BOOL, INT, TEXT, Arm, Binary, BoolLit, Call, Expr, Fn, If, Index, IntLit, ListLit,
+    ANY, BOOL, INT, TEXT, Arm, Binary, BoolLit, Call, Expr, Fn, Hole, If, Index, IntLit, ListLit,
     Match, Name, NoneLit, Param, Pattern, PCons, PEmpty, PNone, PSome, PWild, Program,
     Quant, RangeExpr, SomeExpr, TextLit, TList, TOption, Type, Unary,
 )
@@ -99,7 +99,11 @@ class Parser:
                 examples.append(self.expr())
 
         self.expect_sym("{")
-        body = self.expr()
+        if self.at_kw("sorry"):
+            t = self.advance()
+            body: Expr = Hole(line=t.line, col=t.col)
+        else:
+            body = self.expr()
         self.expect_sym("}")
         return Fn(name, params, ret, requires, ensures, effects, examples, body,
                   line=start.line, col=start.col)
@@ -237,6 +241,8 @@ class Parser:
                 inner = self.expr()
                 self.expect_sym(")")
                 return SomeExpr(inner, line=t.line, col=t.col)
+            if t.value == "sorry":
+                raise self.fail("`sorry` stands only for a whole body, as in `{ sorry }`; expected an expression")
         if t.kind == "SYM" and t.value == "[":
             self.advance()
             items: list[Expr] = []

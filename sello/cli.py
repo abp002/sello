@@ -30,7 +30,7 @@ def _guard(f):
 
 @_guard
 def cmd_add(args):
-    return {"ok": True, "added": _store(args).add(Path(args.file).read_text())}
+    return {"ok": True, "added": _store(args).add(Path(args.file).read_text(), author=args.author)}
 
 
 @_guard
@@ -127,7 +127,7 @@ def cmd_test(args: argparse.Namespace) -> int:
 
 def cmd_mcp(args: argparse.Namespace) -> int:
     from .mcp import serve
-    serve(args.store)
+    serve(args.store, args.author)
     return 0
 
 
@@ -155,8 +155,11 @@ def main(argv: list[str] | None = None) -> int:
             sp.add_argument(a)
         sp.add_argument("--store", default=".sello/store.db")
         sp.set_defaults(f=fn)
+        if name == "add":
+            sp.add_argument("--author", default=None, help="who writes this file: signs new contracts and bodies")
     m = sub.add_parser("mcp", help="serve the store and the compiler to agents over MCP (stdio)")
     m.add_argument("--store", default=".sello/store.db")
+    m.add_argument("--author", default=None, help="the agent behind this server: signs what sello_add stores")
     m.set_defaults(f=cmd_mcp)
     args = p.parse_args(argv)
     return args.f(args)

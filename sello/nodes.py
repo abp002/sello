@@ -200,6 +200,12 @@ class Quant(Expr):
     body: Expr
 
 
+@dataclass
+class Hole(Expr):
+    """`sorry`: el cuerpo que falta. Solo como cuerpo entero, `{ sorry }`: la función es un
+    contrato que espera implementación."""
+
+
 def children(e: Expr) -> list[Expr]:
     """Subexpresiones directas, para recorridos que no distinguen nodos."""
     if isinstance(e, SomeExpr):
@@ -245,6 +251,10 @@ class Fn:
     body: Expr
     line: int = 0
     col: int = 0
+
+    @property
+    def hole(self) -> bool:
+        return isinstance(self.body, Hole)
 
 
 @dataclass

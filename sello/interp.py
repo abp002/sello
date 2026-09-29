@@ -78,6 +78,9 @@ class Interpreter:
             if not self.eval(r, env, name):
                 raise SelloError("E300", f"{shown} violates `requires {unparse(r)}`",
                                  line, col, caller or name, {"call": shown})
+        if fn.hole:
+            raise SelloError("E502", f"{shown}: the body of `{name}` is `sorry`",
+                             line, col, caller or name, {"call": shown})
         try:
             value = self.eval(fn.body, env, name)
         except RecursionError:

@@ -37,9 +37,10 @@ def _guard(f):
     return run
 
 
-def build(store_path: str) -> MCPServer:
+def build(store_path: str, author: str | None = None) -> MCPServer:
     """El servidor con sus tools. El almacén se abre por llamada: sqlite no comparte conexiones
-    entre hilos y así cada tool ve lo último."""
+    entre hilos y así cada tool ve lo último. El autor lo fija quien lanza el servidor, no el
+    modelo: es lo que protege el contrato de un hueco (E103)."""
     server = MCPServer(
         "sello",
         instructions="Sello is a programming language whose user is an AI. Call sello_spec first "
@@ -66,8 +67,8 @@ def build(store_path: str) -> MCPServer:
     @server.tool()
     @_guard
     def sello_add(source: str) -> dict:
-        """Check a Sello program and add its functions to the store, each with its certificate. Names become aliases of the hashes. Calls to functions already in the store are linked by name, as in sello_check."""
-        return {"ok": True, "added": store().add(source)}
+        """Check a Sello program and add its functions to the store, each with its certificate. Names become aliases of the hashes. Calls to functions already in the store are linked by name, as in sello_check. A body `{ sorry }` stores a contract waiting for an implementation (spec §5)."""
+        return {"ok": True, "added": store().add(source, author=author)}
 
     @server.tool()
     @_guard
@@ -114,5 +115,5 @@ def build(store_path: str) -> MCPServer:
     return server
 
 
-def serve(store_path: str = ".sello/store.db") -> None:
-    build(store_path).run(transport="stdio")
+def serve(store_path: str = ".sello/store.db", author: str | None = None) -> None:
+    build(store_path, author).run(transport="stdio")

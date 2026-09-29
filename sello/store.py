@@ -4,6 +4,10 @@ Verificada una vez, verificada para siempre: un hash probado (nivel 2) no se vue
 verificar. Uno de nivel 1 sí se reintenta en cada `add`, por si ahora se prueba (ALE-171). Como el hash de un llamador incluye el hash del llamado, cambiar una
 dependencia invalida solo a quien la usa. El nivel 2 es modular: lo que da por bueno se lee
 en su cierre (`closure`).
+
+Un contrato puede entrar sin cuerpo, `{ sorry }`: es un hueco, y su hash es el de su contrato
+(`contract_hashes`). Lo rellena la función que, con el cuerpo cambiado por `sorry`, da ese hash.
+El contrato es de quien lo escribe (`origins`): solo su autor le cambia el contrato a ese nombre.
 """
 
 from __future__ import annotations
@@ -15,9 +19,9 @@ import sqlite3
 from pathlib import Path
 
 from .checker import Checker, signature
-from .compile import run_examples
+from .compile import level, run_examples
 from .errors import SelloError
-from .hash import _sccs, callees, hash_program, short
+from .hash import _sccs, callees, contract_hashes, hash_program, short
 from .interp import Interpreter
 from .nodes import Call, Expr, Fn, Program
 from .parser import parse
@@ -30,7 +34,10 @@ CREATE TABLE IF NOT EXISTS functions (
   requires TEXT, ensures TEXT, deps TEXT, created_at TEXT);
 CREATE TABLE IF NOT EXISTS names (name TEXT PRIMARY KEY, hash TEXT, updated_at TEXT);
 CREATE TABLE IF NOT EXISTS certificates (
-  hash TEXT PRIMARY KEY, level INTEGER, ok INTEGER, examples INTEGER, verified_at TEXT, error TEXT);
+  hash TEXT PRIMARY KEY, level INTEGER, ok INTEGER, examples INTEGER, verified_at TEXT, error TEXT,
+  pending INTEGER NOT NULL DEFAULT 0);
+CREATE TABLE IF NOT EXISTS origins (
+  hash TEXT PRIMARY KEY, contract TEXT, contract_author TEXT, body_author TEXT);
 """
 
 
@@ -58,6 +65,10 @@ class Store:
         self.db = sqlite3.connect(self.path)
         self.db.row_factory = sqlite3.Row
         self.db.executescript(SCHEMA)
+        # Los almacenes de antes de los huecos (2026-09-29) no tienen ejemplos pendientes.
+        if "pending" not in {r["name"] for r in self.db.execute("PRAGMA table_info(certificates)")}:
+            self.db.execute("ALTER TABLE certificates ADD COLUMN pending INTEGER NOT NULL DEFAULT 0")
+            self.db.commit()
 
     # ---------- consultas ----------
     def resolve(self, name: str) -> str:
@@ -76,10 +87,38 @@ class Store:
         row = self.db.execute("SELECT * FROM certificates WHERE hash = ?", (h,)).fetchone()
         if row is None:
             return None
-        d = {"level": row["level"], "ok": bool(row["ok"]), "examples": row["examples"],
-             "verified_at": row["verified_at"]}
+        d = {"level": row["level"], "ok": bool(row["ok"]), "examples": row["examples"]}
+        if row["pending"]:
+            d["pending"] = row["pending"]  # ejemplos que llegan a un hueco: ni pasan ni fallan
+        d["verified_at"] = row["verified_at"]
         if row["error"]:
             d["error"] = json.loads(row["error"])
+        return d
+
+    def origin(self, h: str) -> sqlite3.Row | None:
+        """Contrato y autores de `h`. None en lo guardado antes de los huecos."""
+        return self.db.execute("SELECT * FROM origins WHERE hash = ?", (h,)).fetchone()
+
+    def is_hole(self, h: str) -> bool:
+        """Un hueco es su propio contrato."""
+        o = self.origin(h)
+        return o is not None and o["contract"] == h
+
+    def _authorship(self, h: str) -> dict:
+        """Lo que se sabe del origen de `h`: si es un hueco o qué hueco rellena, y quién escribió
+        su contrato y su cuerpo."""
+        o = self.origin(h)
+        if o is None:
+            return {}
+        d: dict = {}
+        if o["contract"] == h:
+            d["hole"] = True
+        elif self.is_hole(o["contract"]):
+            d["implements"] = short(o["contract"])
+        if o["contract_author"] is not None:
+            d["contract_author"] = o["contract_author"]
+        if o["body_author"] is not None:
+            d["body_author"] = o["body_author"]
         return d
 
     def closure(self, h: str) -> dict:
@@ -98,7 +137,8 @@ class Store:
             lv = cert["level"] if cert and cert["ok"] else 0
             level = min(level, lv)
             if x != h and lv < 2:
-                rests_on.append({"name": row["name"], "hash": short(x), "level": lv})
+                rests_on.append({"name": row["name"], "hash": short(x), "level": lv,
+                                 **({"hole": True} if self.is_hole(x) else {})})
             for dh in json.loads(row["deps"]).values():
                 if dh not in seen:
                     seen.add(dh)
@@ -112,7 +152,8 @@ class Store:
 
     def names(self) -> list[dict]:
         rows = self.db.execute("SELECT n.name, n.hash, f.signature FROM names n JOIN functions f ON f.hash = n.hash ORDER BY n.name").fetchall()
-        return [{"name": r["name"], "hash": short(r["hash"]), "signature": r["signature"]} for r in rows]
+        return [{"name": r["name"], "hash": short(r["hash"]), "signature": r["signature"],
+                 **({"hole": True} if self.is_hole(r["hash"]) else {})} for r in rows]
 
     def sig(self, name: str) -> dict:
         """Firma + contrato + certificado. Sin cuerpo: es lo que lee la IA."""
@@ -120,7 +161,7 @@ class Store:
         f = self.function(h)
         return {"name": name, "hash": short(h), "signature": f["signature"],
                 "requires": json.loads(f["requires"]), "ensures": json.loads(f["ensures"]),
-                "effects": f["effects"], "certificate": self._report(h)}
+                "effects": f["effects"], **self._authorship(h), "certificate": self._report(h)}
 
     def view(self, name: str) -> dict:
         h = self.resolve(name)
@@ -138,6 +179,24 @@ class Store:
             if r["hash"] != h and h in json.loads(r["deps"]).values():
                 out.append({"name": r["name"], "hash": short(r["hash"])})
         return sorted(out, key=lambda x: x["name"])
+
+    def _named_on(self, h: str) -> list[dict]:
+        """Los nombres cuya función alcanza `h` por sus deps, sin ser `h`. Al rellenar un hueco,
+        los que siguen llamándolo: su hash lleva el del hueco y hay que añadirlos otra vez."""
+        rows = self.db.execute("SELECT name, hash FROM names ORDER BY name").fetchall()
+        return [{"name": r["name"], "hash": short(r["hash"])} for r in rows
+                if r["hash"] != h and self._reaches(r["hash"], h)]
+
+    def _reaches(self, start: str, target: str) -> bool:
+        seen, pending = {start}, [start]
+        while pending:
+            for dh in json.loads(self.function(pending.pop())["deps"]).values():
+                if dh == target:
+                    return True
+                if dh not in seen:
+                    seen.add(dh)
+                    pending.append(dh)
+        return False
 
     # ---------- carga de programas desde el almacén ----------
     def load_closure(self, roots: list[str]) -> tuple[Program, dict[str, str]]:
@@ -191,8 +250,9 @@ class Store:
         return self.load_closure(roots)
 
     # ---------- añadir y verificar ----------
-    def add(self, src: str) -> list[dict]:
-        """Comprueba el fichero, hashea, verifica lo no certificado y actualiza alias."""
+    def add(self, src: str, author: str | None = None) -> list[dict]:
+        """Comprueba el fichero, hashea, verifica lo no certificado y actualiza alias. `author`
+        firma los contratos nuevos y los cuerpos; el contrato de un hueco sigue siendo de su autor."""
         program = parse(src)
         linked, external = self.link(program)
         Checker(linked).check()
@@ -205,6 +265,8 @@ class Store:
         for name, h in hash_program(reimpreso, external).items():
             if hashes[name] != h:
                 raise SelloError("E501", f"the canonical text of `{name}` reparses to a different function; nothing was stored")
+        contracts = contract_hashes(program, external)
+        self._guard(program, contracts, author)
         interp = Interpreter(linked)
         fns = {f.name: f for f in program.fns}
         deps_of = {f.name: {n: hashes[n] for n in callees(f)} for f in program.fns}
@@ -222,36 +284,77 @@ class Store:
                     (h, fn.name, unparse_fn(fn), signature(fn), str(fn.ret), fn.effects,
                      json.dumps([unparse(r) for r in fn.requires]), json.dumps([unparse(e) for e in fn.ensures]),
                      json.dumps(deps_of[fn.name]), _now()))
+                self._record_origin(h, contracts[name], author)
                 cert = self.certificate(h)
                 cached[name] = bool(cert and cert["ok"] and cert["level"] >= 2)
                 if cached[name]:
                     continue
-                if verdicts is None:
-                    verdicts = prove_program(linked, only=set(own))
+                if verdicts is None:  # un hueco no se prueba: entra en los demás por su contrato
+                    verdicts = prove_program(linked, only={n for n, f in own.items() if not f.hole})
                 try:
-                    self._certify(h, own[name], interp, verdicts[name])
+                    self._certify(h, own[name], interp, verdicts.get(name))
                 except SelloError:
                     self.db.commit()
                     raise
             for name in comp:
                 self._alias(name, hashes[name])
         self.db.commit()
-        return [{"name": f.name, "hash": short(hashes[f.name]), "cached": cached[f.name],
-                 "certificate": self._report(hashes[f.name])} for f in program.fns]
+        return [self._added(f.name, hashes[f.name], cached[f.name]) for f in program.fns]
 
-    def _certify(self, h: str, fn: Fn, interp: Interpreter, verdict: Verdict) -> None:
-        """Ejemplos (nivel 1) y, si el probador la probó, nivel 2. Un fallo deja certificado
-        fallido con el error y se relanza."""
+    def _added(self, name: str, h: str, cached: bool) -> dict:
+        d = {"name": name, "hash": short(h), "cached": cached, **self._authorship(h)}
+        if "implements" in d:
+            on_hole = self._named_on(self.origin(h)["contract"])
+            if on_hole:
+                d["callers_on_hole"] = on_hole
+        d["certificate"] = self._report(h)
+        return d
+
+    def _guard(self, program: Program, contracts: dict[str, str], author: str | None) -> None:
+        """E103, antes de guardar nada. Un nombre cuyo contrato nació como hueco (relleno o no)
+        solo cambia de contrato de la mano del autor del hueco; el cuerpo lo escribe cualquiera.
+        Sin autores (None frente a None) no se bloquea nada."""
+        for f in program.fns:
+            row = self.db.execute("SELECT hash FROM names WHERE name = ?", (f.name,)).fetchone()
+            o = row and self.origin(row["hash"])
+            if not o or contracts[f.name] == o["contract"] or not self.is_hole(o["contract"]):
+                continue
+            owner = self.origin(o["contract"])["contract_author"]
+            if author != owner:
+                raise SelloError("E103", f"`{f.name}` holds the contract {short(o['contract'])}, written by "
+                                 f"{owner or 'an anonymous author'}; this file changes it", f.line, f.col,
+                                 f.name, {"contract": short(o["contract"]), "author": owner})
+
+    def _record_origin(self, h: str, contract: str, author: str | None) -> None:
+        """Quién escribió qué. Un hueco: el contrato, de `author`, y ningún cuerpo. Lo que rellena
+        un hueco: el contrato sigue siendo del autor del hueco y el cuerpo es de `author`. Lo demás,
+        las dos cosas de `author`. Como la función, el origen no cambia una vez guardado."""
+        if contract == h:
+            by = (author, None)
+        else:
+            hole = self.origin(contract) if self.is_hole(contract) else None
+            by = (hole["contract_author"] if hole else author, author)
+        self.db.execute("INSERT OR IGNORE INTO origins VALUES (?,?,?,?)", (h, contract, *by))
+
+    def _certify(self, h: str, fn: Fn, interp: Interpreter, verdict: Verdict | None) -> None:
+        """Ejemplos (nivel 1) y, si el probador la probó, nivel 2 (`compile.level`). Los ejemplos
+        que llegan a un hueco quedan pendientes. Un fallo deja certificado fallido con el error y
+        se relanza."""
+        pending: list[tuple[str, str]] = []
         try:
-            n = run_examples(Program([fn]), interp)
-            if verdict.error is not None:
+            n = run_examples(Program([fn]), interp, pending)
+            if verdict is not None and verdict.error is not None:
                 raise verdict.error
         except SelloError as e:
-            self.db.execute("INSERT OR REPLACE INTO certificates VALUES (?,?,?,?,?,?)",
-                            (h, 1, 0, 0, _now(), json.dumps(e.to_dict())))
+            self._write_certificate(h, 1, False, 0, 0, json.dumps(e.to_dict()))
             raise
-        level = 2 if verdict.status == PROVEN else 1
-        self.db.execute("INSERT OR REPLACE INTO certificates VALUES (?,?,?,?,?,?)", (h, level, 1, n, _now(), None))
+        proven = verdict is not None and verdict.status == PROVEN
+        self._write_certificate(h, level(proven, len(pending), fn.hole), True, n, len(pending), None)
+
+    def _write_certificate(self, h: str, lv: int, ok: bool, examples: int, pending: int,
+                           error: str | None) -> None:
+        self.db.execute("INSERT OR REPLACE INTO certificates (hash, level, ok, examples, pending, verified_at, error) "
+                        "VALUES (?,?,?,?,?,?,?)", (h, lv, int(ok), examples, pending, _now(), error))
 
     def _alias(self, name: str, h: str) -> None:
         self.db.execute("INSERT OR REPLACE INTO names VALUES (?,?,?)", (name, h, _now()))
@@ -262,8 +365,9 @@ class Store:
         program, _ = self.load_closure([h])
         Checker(program).check()
         target = next(f for f in program.fns if f.name == f"f_{short(h)}")
+        verdict = None if target.hole else prove_program(program)[target.name]
         try:
-            self._certify(h, target, Interpreter(program), prove_program(program)[target.name])
+            self._certify(h, target, Interpreter(program), verdict)
         except SelloError:
             self.db.commit()
             raise

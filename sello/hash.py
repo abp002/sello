@@ -6,10 +6,11 @@ funciones por su hash; la recursión mutua se hashea como ciclo (idea de Unison)
 from __future__ import annotations
 
 import hashlib
+from dataclasses import replace
 
 from .builtins import NAMES as BUILTINS
 from .nodes import (
-    Arm, Binary, BoolLit, Call, Expr, Fn, If, Index, IntLit, ListLit, Match, Name, NoneLit,
+    Arm, Binary, BoolLit, Call, Expr, Fn, Hole, If, Index, IntLit, ListLit, Match, Name, NoneLit,
     PCons, PEmpty, PNone, PSome, PWild, Program, Quant, RangeExpr, SomeExpr, TextLit, Unary, children,
 )
 
@@ -68,6 +69,8 @@ def canon_expr(e: Expr, env: list[str], resolve) -> str:
     if isinstance(e, Quant):
         return (f"({e.kind} {canon_expr(e.subject, env, resolve)} "
                 f"{canon_expr(e.body, env + [e.var], resolve)})")
+    if isinstance(e, Hole):
+        return "sorry"
     raise TypeError(f"nodo desconocido: {e!r}")
 
 
@@ -172,3 +175,16 @@ def hash_program(program: Program, external: dict[str, str] | None = None) -> di
         for n in comp:
             hashes[n] = _h(f"{cycle}:{order[n]}")
     return hashes
+
+
+def contract_hashes(program: Program, external: dict[str, str] | None = None) -> dict[str, str]:
+    """El hash del contrato de cada función: el de la misma función con `{ sorry }` por cuerpo.
+    Recoge la firma, las cláusulas, los ejemplos y, por hash, lo que ellos llaman; los nombres no
+    cuentan, como en todo hash. Un hueco es su propio contrato, así que una implementación rellena
+    un hueco si su contrato da el hash del hueco."""
+    out: dict[str, str] = {}
+    for i, f in enumerate(program.fns):
+        fns = list(program.fns)
+        fns[i] = replace(f, body=Hole())
+        out[f.name] = hash_program(Program(fns), external)[f.name]
+    return out

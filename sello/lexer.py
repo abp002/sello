@@ -12,6 +12,7 @@ KEYWORDS = {
     "true", "false", "None", "Some",
     "and", "or", "not",
     "forall", "exists", "in",
+    "sorry",
 }
 SYMBOLS2 = {"->", "=>", "==", "!=", "<=", ">=", "..", "++"}
 SYMBOLS1 = set("()[]{},:+-*/%<>_")

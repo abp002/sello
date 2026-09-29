@@ -858,6 +858,8 @@ def confirm(program: Program, fn: Fn, params: list, model: z3.ModelRef,
             return None  # el modelo no cumple el requires de verdad (cuantificadores): espurio
         if e.code == "E500" and "recursion" in e.detail:
             return None  # una entrada grande, no un bug demostrado
+        if e.code == "E502":
+            return None  # llega a un hueco: sin su cuerpo no hay ejecución que lo confirme
         e.extra["found_by"] = "prover"
         e.extra["input"] = shown
         e.detail = f"{e.detail} (input found by the prover: {shown}; the examples do not cover it)"
@@ -934,6 +936,8 @@ def prove(program: Program, fn: Fn, interp: Interpreter | None = None,
             reason += " (wall clock)"  # lo único que depende de la máquina: que se vea
         return Verdict(status, reason, error, int((time.monotonic() - t0) * 1000))
 
+    if fn.hole:
+        return done(UNKNOWN, "no body: `sorry`")
     ctx = z3.Context()
     try:
         tr = Translator(program, fn, ctx)

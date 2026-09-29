@@ -213,6 +213,16 @@ un bug de `add`: certificaba en el orden del fichero, así que un llamador que i
 con nombre y nivel 2 aunque su llamado fallara después. Ahora certifica en orden de dependencias y
 cada ciclo entero. Es el paso previo a guardar contratos sin cuerpo.
 
+**El almacén guarda contratos sin cuerpo** (29 de septiembre de 2026): un cuerpo `{ sorry }` guarda
+un contrato que espera implementación, un hueco, en nivel 0. Su hash es el de su contrato, y lo
+rellena la función que, con el cuerpo cambiado por `sorry`, da ese mismo hash: firma, cláusulas,
+ejemplos y los helpers que llaman, idénticos. El contrato es de quien lo escribe (`add --author`, o
+el autor con el que se lanza `sello mcp`): otro autor no puede cambiárselo al nombre (`E103`), ni
+antes ni después de rellenarlo, así que quien implementa no puede debilitar el `ensures` para salir
+de un `E201`. Quien llama a un hueco se prueba con su contrato, sus ejemplos que llegan al hueco
+quedan pendientes y su cierre lo lista, como un `sorry` en `#print axioms`. Es la consecuencia de
+diseño de que el contrato escrito por otro caza lo que haiku deja pasar.
+
     uv sync --extra dev
     uv run sello check ejemplos/basicos.sello     # parse, tipos, ejemplos, probador (nivel 2)
     uv run sello add ejemplos/basicos.sello       # al almacén, con certificado
@@ -230,6 +240,9 @@ cada ciclo entero. Es el paso previo a guardar contratos sin cuerpo.
    de consulta. Segunda medición: leer por API no baja los aciertos.~~
    ~~**Juez imperfecto**: métrica de silenciosos; vocabulario de listas, `requires` como
    dominio y `E102`. Sello pasa de 7/5 a 1/0 e iguala a Python con asserts.~~
+   ~~El cierre del certificado (`closure_level`, `rests_on`).~~ ~~Contratos sin cuerpo
+   (`{ sorry }`) con autor: el contrato primero, el cuerpo después.~~ Pendiente: al rellenar
+   un hueco, poner al día a quien lo llamaba sin tener que volver a añadirlo.
 3. **Solver**: ~~Z3 sobre los contratos (nivel 2): verificación modular, contraejemplos
    confirmados por el intérprete, medida de terminación. Primera medición: 52 % de las
    funciones probadas, 52 % de los mutantes que llegaban a producción muertos en compilación.

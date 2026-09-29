@@ -43,6 +43,13 @@ CATALOGO: dict[str, tuple[str, str, str]] = {
         "`requires true` and `ensures true` certify nothing. State what the task lets you assume about the arguments, and a property that a wrong result would break.",
         "  requires n >= 0\n  ensures result >= 1",
     ),
+    "E103": (
+        "Contract is fixed",
+        "This name holds a contract written by another author. Keep its contract exactly as `sello view` "
+        "shows it (signature, `requires`, `ensures`, `effects`, `example` and the helpers they call) and "
+        "write only the body. Only the contract's author may change it.",
+        "",
+    ),
     "E200": (
         "Example failed",
         "The body or the example is wrong. Compare expected and got, then fix one of them.",
@@ -91,6 +98,12 @@ CATALOGO: dict[str, tuple[str, str, str]] = {
     "E501": (
         "Internal error",
         "Not caused by your code: the store refused to save something it could not reproduce faithfully. Report it.",
+        "",
+    ),
+    "E502": (
+        "No body yet",
+        "The call reaches a function whose body is `sorry`: a contract waiting for an implementation. "
+        "Implement it with `sello add` (same name, same contract, a real body), or do not call it here.",
         "",
     ),
 }

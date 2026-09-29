@@ -72,7 +72,8 @@ class Checker:
         self.in_contract = False
         for ex in fn.examples:
             self.expect(ex, {}, BOOL, fn, "`example` must be Bool (usually `call == expected`)")
-        self.expect(fn.body, env, fn.ret, fn, f"body of `{_name(fn)}` must return {fn.ret}")
+        if not fn.hole:  # `{ sorry }` no tiene tipo que comprobar: el contrato ya dice qué devolverá
+            self.expect(fn.body, env, fn.ret, fn, f"body of `{_name(fn)}` must return {fn.ret}")
 
     def expect(self, e: Expr, env: Env, want: Type, fn: Fn | None, why: str) -> Type:
         got = self.type_of(e, env, fn)

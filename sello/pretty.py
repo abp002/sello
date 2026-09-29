@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from .nodes import (
-    Binary, BoolLit, Call, Expr, If, Index, IntLit, ListLit, Match, Name, NoneLit,
+    Binary, BoolLit, Call, Expr, Hole, If, Index, IntLit, ListLit, Match, Name, NoneLit,
     PCons, PEmpty, PNone, PSome, PWild, Pattern, Quant, RangeExpr, SomeExpr, TextLit, Unary,
 )
 
@@ -43,6 +43,8 @@ def unparse(e: Expr) -> str:
     if isinstance(e, Quant):
         # El sujeto se parsea al nivel de `or`: un `if`, `match` o cuantificador ahí necesita paréntesis.
         return f"{e.kind} {e.var} in {operando(e.subject)}: {unparse(e.body)}"
+    if isinstance(e, Hole):
+        return "sorry"
     raise TypeError(f"nodo desconocido: {e!r}")
 
 
