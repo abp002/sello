@@ -111,7 +111,9 @@ def ask(prompt: str, model: str) -> dict:
             "tokens_in": u.get("input_tokens", 0) + u.get("cache_creation_input_tokens", 0)
             + u.get("cache_read_input_tokens", 0),
             "tokens_out": u.get("output_tokens", 0),
-            "thinking": u.get("output_tokens_details", {}).get("thinking_tokens", 0), "ms": ms}
+            "thinking": u.get("output_tokens_details", {}).get("thinking_tokens", 0), "ms": ms,
+            # el modelo concreto: el alias (`sonnet`, `haiku`) cambia de modelo con el tiempo
+            "models": sorted(d.get("modelUsage", {}))}
 
 
 def extract(text: str, lang: str) -> str:

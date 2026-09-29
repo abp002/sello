@@ -218,6 +218,11 @@ def run_one(p: dict, cond: str, model: str, max_attempts: int, contratos: dict |
     code = ""
     contrato: ct.Contrato | None = None
     if cond == CONTRATO:
+        if p["fn"] not in contratos:  # un contrato a ciegas que no compila: el problema no se corre
+            print(f"  {p['fn']:<15} {cond:<15} sin contrato: no se corre", file=sys.stderr, flush=True)
+            return {"problem": p["fn"], "cond": cond, "model": model, "accepted_at": None, "contrato": None,
+                    "sin_contrato": True, "attempts": 0, "cost": 0.0, "tokens_in": 0, "tokens_out": 0,
+                    "thinking": 0, "ms": 0, "code": None, "oracle": {}, "oracle_cases": [], "detail": []}
         origen = contratos[p["fn"]]
         contrato = ct.extraer(origen["code"], p["fn"])
     for i in range(1, max_attempts + 1):
@@ -227,7 +232,8 @@ def run_one(p: dict, cond: str, model: str, max_attempts: int, contratos: dict |
         m = re.search(r'"code":\s*"(E\d{3})"', feedback) if (es_sello(cond) and not ok) else None
         attempts.append({"n": i, "ok": ok, "phase": phase, "sello_error": m.group(1) if m else None,
                          "cost": a["cost"], "tokens_in": a["tokens_in"], "tokens_out": a["tokens_out"],
-                         "thinking": a.get("thinking", 0), "ms": a["ms"], "code": code, "feedback": feedback[:2000]})
+                         "thinking": a.get("thinking", 0), "ms": a["ms"], "models": a.get("models"),
+                         "code": code, "feedback": feedback[:2000]})
         print(f"  {p['fn']:<15} {cond:<15} intento {i}: {'aceptado' if ok else phase + (' ' + m.group(1) if m else '')}",
               file=sys.stderr, flush=True)
         if ok:
@@ -267,13 +273,20 @@ def run_one(p: dict, cond: str, model: str, max_attempts: int, contratos: dict |
 
 def cargar_contratos(path: Path) -> dict[str, dict]:
     """Soluciones `sello` aceptadas de una corrida del juez, por problema. Los contratos se
-    extraen de ellas (`contrato.extraer`); el modelo que las escribió queda anotado."""
+    extraen de ellas (`contrato.extraer`); el modelo que las escribió queda anotado. De una
+    corrida de `contratar.py`, los contratos a ciegas que compilan, aceptados o no por su juez
+    débil (regla 1 de 'El contrato se puede escribir sin el cuerpo')."""
     out: dict[str, dict] = {}
     for line in path.read_text().splitlines():
         r = json.loads(line)
-        if r["cond"] == "sello" and r.get("code") and r.get("accepted_at"):
+        if (r["cond"] == "sello" and r.get("code") and r.get("accepted_at")) or \
+                (r["cond"] == "contrato" and r.get("compila")):
             out[r["problem"]] = {"code": r["code"], "model": r["model"], "origen": path.name}
     return out
+
+
+def de_contratar(path: Path) -> bool:
+    return any(json.loads(line)["cond"] == "contrato" for line in path.read_text().splitlines())
 
 
 def main() -> int:
@@ -297,7 +310,7 @@ def main() -> int:
             ap.error(f"--cond {CONTRATO} necesita --contratos")
         contratos = cargar_contratos(args.contratos)
         faltan = [p["fn"] for p in probs if p["fn"] not in contratos]
-        if faltan:
+        if faltan and not de_contratar(args.contratos):  # los de contratar.py sin contrato no se corren
             ap.error(f"{args.contratos.name} no tiene solución `sello` aceptada para: {', '.join(faltan)}")
     jobs = [(p, c) for p in probs for c in conds]
     when = dt.datetime.now().strftime("%Y-%m-%d-%H%M")
@@ -308,6 +321,8 @@ def main() -> int:
 
     RESULTADOS.mkdir(exist_ok=True)
     tag = f"juez-{when}-{args.model}" + ("-contrato" if conds == [CONTRATO] else "")
+    if contratos is not None and de_contratar(args.contratos):
+        tag += "-ciegas"
     base = RESULTADOS / (tag if not args.only else f"humo-{tag}")
     with open(base.with_suffix(".jsonl"), "w") as f:
         for r in rows:
