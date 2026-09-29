@@ -73,6 +73,41 @@ def test_rechazar_lo_correcto_es_E201_y_un_requires_estrecho_va_aparte():
     assert (m["rechaza_correcto"], m["requires_fuera"]) == (0, 1)  # inc(0)
 
 
+SUMA = {"fn": "suma", "sello": "suma(n: Int) -> Int", "statement": "0 + 1 + ... + n, for n >= 0.",
+        "ref": lambda n: n * (n + 1) // 2, "visible": [],
+        "oracle": [{"args": [3], "expect": 6, "zone": "domain"}, {"args": [4], "expect": 10, "zone": "domain"}]}
+
+SUMA_RECURSIVA = """
+fn suma(n: Int) -> Int
+  requires n >= 0
+  ensures (n == 0 and result == 0) or (n > 0 and result == n + suma(n - 1))
+  effects pure
+  example suma(3) == 6
+{ sorry }
+"""
+
+
+def test_un_contrato_que_se_define_por_recursion_se_juzga_con_la_funcion_correcta():
+    """Regresión (2026-09-29, `power` de la quinta corrida de sonnet): con el literal como cuerpo
+    también en la llamada interna `suma(n - 1)`, el contrato rechazaba la respuesta correcta."""
+    m = lit.medir(ct.extraer(SUMA_RECURSIVA, "suma"), SUMA)
+    assert (m["rechaza_correcto"], m["incorrectos"], m["admite_incorrecto"]) == (0, 2, 0)
+
+
+def test_el_cuerpo_de_una_solucion_extraida_no_estorba():
+    """Regresión (2026-09-29): un contrato extraído de una solución trae su cuerpo, que llama a
+    helpers de implementación que `extraer` quita; la medición no debe mirar ese cuerpo."""
+    solucion = contrato("result == n + 1", cuerpo="ayudante(n)") + """
+fn ayudante(n: Int) -> Int
+  requires n >= 0
+  ensures result == n + 1
+  effects pure
+  example ayudante(1) == 2
+{ n + 1 }
+"""
+    assert medir(solucion)["rechaza_correcto"] == 0
+
+
 def test_los_ejemplos_de_la_principal_no_corren_y_los_de_los_helpers_si():
     """El cuerpo constante no pasaría `example inc(1) == 2`; un helper roto sí se nota."""
     assert medir(contrato("result == n + 1", cuerpo="n * 7"))["rechaza_correcto"] == 0

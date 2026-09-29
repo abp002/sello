@@ -11,6 +11,8 @@ constante. Los ejemplos de los helpers sí corren.
 
 Lo prerregistrado es el E201 del `ensures`. El E300 (un `requires` que deja fuera una entrada
 del dominio) se cuenta aparte. La zona ambigua no cuenta (regla 3): se apunta cuántas rechaza.
+Si el contrato llama a la principal (se define por recursión), esa llamada devuelve la
+respuesta de referencia, no el literal (`_Juzgada`).
 
     uv run python bench/literales.py bench/resultados/contratos-<fecha>-sonnet.jsonl \\
         bench/resultados/juez-2026-09-05-0015-sonnet.jsonl
@@ -30,12 +32,13 @@ from harness import RESULTADOS, sello_lit  # noqa: E402
 from harness3 import PROBLEMAS, cargar_contratos, llamada  # noqa: E402
 import contrato as ct  # noqa: E402
 from cotas import solo_cotas  # noqa: E402
+import generar_ambiguos as gen  # noqa: E402
 
 from sello.checker import Checker  # noqa: E402
 from sello.compile import run_examples  # noqa: E402
 from sello.errors import SelloError  # noqa: E402
 from sello.interp import Interpreter  # noqa: E402
-from sello.nodes import Program  # noqa: E402
+from sello.nodes import Hole, Program  # noqa: E402
 from sello.parser import parse_expr  # noqa: E402
 
 ADMITE, E201, E300, OTRO = "admite", "E201", "E300", "otro"
@@ -48,13 +51,51 @@ class Veredicto:
     error: dict | None = None      # el error tal como lo ve un modelo
 
 
+def referencia(p: dict):
+    """La respuesta correcta a cualquier entrada, en JSON neutro (la de `generar_ambiguos`), o
+    None si el problema no la tiene."""
+    if "ref" in p:  # un problema hecho a mano trae la suya
+        return p["ref"]
+    d = next((q for q in gen.PROBLEMAS if q["fn"] == p["fn"]), None)
+    return None if d is None else (lambda *a: gen.neutro(d["ref"](*a), d["opt"]))
+
+
+class _Juzgada(Interpreter):
+    """La principal devuelve `valor` en la llamada que se juzga y la respuesta de referencia en
+    cualquier otra. Así, un contrato que se define por recursión (`result == base * power(base,
+    exp - 1)`) se juzga con la función correcta en las demás entradas: con el literal también
+    ahí, rechazaba lo correcto (regresión 2026-09-29, `power`; enmienda, punto 7)."""
+
+    def __init__(self, program: Program, principal: str, args: list, valor: object, ref) -> None:
+        super().__init__(program)
+        self.principal, self.args, self.valor, self.ref = principal, args, valor, ref
+
+    def call(self, name, args, line=0, col=0, caller=None):
+        if name != self.principal:
+            return super().call(name, args, line, col, caller)
+        if args == self.args:
+            valor = self.valor
+        elif self.ref is None:
+            raise RuntimeError(f"el contrato de `{name}` se llama a sí mismo y el problema no tiene referencia")
+        else:
+            valor = self.ref(*args)
+        fn = self.fns[name]
+        antes, fn.body = fn.body, parse_expr(sello_lit(valor))
+        try:
+            return super().call(name, args, line, col, caller)
+        finally:
+            fn.body = antes
+
+
 def veredicto(c: ct.Contrato, p: dict, args: list, valor: object) -> Veredicto:
     """Qué dice el contrato `c` de `valor` como respuesta a la llamada con `args`. Si el propio
     contrato no se sostiene (un helper que no tipa o falla sus ejemplos), se lanza."""
-    principal = replace(c.principal, body=parse_expr(sello_lit(valor)))
+    # Una copia con `{ sorry }`: el cuerpo lo pone _Juzgada en cada llamada, y el de una solución
+    # extraída llama a helpers de implementación que `extraer` quita (regresión 2026-09-29).
+    principal = replace(c.principal, body=Hole())
     program = Program([*c.helpers, principal])
     Checker(program).check()
-    interp = Interpreter(program)
+    interp = _Juzgada(program, principal.name, args, valor, referencia(p))
     run_examples(Program(c.helpers), interp)
     interp.fuel = FUEL
     try:
