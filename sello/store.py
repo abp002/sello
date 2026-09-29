@@ -2,7 +2,8 @@
 
 Verificada una vez, verificada para siempre: un hash probado (nivel 2) no se vuelve a
 verificar. Uno de nivel 1 sí se reintenta en cada `add`, por si ahora se prueba (ALE-171). Como el hash de un llamador incluye el hash del llamado, cambiar una
-dependencia invalida solo a quien la usa.
+dependencia invalida solo a quien la usa. El nivel 2 es modular: lo que da por bueno se lee
+en su cierre (`closure`).
 """
 
 from __future__ import annotations
@@ -16,7 +17,7 @@ from pathlib import Path
 from .checker import Checker, signature
 from .compile import run_examples
 from .errors import SelloError
-from .hash import callees, hash_program, short
+from .hash import _sccs, callees, hash_program, short
 from .interp import Interpreter
 from .nodes import Call, Expr, Fn, Program
 from .parser import parse
@@ -81,6 +82,34 @@ class Store:
             d["error"] = json.loads(row["error"])
         return d
 
+    def closure(self, h: str) -> dict:
+        """Lo que el certificado de `h` da por bueno. El nivel 2 es modular (se prueba con los
+        contratos de lo que se llama), así que vale lo que valga lo más flojo de su cierre, como
+        un teorema de Lean vale lo que los `sorry` que lista `#print axioms`. `closure_level` es
+        el nivel más bajo entre `h` y todo lo que alcanza por sus deps, helpers de los contratos
+        incluidos; `rests_on`, lo de ese cierre que no llega a 2 (0: su verificación falló). Se
+        calcula al leer y no se guarda: el certificado de una dependencia puede subir con
+        `verify` o con otro `add` (ALE-171)."""
+        level, rests_on = 2, []
+        seen, pending = {h}, [h]
+        while pending:
+            x = pending.pop()
+            row, cert = self.function(x), self.certificate(x)
+            lv = cert["level"] if cert and cert["ok"] else 0
+            level = min(level, lv)
+            if x != h and lv < 2:
+                rests_on.append({"name": row["name"], "hash": short(x), "level": lv})
+            for dh in json.loads(row["deps"]).values():
+                if dh not in seen:
+                    seen.add(dh)
+                    pending.append(dh)
+        return {"closure_level": level, "rests_on": sorted(rests_on, key=lambda d: (d["name"], d["hash"]))}
+
+    def _report(self, h: str) -> dict | None:
+        """El certificado tal como se lee: lo guardado más su cierre."""
+        cert = self.certificate(h)
+        return cert and {**cert, **self.closure(h)}
+
     def names(self) -> list[dict]:
         rows = self.db.execute("SELECT n.name, n.hash, f.signature FROM names n JOIN functions f ON f.hash = n.hash ORDER BY n.name").fetchall()
         return [{"name": r["name"], "hash": short(r["hash"]), "signature": r["signature"]} for r in rows]
@@ -91,7 +120,7 @@ class Store:
         f = self.function(h)
         return {"name": name, "hash": short(h), "signature": f["signature"],
                 "requires": json.loads(f["requires"]), "ensures": json.loads(f["ensures"]),
-                "effects": f["effects"], "certificate": self.certificate(h)}
+                "effects": f["effects"], "certificate": self._report(h)}
 
     def view(self, name: str) -> dict:
         h = self.resolve(name)
@@ -177,32 +206,38 @@ class Store:
             if hashes[name] != h:
                 raise SelloError("E501", f"the canonical text of `{name}` reparses to a different function; nothing was stored")
         interp = Interpreter(linked)
-        out: list[dict] = []
+        fns = {f.name: f for f in program.fns}
         deps_of = {f.name: {n: hashes[n] for n in callees(f)} for f in program.fns}
+        cached: dict[str, bool] = {}
         verdicts: dict[str, Verdict] | None = None  # el probador, solo si hace falta verificar algo
-        for fn in program.fns:
-            h = hashes[fn.name]
-            self.db.execute(
-                "INSERT OR IGNORE INTO functions VALUES (?,?,?,?,?,?,?,?,?,?)",
-                (h, fn.name, unparse_fn(fn), signature(fn), str(fn.ret), fn.effects,
-                 json.dumps([unparse(r) for r in fn.requires]), json.dumps([unparse(e) for e in fn.ensures]),
-                 json.dumps(deps_of[fn.name]), _now()))
-            cert = self.certificate(h)
-            if cert and cert["ok"] and cert["level"] >= 2:
-                out.append({"name": fn.name, "hash": short(h), "cached": True, "certificate": cert})
-                self._alias(fn.name, h)
-                continue
-            if verdicts is None:
-                verdicts = prove_program(linked, only=set(own))
-            try:
-                self._certify(h, own[fn.name], interp, verdicts[fn.name])
-                self._alias(fn.name, h)
-                out.append({"name": fn.name, "hash": short(h), "cached": False, "certificate": self.certificate(h)})
-            except SelloError:
-                self.db.commit()
-                raise
+        # Lo llamado antes que quien lo llama, y cada ciclo entero antes de darle alias: si algo
+        # falla, nada de lo que lo alcanza se queda guardado (regresión 2026-09-29: en el orden
+        # del fichero, un llamador que iba delante se quedaba con alias y nivel 2 sobre un
+        # llamado que después fallaba).
+        for comp in _sccs({n: set(d) for n, d in deps_of.items()}):
+            for name in comp:
+                fn, h = fns[name], hashes[name]
+                self.db.execute(
+                    "INSERT OR IGNORE INTO functions VALUES (?,?,?,?,?,?,?,?,?,?)",
+                    (h, fn.name, unparse_fn(fn), signature(fn), str(fn.ret), fn.effects,
+                     json.dumps([unparse(r) for r in fn.requires]), json.dumps([unparse(e) for e in fn.ensures]),
+                     json.dumps(deps_of[fn.name]), _now()))
+                cert = self.certificate(h)
+                cached[name] = bool(cert and cert["ok"] and cert["level"] >= 2)
+                if cached[name]:
+                    continue
+                if verdicts is None:
+                    verdicts = prove_program(linked, only=set(own))
+                try:
+                    self._certify(h, own[name], interp, verdicts[name])
+                except SelloError:
+                    self.db.commit()
+                    raise
+            for name in comp:
+                self._alias(name, hashes[name])
         self.db.commit()
-        return out
+        return [{"name": f.name, "hash": short(hashes[f.name]), "cached": cached[f.name],
+                 "certificate": self._report(hashes[f.name])} for f in program.fns]
 
     def _certify(self, h: str, fn: Fn, interp: Interpreter, verdict: Verdict) -> None:
         """Ejemplos (nivel 1) y, si el probador la probó, nivel 2. Un fallo deja certificado
@@ -233,7 +268,7 @@ class Store:
             self.db.commit()
             raise
         self.db.commit()
-        return {"name": name, "hash": short(h), "certificate": self.certificate(h)}
+        return {"name": name, "hash": short(h), "certificate": self._report(h)}
 
     def eval(self, expr_src: str):
         from .interp import fmt

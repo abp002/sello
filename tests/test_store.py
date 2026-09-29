@@ -159,6 +159,7 @@ def test_lo_que_el_probador_prueba_lleva_certificado_de_nivel_2(store):
     assert f["certificate"]["level"] == 2 and f["certificate"]["ok"]
     assert store.sig("factorial")["certificate"]["level"] == 2
     assert store.verify("factorial")["certificate"]["level"] == 2
+    assert store.sig("factorial")["certificate"]["closure_level"] == 2  # se llama a sí misma
 
 
 def test_lo_que_no_prueba_se_queda_en_nivel_1(store):
@@ -255,3 +256,95 @@ def test_add_sube_un_certificado_de_nivel_1_si_ahora_se_prueba(store):
     out = store.add(INC)
     assert out[0]["cached"] is False
     assert out[0]["certificate"]["level"] == 2
+
+
+# ---------- lo que un nivel 2 da por bueno (2026-09-29) ----------
+
+# f no termina para n >= 1 (ninguna medida decrece): se queda en nivel 1 para siempre, con sus
+# ejemplos pasados. g se prueba en nivel 2 con el contrato de f, que nadie ha probado, y g(1)
+# tampoco termina.
+NO_TERMINA = """
+fn f(n: Int) -> Int
+  requires n >= 0
+  ensures result == 42
+  effects pure
+  example f(0) == 42
+{ if n == 0 then 42 else f(n) }
+"""
+
+LLAMA_A_F = """
+fn g(n: Int) -> Int
+  requires n >= 0
+  ensures result == 43
+  effects pure
+  example g(0) == 43
+{ f(n) + 1 }
+"""
+
+
+def test_si_el_llamado_falla_no_se_guarda_quien_lo_llama_aunque_vaya_antes(store):
+    """Regresión: add certificaba en el orden del fichero y se paraba en el primer fallo, así que
+    un llamador que iba delante se quedaba con alias y nivel 2 sobre un llamado roto."""
+    with pytest.raises(SelloError) as ei:
+        store.add(LLAMA_A_F + NO_TERMINA.replace("f(0) == 42", "f(0) == 41"))
+    assert ei.value.code == "E200"
+    assert store.names() == []
+
+
+# impar va antes que par en el fichero y en el orden de la componente: si par falla, impar ya
+# se ha certificado.
+PARIDAD = """
+fn impar(n: Int) -> Bool
+  requires n >= 0
+  ensures 1 == 1
+  effects pure
+  example impar(3) == true
+{ if n == 0 then false else par(n - 1) }
+
+fn par(n: Int) -> Bool
+  requires n >= 0
+  ensures 1 == 1
+  effects pure
+  example par(4) == true
+{ if n == 0 then true else impar(n - 1) }
+"""
+
+
+def test_un_ciclo_se_guarda_entero_o_no_se_guarda(store):
+    """Regresión: dentro de un ciclo no hay orden de dependencias que valga. impar llama a par,
+    así que no puede quedarse con alias si par falla después."""
+    with pytest.raises(SelloError):
+        store.add(PARIDAD.replace("par(4) == true", "par(4) == false"))
+    assert store.names() == []
+    assert [f["name"] for f in store.add(PARIDAD)] == ["impar", "par"]
+
+
+def test_un_nivel_2_dice_en_que_nivel_1_se_apoya(store):
+    g = {f["name"]: f for f in store.add(LLAMA_A_F + NO_TERMINA)}["g"]  # g delante de f
+    f = {"name": "f", "hash": store.sig("f")["hash"], "level": 1}
+    for cert in (g["certificate"], store.sig("g")["certificate"], store.verify("g")["certificate"]):
+        assert cert["level"] == 2  # modular: con el contrato de f
+        assert cert["closure_level"] == 1 and cert["rests_on"] == [f]
+    assert store.sig("f")["certificate"]["rests_on"] == []  # su propio nivel ya lo dice
+
+
+def test_el_cierre_llega_a_lo_que_se_llama_de_segunda_mano(store):
+    store.add(NO_TERMINA + LLAMA_A_F)
+    [h] = store.add("""
+fn h(n: Int) -> Int
+  requires n >= 0
+  ensures result == 44
+  effects pure
+  example h(0) == 44
+{ g(n) + 1 }
+""")
+    assert h["certificate"]["level"] == 2 and h["certificate"]["closure_level"] == 1
+    assert [d["name"] for d in h["certificate"]["rests_on"]] == ["f"]  # g es nivel 2: no se lista
+
+
+def test_una_dependencia_fallida_baja_el_cierre_a_0(store):
+    store.add(NO_TERMINA + LLAMA_A_F)
+    f = store.resolve("f")  # como si un verify posterior la hubiera tumbado
+    store.db.execute("UPDATE certificates SET ok = 0 WHERE hash = ?", (f,)); store.db.commit()
+    cert = store.sig("g")["certificate"]
+    assert cert["closure_level"] == 0 and cert["rests_on"] == [{"name": "f", "hash": short(f), "level": 0}]

@@ -204,6 +204,15 @@ prerregistro no se cumple, porque la segunda pasada pierde `DH0021`, una tarea s
 el reloj con la máquina cargada (el probador de antes la pierde igual). El cambio se queda.
 Resultados en `bench/resultados/*253*`.
 
+**El certificado dice en qué se apoya** (29 de septiembre de 2026): el nivel 2 es modular, se prueba
+con los contratos de lo que la función llama, y nada decía si esos contratos estaban probados.
+`sig`, `add` y `verify` dan ahora `closure_level`, el nivel más bajo de todo lo que la función
+alcanza por sus llamadas, y `rests_on`, lo de ese cierre que no llega a 2, como `#print axioms` en
+Lean. Se calcula al leer, porque el certificado de una dependencia puede subir. Por el camino salió
+un bug de `add`: certificaba en el orden del fichero, así que un llamador que iba delante se quedaba
+con nombre y nivel 2 aunque su llamado fallara después. Ahora certifica en orden de dependencias y
+cada ciclo entero. Es el paso previo a guardar contratos sin cuerpo.
+
     uv sync --extra dev
     uv run sello check ejemplos/basicos.sello     # parse, tipos, ejemplos, probador (nivel 2)
     uv run sello add ejemplos/basicos.sello       # al almacén, con certificado
