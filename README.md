@@ -223,6 +223,16 @@ de un `E201`. Quien llama a un hueco se prueba con su contrato, sus ejemplos que
 quedan pendientes y su cierre lo lista, como un `sorry` en `#print axioms`. Es la consecuencia de
 diseño de que el contrato escrito por otro caza lo que haiku deja pasar.
 
+**El contrato se puede escribir sin el cuerpo** (29 de septiembre de 2026, prerregistrado el 5):
+sonnet escribe solo el contrato de los 12 problemas del juez imperfecto, con `{ sorry }` por
+cuerpo (`bench/contratar.py`), y haiku escribe el cuerpo contra él. Medido como un juez, con la
+respuesta correcta y otra incorrecta por cuerpo (`bench/literales.py`): ningún contrato a ciegas
+rechaza lo correcto ni admite lo incorrecto; los escritos con el cuerpo delante admiten el 2 %
+(hoy) y el 7 % (los de la quinta corrida). Haiku entrega 12 de 12 sin un silencioso, y de 530
+mutantes de su cuerpo llegan a producción 2, que el contrato caza. Dos controles separan la spec
+nueva del hecho de escribir a ciegas. La regla de decisión confirma; los denominadores de los
+mutantes son pequeños.
+
     uv sync --extra dev
     uv run sello check ejemplos/basicos.sello     # parse, tipos, ejemplos, probador (nivel 2)
     uv run sello add ejemplos/basicos.sello       # al almacén, con certificado
