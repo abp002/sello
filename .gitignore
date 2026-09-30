@@ -11,3 +11,4 @@ bench/resultados/*.log
 .claude/worktrees/
 bench/vericoding/cache/
 demo/salida/*.db
+bench/resultados/*/*.db

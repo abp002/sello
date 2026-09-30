@@ -1,0 +1,12 @@
+{"problem": "clamp", "origen": "humo-contratos-mcp-2026-10-01-0019-sonnet.jsonl", "medida": {"dominio": 25, "rechaza_correcto": 0, "requires_fuera": 0, "otros": 0, "incorrectos": 24, "admite_incorrecto": 0, "ambiguos": 4, "ambiguos_rechazados": 4, "solo_cotas": true}}
+{"problem": "index_of", "origen": "humo-contratos-mcp-2026-10-01-0019-sonnet.jsonl", "medida": null}
+{"problem": "int_sqrt", "origen": "humo-contratos-mcp-2026-10-01-0019-sonnet.jsonl", "medida": null}
+{"problem": "longest_run", "origen": "humo-contratos-mcp-2026-10-01-0019-sonnet.jsonl", "medida": null}
+{"problem": "max_subarray", "origen": "humo-contratos-mcp-2026-10-01-0019-sonnet.jsonl", "medida": null}
+{"problem": "merge_sorted", "origen": "humo-contratos-mcp-2026-10-01-0019-sonnet.jsonl", "medida": null}
+{"problem": "most_frequent", "origen": "humo-contratos-mcp-2026-10-01-0019-sonnet.jsonl", "medida": null}
+{"problem": "nth", "origen": "humo-contratos-mcp-2026-10-01-0019-sonnet.jsonl", "medida": null}
+{"problem": "power", "origen": "humo-contratos-mcp-2026-10-01-0019-sonnet.jsonl", "medida": null}
+{"problem": "rotate_left", "origen": "humo-contratos-mcp-2026-10-01-0019-sonnet.jsonl", "medida": null}
+{"problem": "second_largest", "origen": "humo-contratos-mcp-2026-10-01-0019-sonnet.jsonl", "medida": null}
+{"problem": "zip_sum", "origen": "humo-contratos-mcp-2026-10-01-0019-sonnet.jsonl", "medida": null}

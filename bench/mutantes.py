@@ -26,6 +26,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from harness import RESULTADOS  # noqa: E402
 from harness3 import CONDS, CONDS_TODAS, PROBLEMAS, ejecutar, es_sello  # noqa: E402
+from flujo import COND as MCP  # noqa: E402
 import juez  # noqa: E402
 
 from sello.nodes import (  # noqa: E402
@@ -35,6 +36,8 @@ from sello.parser import parse  # noqa: E402
 from sello.pretty import unparse, unparse_fn  # noqa: E402
 
 TIMEOUT = 60  # el mismo que harness3
+# Las condiciones que tienen soluciones que mutar: las del juez y la del flujo por el MCP (`flujo.py`).
+COLUMNAS = CONDS_TODAS + [MCP]
 
 # ---------- destinos de un mutante ----------
 
@@ -334,7 +337,7 @@ def _pct(a: int, b: int) -> str:
 
 
 def resumen(rows: list[dict], when: str) -> str:
-    cols = sorted({(r["cond"], r["model"]) for r in rows}, key=lambda x: (CONDS_TODAS.index(x[0]), x[1]))
+    cols = sorted({(r["cond"], r["model"]) for r in rows}, key=lambda x: (COLUMNAS.index(x[0]), x[1]))
     name = lambda c: f"{c[0]}·{c[1]}"  # noqa: E731
     probs = sorted({r["problem"] for r in rows})
     by = {(r["problem"], r["cond"], r["model"]): r for r in rows}
@@ -432,7 +435,7 @@ def procesar(sol: dict, p: dict, pool: ThreadPoolExecutor) -> dict:
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("jsonl", nargs="+", type=Path, help="corridas del juez de las que tomar las soluciones")
-    ap.add_argument("--cond", nargs="+", choices=CONDS_TODAS, default=CONDS_TODAS)
+    ap.add_argument("--cond", nargs="+", choices=COLUMNAS, default=COLUMNAS)
     ap.add_argument("--only", help="nombre de un problema")
     ap.add_argument("--workers", type=int, default=8)
     args = ap.parse_args()
