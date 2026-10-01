@@ -45,9 +45,10 @@ CATALOGO: dict[str, tuple[str, str, str]] = {
     ),
     "E103": (
         "Contract is fixed",
-        "This name holds a contract written by another author. Keep its contract exactly as `sello view` "
-        "shows it (signature, `requires`, `ensures`, `effects`, `example` and the helpers they call) and "
-        "write only the body. Only the contract's author may change it.",
+        "This name holds, or is called by, a contract written by another author. Keep that contract exactly "
+        "as `sello view` shows it (signature, `requires`, `ensures`, `effects`, `example` and the helpers they "
+        "call), write only the body, and give your own helpers names the contract does not call. Only the "
+        "contract's author may change it.",
         "",
     ),
     "E200": (

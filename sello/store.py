@@ -156,12 +156,16 @@ class Store:
                  **({"hole": True} if self.is_hole(r["hash"]) else {})} for r in rows]
 
     def sig(self, name: str) -> dict:
-        """Firma + contrato + certificado. Sin cuerpo: es lo que lee la IA."""
+        """Firma + contrato + certificado. Sin cuerpo: es lo que lee la IA. Los ejemplos van, en su
+        orden, porque son contrato: sin ellos, quien rellenaba un hueco inventaba los suyos y daba
+        otro hash (E103 en todos los problemas de flujo-2026-10-01-0021-mcp)."""
         h = self.resolve(name)
         f = self.function(h)
+        examples = [unparse(e) for e in parse(f["source"]).fns[0].examples]
         return {"name": name, "hash": short(h), "signature": f["signature"],
                 "requires": json.loads(f["requires"]), "ensures": json.loads(f["ensures"]),
-                "effects": f["effects"], **self._authorship(h), "certificate": self._report(h)}
+                "effects": f["effects"], "examples": examples, **self._authorship(h),
+                "certificate": self._report(h)}
 
     def view(self, name: str) -> dict:
         h = self.resolve(name)
@@ -266,7 +270,7 @@ class Store:
             if hashes[name] != h:
                 raise SelloError("E501", f"the canonical text of `{name}` reparses to a different function; nothing was stored")
         contracts = contract_hashes(program, external)
-        self._guard(program, contracts, author)
+        self._guard(program, hashes, contracts, author)
         interp = Interpreter(linked)
         fns = {f.name: f for f in program.fns}
         deps_of = {f.name: {n: hashes[n] for n in callees(f)} for f in program.fns}
@@ -310,10 +314,49 @@ class Store:
         d["certificate"] = self._report(h)
         return d
 
-    def _guard(self, program: Program, contracts: dict[str, str], author: str | None) -> None:
+    def _contract_names(self) -> dict[str, list[tuple[str, str, str | None, str]]]:
+        """Los nombres que llama un contrato nacido como hueco que algún nombre tiene (el hueco o lo
+        que lo rellena), en todo su cierre: {nombre: [(hash al que apunta en ese contrato, hueco,
+        autor del contrato, nombre que lo tiene)]}. El texto de `view` los enlaza por nombre: si
+        uno se moviera, ese texto daría otro contrato."""
+        out: dict[str, list[tuple[str, str, str | None, str]]] = {}
+        for r in self.db.execute("SELECT name, hash FROM names").fetchall():
+            o = self.origin(r["hash"])
+            if o is None or not self.is_hole(o["contract"]):
+                continue
+            hole = o["contract"]
+            owner = self.origin(hole)["contract_author"]
+            seen, pending = {hole}, [hole]
+            while pending:
+                for n, dh in json.loads(self.function(pending.pop())["deps"]).items():
+                    if dh == hole:
+                        continue
+                    out.setdefault(n, []).append((dh, hole, owner, r["name"]))
+                    if dh not in seen:
+                        seen.add(dh)
+                        pending.append(dh)
+        return out
+
+    def _guard(self, program: Program, hashes: dict[str, str], contracts: dict[str, str],
+               author: str | None) -> None:
         """E103, antes de guardar nada. Un nombre cuyo contrato nació como hueco (relleno o no)
         solo cambia de contrato de la mano del autor del hueco; el cuerpo lo escribe cualquiera.
-        Sin autores (None frente a None) no se bloquea nada."""
+        Tampoco cambian de función, salvo por su mano, los nombres que ese contrato llama: si no,
+        el contrato copiado de `view` daría otro hash y el hueco ya no se podría rellenar
+        (regresión 2026-10-01). Rellenar un hueco no cuenta como mover el nombre. Los helpers se
+        miran primero: si el fichero los cambia, son la causa del error. Sin autores (None frente
+        a None) no se bloquea nada."""
+        called = self._contract_names()
+        for f in program.fns:
+            row = self.db.execute("SELECT hash FROM names WHERE name = ?", (f.name,)).fetchone()
+            if row is None or row["hash"] == hashes[f.name] or contracts[f.name] == row["hash"]:
+                continue
+            for dh, hole, owner, holder in called.get(f.name, []):
+                if dh == row["hash"] and author != owner:
+                    raise SelloError("E103", f"`{f.name}` is called by the contract {short(hole)} of `{holder}`, "
+                                     f"written by {owner or 'an anonymous author'}; this file gives the name "
+                                     f"another function", f.line, f.col, f.name,
+                                     {"contract": short(hole), "author": owner, "called_by": holder})
         for f in program.fns:
             row = self.db.execute("SELECT hash FROM names WHERE name = ?", (f.name,)).fetchone()
             o = row and self.origin(row["hash"])

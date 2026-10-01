@@ -73,7 +73,7 @@ def build(store_path: str, author: str | None = None) -> MCPServer:
     @server.tool()
     @_guard
     def sello_sig(name: str) -> dict:
-        """Signature, requires, ensures, effects and certificate of a stored function, without its body."""
+        """Signature, requires, ensures, effects, examples and certificate of a stored function, without its body."""
         return {"ok": True, **store().sig(name)}
 
     @server.tool()

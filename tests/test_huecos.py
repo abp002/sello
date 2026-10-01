@@ -163,6 +163,7 @@ def test_quien_no_escribio_el_contrato_no_puede_cambiarlo(store):
         with pytest.raises(SelloError) as ei:
             store.add(src, author="haiku")
         assert ei.value.code == "E103" and ei.value.extra["author"] == "sonnet"
+        assert "called_by" not in ei.value.extra  # es el contrato de este nombre, no un helper de otro
         assert store.resolve("doble") == hueco
     n = store.db.execute("SELECT count(*) FROM functions").fetchone()[0]
     assert n == 2  # nada de lo rechazado se guardó
@@ -186,6 +187,79 @@ def test_la_guarda_sigue_al_contrato_despues_de_rellenarlo(store):
 def test_sin_autores_no_se_bloquea_nada(store):
     store.add(HUECO)
     assert "hole" not in by_name(store.add(DEBIL))["doble"]
+
+
+# Otra versión del helper del contrato, con el mismo nombre: lo que guardó haiku.
+OTRO_ES_PAR = ES_PAR.replace("{ n % 2 == 0 }", "{ n % 2 != 1 }")
+
+
+def test_otro_autor_no_mueve_el_nombre_de_un_helper_del_contrato(store):
+    """Regresión 2026-10-01 (flujo-2026-10-01-0027-control, second_largest). Quien rellenaba guardó,
+    en un add aparte, sus propias versiones de los helpers del contrato con los mismos nombres, y
+    movió sus alias. Desde ahí, el contrato copiado tal cual de `view` enlazaba esos nombres con las
+    versiones nuevas, daba otro hash y salía E103 sin salida. Nota 'Un hueco se rellena por el MCP
+    igual que en el banco'."""
+    store.add(HUECO, author="sonnet")
+    es_par, hueco = store.resolve("es_par"), store.resolve("doble")
+    with pytest.raises(SelloError) as ei:
+        store.add(OTRO_ES_PAR, author="haiku")
+    assert ei.value.code == "E103" and ei.value.function == "es_par"
+    assert (ei.value.extra["author"], ei.value.extra["contract"]) == ("sonnet", short(hueco))
+    assert store.resolve("es_par") == es_par
+    # El texto que enseña view, con un cuerpo, sigue rellenando el hueco.
+    fuente = store.view("doble")["source"].replace("sorry", "2 * n")
+    assert by_name(store.add(fuente, author="haiku"))["doble"]["implements"] == short(hueco)
+    with pytest.raises(SelloError) as ei:  # y la guarda sigue al contrato después de rellenarlo
+        store.add(OTRO_ES_PAR, author="haiku")
+    assert ei.value.code == "E103"
+
+
+def test_la_guarda_del_helper_alcanza_a_los_helpers_de_sus_helpers(store):
+    # Si quien rellena copia el texto de un helper del contrato, los nombres que ese texto llama
+    # también tienen que seguir donde estaban.
+    par_de = ES_PAR.replace("es_par", "par_de").replace("{ n % 2 == 0 }", "{ es_par(n) }")
+    store.add(ES_PAR + par_de + DOBLE.replace("es_par(result)", "par_de(result)"), author="sonnet")
+    with pytest.raises(SelloError) as ei:
+        store.add(OTRO_ES_PAR, author="haiku")
+    assert ei.value.code == "E103" and ei.value.function == "es_par"
+
+
+def test_e103_senala_el_helper_cuando_el_fichero_lo_redefine(store):
+    # El mismo fichero trae el contrato tal cual y otra versión del helper: el error apunta a la
+    # causa, el helper, no a la principal.
+    store.add(HUECO, author="sonnet")
+    with pytest.raises(SelloError) as ei:
+        store.add(OTRO_ES_PAR + DOBLE.replace("{ sorry }", "{ 2 * n }"), author="haiku")
+    assert ei.value.code == "E103" and ei.value.function == "es_par"
+
+
+def test_el_dueno_del_contrato_si_mueve_sus_helpers_y_sin_autores_nadie_bloquea(store, tmp_path):
+    store.add(HUECO, author="sonnet")
+    store.add(OTRO_ES_PAR, author="sonnet")
+    assert store.resolve("es_par") == hash_program(parse(OTRO_ES_PAR))["es_par"]
+    anonimo = Store(tmp_path / "anonimo.db")
+    anonimo.add(HUECO)
+    anonimo.add(OTRO_ES_PAR)
+
+
+def test_rellenar_un_hueco_que_otro_contrato_llama_no_es_mover_un_helper(store):
+    # Rellenar mueve el nombre del hueco a su implementación, aunque el contrato de otro hueco lo
+    # llame en sus cláusulas: eso no cambia de contrato.
+    cuadruple = CUADRUPLE.replace("ensures result == 4 * n", "ensures result == doble(doble(n))")
+    store.add(HUECO + cuadruple.replace("{ doble(doble(n)) }", "{ sorry }"), author="sonnet")
+    assert "implements" in by_name(store.add(IMPLEMENTADA, author="haiku"))["doble"]
+
+
+def test_lo_que_ensena_sig_basta_para_reescribir_el_contrato(store):
+    """Firma, cláusulas y ejemplos, en su orden. Sin los ejemplos, haiku inventaba los suyos y
+    chocaba con E103 en todos los problemas (flujo-2026-10-01-0021-mcp)."""
+    dos = HUECO.replace("  example doble(3) == 6\n", "  example doble(3) == 6\n  example doble(0) == 0\n")
+    store.add(dos, author="sonnet")
+    sig = store.sig("doble")
+    texto = (f"fn {sig['signature']}\n" + "".join(f"  requires {r}\n" for r in sig["requires"])
+             + "".join(f"  ensures {e}\n" for e in sig["ensures"]) + f"  effects {sig['effects']}\n"
+             + "".join(f"  example {x}\n" for x in sig["examples"]) + "{ 2 * n }")
+    assert "implements" in by_name(store.add(texto, author="haiku"))["doble"]
 
 
 def test_quien_llama_a_un_hueco_se_prueba_con_su_contrato_y_espera_sus_ejemplos(store):

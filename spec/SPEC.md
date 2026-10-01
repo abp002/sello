@@ -144,9 +144,9 @@ add a function with the same name, the same contract (signature, clauses, exampl
 helpers they call) and a real body: `add` says which hole it `implements`, and the name moves
 to it. The contract belongs to its author (`sello add --author`, or the author `sello mcp` was
 started with): only that author may give the name a different contract, before or after it
-is implemented (`E103`). A function that calls a hole is proven against the hole's contract;
-its examples that reach the hole are `pending`, not run, and `rests_on` lists the hole with
-`"hole": true`. Callers keep the hole they were added with: when it is implemented,
+is implemented, or give another function to a name the contract calls (`E103`). A function
+that calls a hole is proven against the hole's contract; its examples that reach the hole are
+`pending`, not run, and `rests_on` lists the hole with `"hole": true`. Callers keep the hole they were added with: when it is implemented,
 `callers_on_hole` lists them; add them again.
 
 Reading is an API, not a file. Every command prints JSON:
@@ -154,7 +154,7 @@ Reading is an API, not a file. Every command prints JSON:
 | Command | Returns |
 |---|---|
 | `sello add FILE` | per function: name, hash, `cached`, authors, certificate |
-| `sello sig NAME` | signature + `requires` + `ensures` + `effects` + certificate, **no body** |
+| `sello sig NAME` | signature + `requires` + `ensures` + `effects` + `example` + certificate, **no body** |
 | `sello view NAME` | canonical source |
 | `sello deps NAME` / `sello users NAME` | what it calls / what calls it |
 | `sello names` | every name with its hash and signature |
@@ -171,7 +171,7 @@ All errors are JSON: `{"code", "where", "what", "fix", "example"}`. Codes are st
 | E100 | Missing contract clause | Add `requires`, `ensures`, `effects` or an `example` |
 | E101 | Unknown effect | Only `pure` exists in v0 |
 | E102 | Trivial contract clause | `requires true` / `ensures true` certify nothing; state what you assume and what a wrong result would break |
-| E103 | Contract is fixed | The name holds another author's contract: keep it exactly as `sello view` shows it and write only the body |
+| E103 | Contract is fixed | The name holds, or is called by, another author's contract: keep it exactly as `sello view` shows it, write only the body, and name your own helpers differently |
 | E200 | Example failed | Body or example is wrong; the message shows expected vs got |
 | E201 | Postcondition violated | Body returned a value that breaks `ensures` |
 | E300 | Precondition violated at a call | Guard the call with `if`, or strengthen the caller's `requires` |
