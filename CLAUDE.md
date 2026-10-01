@@ -26,6 +26,10 @@ Python 3.12+, `uv`, `pytest`, `z3-solver` (fase 3). Sin frameworks.
     uv sync
     uv run pytest
 
+`uv run` reinstala z3-solver en cada arranque (la rueda 5.1.0.0 dice macosx_13_0 en el nombre y
+macosx_13_3 en su WHEEL). Con procesos en paralelo (servidores MCP, corridas largas), lanzar con
+`.venv/bin/python` o `.venv/bin/sello` y no meter otro `uv run` durante la corrida.
+
 ## QA
 
 Nivel: activo. Tests de la lógica que se toque: parser, normalización y hash del AST,
