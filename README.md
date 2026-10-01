@@ -233,6 +233,25 @@ mutantes de su cuerpo llegan a producción 2, que el contrato caza. Dos controle
 nueva del hecho de escribir a ciegas. La regla de decisión confirma; los denominadores de los
 mutantes son pequeños.
 
+**Un hueco se rellena por el MCP igual que en el banco** (1 de octubre de 2026, prerregistrado el
+mismo día). El flujo contrato→cuerpo pasa por el producto (`bench/flujo.py`). Por problema hay un
+almacén y dos agentes de Claude Code sin más herramientas que `sello mcp`. Sonnet, con
+`--author sonnet`, guarda el contrato como hueco; haiku, con `--author haiku`, lo rellena, y su
+única guarda es `E103`. Sonnet guarda los 12 al primer intento, y sus contratos pasan la prueba de
+literales como los del banco. Haiku rellena 12 de 12 sin un silencioso. La medición destapó dos
+fallos del almacén:
+- `sig` no enseñaba los ejemplos, que son contrato, y haiku chocaba con `E103` en los 12
+  problemas.
+- Un hueco podía quedarse sin forma de rellenarse. Bastaba con que quien implementa guardara sus
+  propios helpers con los nombres de los del contrato. Desde ahí, el contrato copiado tal cual de
+  `view` daba otro hash.
+
+Ahora `sig` enseña los ejemplos, y los nombres que llama el contrato de un hueco solo los mueve su
+autor. Remedido, `E103` cae de 12 problemas a 1 y a 0; ese 1 es la guarda nueva. Una de las cuatro
+predicciones, la media de intentos, no se cumple en una columna: dos sesiones largas, con
+tropiezos del cuerpo. Queda abierto un tercer fallo. Con los helpers enlazados desde el almacén,
+el probador no refuta lo que sí refuta con ellos en el mismo fichero.
+
     uv sync --extra dev
     uv run sello check ejemplos/basicos.sello     # parse, tipos, ejemplos, probador (nivel 2)
     uv run sello add ejemplos/basicos.sello       # al almacén, con certificado
