@@ -187,6 +187,28 @@ fn f(n: Int) -> Int
     assert r["ok"] and r["functions"][1]["level"] == 1 and r["functions"][1]["unproven"]
 
 
+def test_descartar_la_entrada_que_no_reproduce_no_convierte_el_resto_en_prueba():
+    """Con el contrato de `g`, f(5) puede dar 0; ejecutado da 5. Descartada la única entrada que
+    permite el requires, Z3 dice unsat, y no es una prueba: la ejecución usó el cuerpo de `g`, y el
+    nivel 2 promete el ensures con cualquier `g` que cumpla su contrato."""
+    src = """
+fn g(x: Int) -> Int
+  requires x >= 0
+  ensures result >= 0
+  effects pure
+  example g(5) == 5
+{ x }
+
+fn f(x: Int) -> Int
+  requires x == 5
+  ensures result == 5
+  effects pure
+  example f(5) == 5
+{ g(x) }
+"""
+    assert verdict(src, "f").status == pr.UNKNOWN
+
+
 def test_recursion_sin_medida_que_decrezca_no_es_nivel_2():
     src = """
 fn f(n: Int) -> Int

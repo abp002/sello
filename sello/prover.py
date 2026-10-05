@@ -22,7 +22,9 @@ Tres salidas:
                   débiles que sus cuerpos), sin medida de terminación... -> se queda en nivel 1
 
 Un contraejemplo que el intérprete no confirma nunca se reporta: el probador no añade rechazos
-nuevos, solo adelanta a compilación errores que ya existían para alguna entrada.
+nuevos, solo adelanta a compilación errores que ya existían para alguna entrada. Tampoco cierra
+la búsqueda: lo que queda sin decidir pide unos pocos candidatos más, sin las entradas ya vistas
+(`search`), porque cuál da Z3 primero depende hasta de los nombres de las funciones.
 
 Lo que promete un certificado de nivel 2: si las funciones llamadas devuelven lo que dice su
 contrato, la función termina y su resultado cumple `ensures` para toda entrada que cumpla
@@ -102,6 +104,12 @@ FACTS: frozenset = frozenset({"cons", "concat"})
 PHASES: tuple = (("s", False, 500_000), ("s", True, 1_500_000), ("u", False, 500_000), ("u", True, 1_500_000))
 # Fase u (ALE-169): `/` y `%` con divisor no literal como funciones no interpretadas con axiomas
 # lineales. Solo se intenta si la función los usa y lo exacto no decidió.
+# Candidatos de más (`search`): una obligación sin decidir cuyo candidato el intérprete no reprodujo
+# pide hasta RETRIES modelos más, sin las entradas ya vistas, con la primera fase. Solo puede
+# refutar. Regresión de flujo-2026-10-01-1914-control: el primer modelo de un helper con bug lo
+# decidían los nombres (en el fichero, la entrada mala; enlazado desde el almacén, una buena), y
+# con un candidato más el enlazado da el mismo E201.
+RETRIES = 3
 
 
 @dataclass
@@ -225,6 +233,22 @@ def check(s: z3.Solver, ctx: z3.Context, ms: int, mbqi: bool,
         return r, None
 
 
+def query(s: z3.Solver, ctx: z3.Context, budget: Budget, mbqi: bool,
+          cap: int) -> tuple[z3.CheckSatResult, z3.ModelRef | None] | None:
+    """Una consulta con lo que quede de trabajo (como mucho `cap`), descontado del presupuesto.
+    None si ya no queda. Si Z3 se atasca, Stuck: el contexto se abandona sin pop."""
+    work, ms = min(budget.query_work(), cap), budget.query_ms()
+    if work <= 0 or ms <= 0:
+        return None
+    before = _rcount(s)
+    r, model = check(s, ctx, ms, mbqi, work)
+    spent = _rcount(s) - before
+    budget.spend(spent)
+    if r == z3.unknown and spent < work and s.reason_unknown() in ("canceled", "timeout", ""):
+        budget.wall_cut = True  # paró sin agotar su trabajo: lo cortó el reloj
+    return r, model
+
+
 def decide(runs: list, ctx: z3.Context, budget: Budget, confirm_model,
            sat_refutes: bool = False) -> tuple[bool | None, object]:
     """¿Es válida una obligación? `runs` son fases (solver, camino, proposición, mbqi, ms) en
@@ -235,9 +259,6 @@ def decide(runs: list, ctx: z3.Context, budget: Budget, confirm_model,
     open_ = None  # solver con la obligación ya apilada: fases seguidas sobre el mismo solver
     try:              # comparten el estado (lo aprendido en la primera sirve a la segunda)
         for s, path, prop, mbqi, cap in runs:
-            work, ms = min(budget.query_work(), cap), budget.query_ms()
-            if work <= 0 or ms <= 0:
-                return None, None
             if s is not open_:
                 if open_ is not None:
                     open_.pop()
@@ -245,12 +266,10 @@ def decide(runs: list, ctx: z3.Context, budget: Budget, confirm_model,
                 s.add(*path)
                 s.add(z3.Not(prop))
                 open_ = s
-            before = _rcount(s)
-            r, model = check(s, ctx, ms, mbqi, work)  # si Z3 se atasca, Stuck: el contexto se abandona sin pop
-            spent = _rcount(s) - before
-            budget.spend(spent)
-            if r == z3.unknown and spent < work and s.reason_unknown() in ("canceled", "timeout", ""):
-                budget.wall_cut = True  # paró sin agotar su trabajo: lo cortó el reloj
+            got = query(s, ctx, budget, mbqi, cap)
+            if got is None:
+                return None, None
+            r, model = got
             if r == z3.unsat:
                 return True, None
             if r == z3.sat and sat_refutes:
@@ -260,6 +279,34 @@ def decide(runs: list, ctx: z3.Context, budget: Budget, confirm_model,
                 if found is not None:
                     return False, found
         return None, None
+    except Stuck:
+        open_ = None
+        raise
+    finally:
+        if open_ is not None:
+            open_.pop()
+
+
+def search(s: z3.Solver, path: list, prop: z3.BoolRef, seen: list, ctx: z3.Context, budget: Budget,
+           confirm_model, exclude, mbqi: bool, cap: int) -> SelloError | None:
+    """Más candidatos para una obligación que quedó sin decidir: cada consulta excluye las
+    entradas ya vistas que el intérprete no reprodujo (`seen`, y después `exclude(modelo)` de cada
+    candidato nuevo). Solo refuta: devuelve el error real o None. Con entradas excluidas, un unsat
+    no prueba nada: se descartaron ejecutando los cuerpos de lo llamado, y el nivel 2 habla de sus
+    contratos."""
+    open_ = s
+    s.push()
+    try:
+        s.add(*path, z3.Not(prop), *seen)
+        for _ in range(RETRIES):
+            got = query(s, ctx, budget, mbqi, cap)
+            if got is None or got[0] == z3.unsat or got[1] is None:
+                return None
+            found = confirm_model(got[1])
+            if found is not None:
+                return found
+            s.add(exclude(got[1]))
+        return None
     except Stuck:
         open_ = None
         raise
@@ -955,11 +1002,22 @@ def prove(program: Program, fn: Fn, interp: Interpreter | None = None,
     except z3.Z3Exception as z:
         return done(UNKNOWN, f"z3: {str(z).strip()[:120]}")
 
+    def exclude(m: z3.ModelRef) -> z3.BoolRef:
+        """La entrada que se ejecutó para el candidato `m` (la misma que lee `confirm`), excluida."""
+        return z3.Or([p != m.eval(p, model_completion=True) for p in params])
+
+    seen: dict[int, list] = {}  # por obligación, las entradas de los candidatos que no se reprodujeron
+
     def attempt(k: int, phases: list) -> bool | None:
         """Una obligación con esas fases; un contraejemplo real se lanza como Refuted."""
+        def confirm_model(m: z3.ModelRef) -> SelloError | None:
+            found = confirm(program, fn, params, m, interp)
+            if found is None and params:
+                seen.setdefault(k, []).append(exclude(m))
+            return found
         runs = [(kinds[kind][0], kinds[kind][1].obligations[k], mbqi, cap) for kind, mbqi, cap in phases]
         valid, err = decide([(sv, o.path, o.prop, mbqi, cap) for sv, o, mbqi, cap in runs], ctx, budget,
-                            lambda m: confirm(program, fn, params, m, interp))
+                            confirm_model)
         if valid is False:
             raise Refuted(err)
         return valid
@@ -985,6 +1043,19 @@ def prove(program: Program, fn: Fn, interp: Interpreter | None = None,
                     undecided = [k for k in undecided if not budget.left() or attempt(k, phases_u) is None]
             except Unsupported:
                 pass
+        # Lo que sigue sin decidir y tuvo un candidato que no se reproducía pide otros: lo decidía
+        # el primer modelo de Z3, y ese depende hasta de los nombres. Va al final, como la fase u,
+        # para no quitarle trabajo a las pruebas; y solo puede refutar.
+        kind, mbqi, cap = PHASES[0]
+        if kind in kinds:
+            sv, trk = kinds[kind]
+            for k in undecided:
+                if k in seen and budget.left():
+                    o = trk.obligations[k]
+                    err = search(sv, o.path, o.prop, seen[k], ctx, budget,
+                                 lambda m: confirm(program, fn, params, m, interp), exclude, mbqi, cap)
+                    if err is not None:
+                        raise Refuted(err)
         if undecided:
             return done(UNKNOWN, reason or f"undecided: {tr.obligations[undecided[0]].what}")
         if _mutual(program, fn):

@@ -233,6 +233,94 @@ def test_add_enlazado_caza_un_contrato_que_lo_guardado_contradice(store):
     assert ei.value.code == "E201"
 
 
+# Regresión de flujo-2026-10-01-1914-control, second_largest: el find_in_list de haiku viola su
+# contrato (find_in_list([-1], [14]) da Some(-1)). En un fichero con los helpers del contrato, E201;
+# con ellos enlazados desde el almacén, nivel 1. El primer modelo de Z3 no se reproducía y no se
+# pedía otro: lo decidían los nombres (f_<hash> frente a is_second). Fuentes tal cual, porque de
+# ellas salen los hashes y de los hashes, el modelo.
+SL_HELPERS = """
+fn has(xs: List[Int], v: Int) -> Bool
+  requires (len(xs) >= 0)
+  ensures (result == contains(xs, v))
+  effects pure
+  example (has([3, 9, 1], 9) == true)
+  example (has([3, 9, 1], 4) == false)
+  example (has([], 1) == false)
+{
+  match xs { [] => false [h, ..t] => ((h == v) or has(t, v)) }
+}
+
+fn greater_count(xs: List[Int], v: Int) -> Int
+  requires (len(xs) >= 0)
+  ensures ((result >= 0) and (result <= len(xs)))
+  ensures ((result == 0) or (exists x in xs: (x > v)))
+  ensures ((result > 0) or (forall x in xs: (x <= v)))
+  effects pure
+  example (greater_count([3, 9, 1], 3) == 1)
+  example (greater_count([3, 9, 1], 9) == 0)
+  example (greater_count([3, 9, 1], 1) == 2)
+  example (greater_count([], 5) == 0)
+{
+  match xs { [] => 0 [h, ..t] => if (h > v) then (1 + greater_count(t, v)) else greater_count(t, v) }
+}
+
+fn is_second(xs: List[Int], r: Option[Int]) -> Bool
+  requires (len(xs) >= 0)
+  ensures ((r != None) or (result == (len(xs) < 2)))
+  effects pure
+  example (is_second([3, 9, 1], Some(3)) == true)
+  example (is_second([3, 9, 1], Some(9)) == false)
+  example (is_second([3, 9, 1], Some(1)) == false)
+  example (is_second([3, 9, 1], Some(7)) == false)
+  example (is_second([3, 9, 1], None) == false)
+  example (is_second([4], None) == true)
+  example (is_second([4], Some(4)) == false)
+  example (is_second([], None) == true)
+{
+  match r { None => match xs { [] => true [_, ..t] => match t { [] => true _ => false } } Some(v) => (has(xs, v) and (greater_count(xs, v) == 1)) }
+}
+"""
+
+SL_CUERPO = """
+fn find_in_list(current: List[Int], original: List[Int]) -> Option[Int]
+  requires distinct(original)
+  ensures is_second(original, result)
+  effects pure
+  example (find_in_list([3, 9, 1], [3, 9, 1]) == Some(3))
+  example (find_in_list([4], [4]) == None)
+  example (find_in_list([], []) == None)
+  example (find_in_list([5, 2], [5, 2]) == Some(2))
+  example (find_in_list([1, 2, 3, 4], [1, 2, 3, 4]) == Some(3))
+{
+  match current { [] => None [x, ..t] => if (greater_count(original, x) == 1) then Some(x) else find_in_list(t, original) }
+}
+
+fn second_largest(xs: List[Int]) -> Option[Int]
+  requires distinct(xs)
+  ensures is_second(xs, result)
+  effects pure
+  example (second_largest([3, 9, 1]) == Some(3))
+  example (second_largest([4]) == None)
+  example (second_largest([]) == None)
+  example (second_largest([5, 2]) == Some(2))
+  example (second_largest([1, 2, 3, 4]) == Some(3))
+{
+  find_in_list(xs, xs)
+}
+"""
+
+
+@pytest.mark.parametrize("enlazado", [False, True], ids=["en-el-fichero", "enlazado"])
+def test_un_helper_que_viola_su_contrato_se_caza_igual_enlazado_que_en_el_fichero(store, enlazado):
+    if enlazado:
+        store.add(SL_HELPERS)
+    with pytest.raises(SelloError) as ei:
+        store.add(SL_CUERPO if enlazado else SL_HELPERS + SL_CUERPO)
+    assert ei.value.code == "E201" and ei.value.function == "find_in_list"
+    assert ei.value.extra["found_by"] == "prover"
+    assert not {"find_in_list", "second_largest"} & {n["name"] for n in store.names()}
+
+
 def test_check_con_almacen_enlaza_y_solo_informa_del_fuente(store):
     from sello.compile import check_source
     store.add(INC)
