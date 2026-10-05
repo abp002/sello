@@ -44,3 +44,13 @@ def test_resumen_cuenta_matados_y_niveles():
     assert "| **matados por el probador / llegaban** | **1/2 (50 %)** |" in md
     assert "| equivalentes en el dominio matados (bug fuera del oráculo) | 1/1 (100 %) |" in md
     assert "| · matados con E300 | 1 |" in md
+
+
+def test_resumen_acepta_la_columna_del_flujo_por_mcp():
+    """Regresión 2026-10-05: las soluciones de flujo.py, y los mutantes que salen de ellas, traen la
+    condición `sello_mcp`, que no es de harness3. El resumen se caía al ordenar las columnas,
+    después de haber comprobado todos los programas."""
+    fila = {"kind": "solucion", "problem": "f", "model": "haiku", "ok": True, "error": None, "ms": 10,
+            "funciones": [{"name": "f", "level": 2, "motivo": None}], "principal": 2}
+    md = pb.resumen([{**fila, "cond": "sello_mcp"}, {**fila, "cond": "sello"}], "hoy")
+    assert md.index("sello·haiku") < md.index("sello_mcp·haiku")

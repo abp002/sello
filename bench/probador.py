@@ -33,8 +33,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from harness import RESULTADOS, ROOT  # noqa: E402
-from harness3 import CONDS_TODAS  # noqa: E402
-from mutantes import CAZADO, EQUIVALENTE, RUIDOSO, SILENCIOSO  # noqa: E402
+from mutantes import CAZADO, COLUMNAS, EQUIVALENTE, RUIDOSO, SILENCIOSO  # noqa: E402
 
 TIMEOUT = 120
 if "SELLO_RELOJ" in os.environ:  # experimento (ALE-188): el reloj del programa más margen
@@ -129,7 +128,7 @@ def _pct(a: int, b: int) -> str:
 
 
 def resumen(rows: list[dict], when: str) -> str:
-    cols = sorted({(r["cond"], r["model"]) for r in rows}, key=lambda x: (CONDS_TODAS.index(x[0]), x[1]))
+    cols = sorted({(r["cond"], r["model"]) for r in rows}, key=lambda x: (COLUMNAS.index(x[0]), x[1]))
     name = lambda c: f"{c[0]}·{c[1]}"  # noqa: E731
     head = "| " + " | ".join(name(c) for c in cols) + " |"
     sep = "|---|" + "---|" * len(cols)
@@ -223,6 +222,7 @@ def main() -> int:
     ap.add_argument("--mutantes", nargs="*", type=Path, default=[], help="corridas de mutantes (jsonl)")
     ap.add_argument("--only", help="nombre de un problema")
     ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--etiqueta", help="sufijo de los ficheros de salida: dos pasadas del mismo minuto se pisaban")
     args = ap.parse_args()
     if not args.soluciones and not args.mutantes:
         ap.error("hace falta --soluciones y/o --mutantes")
@@ -242,7 +242,7 @@ def main() -> int:
         done = list(ex.map(run, rows))
 
     RESULTADOS.mkdir(exist_ok=True)
-    base = RESULTADOS / (("humo-" if args.only else "") + f"probador-{when}")
+    base = RESULTADOS / (("humo-" if args.only else "") + f"probador-{when}" + (f"-{args.etiqueta}" if args.etiqueta else ""))
     with open(base.with_suffix(".jsonl"), "w") as f:
         for r in done:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")
