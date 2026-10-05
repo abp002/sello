@@ -16,13 +16,15 @@ herramientas que `sello mcp`, cada una con su autor, que fija quien lanza el ser
 
 Después se lee el almacén. Si el nombre apunta a una función que rellena el hueco, el problema
 está entregado y el oráculo de `harness3` juzga esa función, reconstruida desde el almacén con
-su cierre (`programa_de`). Salen filas con el formato de `harness3`, con la condición
-`sello_mcp`, que `mutantes.py` lee. De los contratos de sonnet salen filas con el formato de
-`contratar.py`, que `literales.py` lee.
+su cierre (`programa_de`), en ejecución: sin probador, como la ejecuta `eval` (desde el
+2026-10-05; nota 'El oráculo del flujo juzga lo que el almacén ejecuta'). Salen filas con el
+formato de `harness3`, con la condición `sello_mcp`, que `mutantes.py` lee. De los contratos de
+sonnet salen filas con el formato de `contratar.py`, que `literales.py` lee.
 
     uv run python bench/flujo.py --only clamp        # humo
     uv run python bench/flujo.py                     # el flujo entero
     uv run python bench/flujo.py --contratos bench/resultados/contratos-2026-09-29-2317-sonnet.jsonl
+    uv run python bench/flujo.py --rejuzgar bench/resultados/flujo-A.jsonl   # solo el oráculo, sin modelo
 
 Los servidores se lanzan con `.venv/bin/sello`, no con `uv run`. uv reinstala z3-solver en cada
 arranque, porque la rueda 5.1.0.0 dice macosx_13_0 en el nombre y macosx_13_3 dentro. Con cuatro
@@ -47,7 +49,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from harness import RESULTADOS, ROOT  # noqa: E402
-from harness3 import PROBLEMAS, cargar_contratos, ejecutar_sello, ejemplos  # noqa: E402
+from harness3 import PROBLEMAS, cargar_contratos, ejecutar_sello, ejemplos, llamada  # noqa: E402
 import contrato as ct  # noqa: E402
 import juez  # noqa: E402
 
@@ -59,6 +61,7 @@ from sello.pretty import unparse_fn  # noqa: E402
 from sello.store import Store, _rewrite_fn  # noqa: E402
 
 COND = "sello_mcp"
+ORACULO = "ejecucion"  # cómo juzga el oráculo; las filas de antes del 2026-10-05 no lo dicen: fichero y probador
 AUTOR_CONTRATO, AUTOR_CUERPO = "sonnet", "haiku"
 MAX_TURNOS = 30
 SELLO = ROOT / ".venv" / "bin" / "sello"
@@ -299,6 +302,81 @@ def _nombres_de(s: Store, autor: str) -> list[str]:
     return [r["name"] for r in rows]
 
 
+# ---------- el oráculo ----------
+
+def oraculo(code: str, p: dict) -> tuple[list[dict], dict]:
+    """El oráculo de `harness3` sobre el programa reconstruido, en ejecución: los casos, con los
+    contratos comprobados al ejecutar y sin probador, y sus recuentos. Por el almacén, a producción
+    llega lo que `eval` ejecuta, y `eval` no vuelve a probar. Cargar el programa como fichero sí lo
+    hacía, y el probador no ve lo mismo en el fichero que en el almacén. El second_largest de
+    flujo-2026-10-01-1914-control, que el almacén había aceptado, no cargaba por un E201 de un
+    helper, y sus 25 llamadas del dominio, correctas en ejecución, salían ruidosas. Un bug del
+    dominio habría salido igual, ruidoso en vez de silencioso. Nota 'El oráculo del flujo juzga lo
+    que el almacén ejecuta'."""
+    r = ejecutar_sello(code, p, p["oracle"], prover=False)
+    casos = [{**c, "result": juez.REJECT, "detail": r} for c in p["oracle"]] if isinstance(r, dict) else r
+    return casos, juez.contar(casos)
+
+
+def no_cargo(casos: list[dict]) -> bool:
+    """Si el programa no llegó a cargar: entonces ninguna llamada se ejecutó y ninguna lleva `call`."""
+    return bool(casos) and all("call" not in c for c in casos)
+
+
+def rejuzgar(path: Path) -> list[dict]:
+    """Las filas de una corrida ya hecha, con cada solución entregada juzgada de nuevo por `oraculo`,
+    sin modelo, desde su `code`. Cada una guarda el oráculo con que se juzgó (`oraculo_antes`) y las
+    llamadas cuyo resultado cambia. Lo demás de la fila no se toca."""
+    probs = {p["fn"]: p for p in (json.loads(f.read_text()) for f in sorted(PROBLEMAS.glob("*.json")))}
+    filas = []
+    for line in path.read_text().splitlines():
+        r = json.loads(line)
+        if r.get("code"):
+            p = probs[r["problem"]]
+            antes = {llamada(p, c["args"]): c["result"] for c in r["oracle_cases"]}
+            casos, cuenta = oraculo(r["code"], p)
+            ahora = {llamada(p, c["args"]): c for c in casos}
+            if antes.keys() != ahora.keys():
+                raise ValueError(f"{path.name}, {r['problem']}: el oráculo del problema ya no es el de la corrida")
+            cambios = [{"call": k, "zone": c["zone"], "antes": antes[k], "ahora": c["result"]}
+                       for k, c in ahora.items() if antes[k] != c["result"]]
+            r = {**r, "oracle": cuenta, "oracle_cases": casos,
+                 "flujo": {**(r.get("flujo") or {}), "oraculo": ORACULO, "oraculo_antes": r["oracle"],
+                           "no_cargo_antes": no_cargo(r["oracle_cases"]), "cambios": cambios}}
+        filas.append(r)
+    return filas
+
+
+def resumen_rejuicio(path: Path, filas: list[dict], when: str) -> str:
+    juzgadas = [r for r in filas if r.get("code")]
+    fl = lambda r: r["flujo"]  # noqa: E731
+    cifras = lambda o: f"{o['dom_silencioso']}+{o['amb_silencioso']} · {o['dom_ruidoso']} · {o['cazados']}"  # noqa: E731
+    out = [f"# Rejuicio en ejecución de {path.stem} ({when})", "",
+           "Las soluciones entregadas de la corrida, juzgadas de nuevo por el oráculo de `harness3` en "
+           "ejecución: contratos comprobados al ejecutar, sin probador. Prerregistrado en el vault: 'El "
+           "oráculo del flujo juzga lo que el almacén ejecuta'. Formato: silenciosos dominio+ambigua · "
+           "ruidosos en el dominio · cazados.", "",
+           "| Problema | antes | en ejecución | llamadas que cambian |", "|---|---|---|---|"]
+    for r in sorted(juzgadas, key=lambda r: r["problem"]):
+        cambios = Counter(f"{c['antes']} → {c['ahora']}" for c in fl(r)["cambios"])
+        out.append(f"| {r['problem']} | {cifras(fl(r)['oraculo_antes'])} | {cifras(r['oracle'])} | "
+                   + (", ".join(f"{n} {k}" for k, n in sorted(cambios.items())) or "0") + " |")
+    suma = lambda k, o="oracle": sum((r[o] if o == "oracle" else fl(r)[o])[k] for r in juzgadas)  # noqa: E731
+    out += ["",
+            f"- Soluciones: {len(juzgadas)}; llamadas del oráculo: {sum(len(r['oracle_cases']) for r in juzgadas)}; "
+            f"cambian {sum(len(fl(r)['cambios']) for r in juzgadas)}, en "
+            f"{sum(bool(fl(r)['cambios']) for r in juzgadas)} soluciones.",
+            f"- Programas que no cargan: {sum(fl(r)['no_cargo_antes'] for r in juzgadas)} → "
+            f"{sum(no_cargo(r['oracle_cases']) for r in juzgadas)}.",
+            f"- **Silenciosos {suma('silenciosos', 'oraculo_antes')} → {suma('silenciosos')}** (dominio "
+            f"{suma('dom_silencioso', 'oraculo_antes')} → {suma('dom_silencioso')}, ambigua "
+            f"{suma('amb_silencioso', 'oraculo_antes')} → {suma('amb_silencioso')}); ruidosos en el dominio "
+            f"{suma('dom_ruidoso', 'oraculo_antes')} → {suma('dom_ruidoso')}; declarados en la ambigua "
+            f"{suma('amb_declarado', 'oraculo_antes')} → {suma('amb_declarado')}; cazados "
+            f"{suma('cazados', 'oraculo_antes')} → {suma('cazados')}."]
+    return "\n".join(out) + "\n"
+
+
 # ---------- las dos fases ----------
 
 def fase_contrato(p: dict, dir_: Path, model: str) -> tuple[dict, str | None]:
@@ -351,9 +429,7 @@ def fase_cuerpo(p: dict, dir_: Path, store: Path, hueco: str, contrato_de: dict,
     oracle_cases: list[dict] = []
     oracle: dict = {}
     if code:
-        r = ejecutar_sello(code, p, p["oracle"])
-        oracle_cases = [{**c, "result": juez.REJECT, "detail": r} for c in p["oracle"]] if isinstance(r, dict) else r
-        oracle = juez.contar(oracle_cases)
+        oracle_cases, oracle = oraculo(code, p)
     u = uso(final)
     print(f"  {p['fn']:<15} cuerpo: {'rellena ' + short(impl) if impl else 'NO RELLENA'} · "
           f"{len(progs)} programas · E103 {fr['e103']} · {u['turnos']} turnos · {u['fin']}"
@@ -366,7 +442,7 @@ def fase_cuerpo(p: dict, dir_: Path, store: Path, hueco: str, contrato_de: dict,
             "attempts": len(progs), **{k: u[k] for k in ("cost", "tokens_in", "tokens_out", "thinking")},
             "ms": meta["ms"], "code": code, "oracle": oracle,
             "oracle_cases": oracle_cases, "detail": progs,
-            "flujo": {"relleno": short(impl) if impl else None, "certificado": cert, **fr,
+            "flujo": {"relleno": short(impl) if impl else None, "certificado": cert, "oraculo": ORACULO, **fr,
                       "otros_nombres": [n for n in _nombres_de(s, AUTOR_CUERPO) if n != p["fn"]],
                       **{k: v for k, v in u.items() if k not in ("cost", "tokens_in", "tokens_out", "thinking")},
                       "carga": meta["carga"], "stderr": meta["stderr"], "traza": str(traza.relative_to(ROOT))}}
@@ -463,7 +539,19 @@ def main() -> int:
     ap.add_argument("--modelo-cuerpo", default="haiku")
     ap.add_argument("--only", help="nombre de un problema")
     ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--rejuzgar", nargs="+", type=Path, metavar="JSONL",
+                    help="corridas ya hechas: solo el oráculo, sin modelo; deja <corrida>-ejecucion.{jsonl,md}")
     args = ap.parse_args()
+    if args.rejuzgar:
+        when = dt.datetime.now().strftime("%Y-%m-%d-%H%M")
+        for path in args.rejuzgar:
+            filas = rejuzgar(path)
+            base = path.with_name(f"{path.stem}-{ORACULO}")
+            Path(f"{base}.jsonl").write_text("".join(json.dumps(r, ensure_ascii=False) + "\n" for r in filas))
+            md = resumen_rejuicio(path, filas, when)
+            Path(f"{base}.md").write_text(md)
+            print(md)
+        return 0
     if not SELLO.exists():
         ap.error(f"falta {SELLO}: `uv sync` primero")
     probs = [json.loads(f.read_text()) for f in sorted(PROBLEMAS.glob("*.json"))]

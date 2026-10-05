@@ -16,7 +16,9 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "bench"))
 import flujo  # noqa: E402
+import juez  # noqa: E402
 import mutantes  # noqa: E402
+from harness3 import PROBLEMAS  # noqa: E402
 
 from sello.errors import SelloError  # noqa: E402
 from sello.hash import hash_program  # noqa: E402
@@ -169,3 +171,119 @@ def test_mutantes_lee_las_filas_del_flujo_sin_mutar_el_contrato(tmp_path):
     _, muts = mutantes.mutar(sol["cond"], sol["code"], sol["congelados"])
     assert muts and all(m["fn"] == "inc" for m in muts)
     assert "sello_mcp·haiku" in mutantes.resumen([{**sol, "recuento": mutantes.contar([])}], "hoy")
+
+
+# La solución de haiku que el almacén aceptó en flujo-2026-10-01-1914-control (second_largest), tal
+# como la reconstruye `programa_de`. Su `find_in_list` viola el contrato fuera del uso que le da la
+# principal: find_in_list([-1], [14]) da Some(-1). Como fichero, el probador lo refuta (E201).
+SECOND_LARGEST_1914 = """
+fn has(xs: List[Int], v: Int) -> Bool
+  requires (len(xs) >= 0)
+  ensures (result == contains(xs, v))
+  effects pure
+  example (has([3, 9, 1], 9) == true)
+  example (has([3, 9, 1], 4) == false)
+  example (has([], 1) == false)
+{
+  match xs { [] => false [h, ..t] => ((h == v) or has(t, v)) }
+}
+
+fn greater_count(xs: List[Int], v: Int) -> Int
+  requires (len(xs) >= 0)
+  ensures ((result >= 0) and (result <= len(xs)))
+  ensures ((result == 0) or (exists x in xs: (x > v)))
+  ensures ((result > 0) or (forall x in xs: (x <= v)))
+  effects pure
+  example (greater_count([3, 9, 1], 3) == 1)
+  example (greater_count([3, 9, 1], 9) == 0)
+  example (greater_count([3, 9, 1], 1) == 2)
+  example (greater_count([], 5) == 0)
+{
+  match xs { [] => 0 [h, ..t] => if (h > v) then (1 + greater_count(t, v)) else greater_count(t, v) }
+}
+
+fn is_second(xs: List[Int], r: Option[Int]) -> Bool
+  requires (len(xs) >= 0)
+  ensures ((r != None) or (result == (len(xs) < 2)))
+  effects pure
+  example (is_second([3, 9, 1], Some(3)) == true)
+  example (is_second([3, 9, 1], Some(9)) == false)
+  example (is_second([3, 9, 1], Some(1)) == false)
+  example (is_second([3, 9, 1], Some(7)) == false)
+  example (is_second([3, 9, 1], None) == false)
+  example (is_second([4], None) == true)
+  example (is_second([4], Some(4)) == false)
+  example (is_second([], None) == true)
+{
+  match r { None => match xs { [] => true [_, ..t] => match t { [] => true _ => false } } Some(v) => (has(xs, v) and (greater_count(xs, v) == 1)) }
+}
+
+fn find_in_list(current: List[Int], original: List[Int]) -> Option[Int]
+  requires distinct(original)
+  ensures is_second(original, result)
+  effects pure
+  example (find_in_list([3, 9, 1], [3, 9, 1]) == Some(3))
+  example (find_in_list([4], [4]) == None)
+  example (find_in_list([], []) == None)
+  example (find_in_list([5, 2], [5, 2]) == Some(2))
+  example (find_in_list([1, 2, 3, 4], [1, 2, 3, 4]) == Some(3))
+{
+  match current { [] => None [x, ..t] => if (greater_count(original, x) == 1) then Some(x) else find_in_list(t, original) }
+}
+
+fn second_largest(xs: List[Int]) -> Option[Int]
+  requires distinct(xs)
+  ensures is_second(xs, result)
+  effects pure
+  example (second_largest([3, 9, 1]) == Some(3))
+  example (second_largest([4]) == None)
+  example (second_largest([]) == None)
+  example (second_largest([5, 2]) == Some(2))
+  example (second_largest([1, 2, 3, 4]) == Some(3))
+{
+  find_in_list(xs, xs)
+}
+"""
+
+
+def _problema(fn: str) -> dict:
+    return json.loads((PROBLEMAS / f"{fn}.json").read_text())
+
+
+def test_el_oraculo_juzga_en_ejecucion_lo_que_el_almacen_acepto():
+    # Regresión de flujo-2026-10-01-1914-control: el oráculo cargaba el fichero con el probador, el
+    # E201 de find_in_list tumbaba la carga y las 25 llamadas del dominio salían ruidosas. A
+    # producción, por el almacén, llega lo que `eval` ejecuta, que no vuelve a probar.
+    casos, cuenta = flujo.oraculo(SECOND_LARGEST_1914, _problema("second_largest"))
+    dominio = [c for c in casos if c["zone"] == "domain"]
+    assert len(dominio) == 25 and all(c["result"] == juez.OK for c in dominio)
+    assert cuenta["dom_ruidoso"] == 0 and cuenta["silenciosos"] == 0
+    # En ejecución, con los contratos: lo que repite valores choca con `requires distinct(xs)`.
+    ambigua = [c for c in casos if c["zone"] != "domain"]
+    assert ambigua and all(c["detail"]["error"]["code"] == "E300" for c in ambigua)
+
+
+def test_rejuzgar_guarda_el_oraculo_de_antes_y_las_llamadas_que_cambian(tmp_path):
+    p = _problema("second_largest")
+    # Como quedó la fila en la corrida: el programa no cargó y ninguna llamada se ejecutó.
+    error = {"ok": False, "error": {"code": "E201", "found_by": "prover"}}
+    antes = [{**c, "result": juez.REJECT, "detail": error} for c in p["oracle"]]
+    entregada = {"problem": "second_largest", "cond": flujo.COND, "accepted_at": 3, "code": SECOND_LARGEST_1914,
+                 "oracle": juez.contar(antes), "oracle_cases": antes, "flujo": {"relleno": "abc"}}
+    sin_hueco = {"problem": "nth", "cond": flujo.COND, "accepted_at": None, "code": None, "oracle": {},
+                 "oracle_cases": [], "flujo": {}}
+    corrida = tmp_path / "flujo.jsonl"
+    corrida.write_text("".join(json.dumps(r) + "\n" for r in (entregada, sin_hueco)))
+    sl, nth = flujo.rejuzgar(corrida)
+    assert nth == sin_hueco
+    f = sl["flujo"]
+    assert f["relleno"] == "abc" and f["oraculo"] == flujo.ORACULO and f["no_cargo_antes"]
+    assert f["oraculo_antes"]["dom_ruidoso"] == 25 and sl["oracle"]["dom_ruidoso"] == 0
+    assert len(f["cambios"]) == 25 and all(
+        (c["zone"], c["antes"], c["ahora"]) == ("domain", juez.REJECT, juez.OK) for c in f["cambios"])
+    md = flujo.resumen_rejuicio(corrida, [sl, nth], "hoy")
+    assert "25 reject → ok" in md and "Programas que no cargan: 1 → 0" in md
+    # Si el oráculo del problema no es el de la corrida, comparar llamada a llamada no tiene sentido.
+    corrida.write_text(json.dumps({**entregada, "oracle_cases": antes[1:]}) + "\n")
+    with pytest.raises(ValueError):
+        flujo.rejuzgar(corrida)

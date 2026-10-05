@@ -109,13 +109,17 @@ def casos_sello(p: dict, casos: list[dict]) -> str:
     return json.dumps([{"call": llamada(p, c["args"]), "expect": sello_lit(c["expect"])} for c in casos])
 
 
-def ejecutar_sello(code: str, p: dict, casos: list[dict], timeout: int = 60) -> list[dict] | dict:
-    """Corre `sello test`. Devuelve la lista de casos con `result` bruto, o el error de compilación."""
+def ejecutar_sello(code: str, p: dict, casos: list[dict], timeout: int = 60,
+                   prover: bool = True) -> list[dict] | dict:
+    """Corre `sello test`. Devuelve la lista de casos con `result` bruto, o el error de compilación.
+    Sin `prover`, la carga no pasa el probador (`--no-prover`): el programa se juzga en ejecución,
+    con sus contratos."""
     with tempfile.TemporaryDirectory() as d:
         src = Path(d, "sol.sello"); src.write_text(code + "\n")
         cj = Path(d, "cases.json"); cj.write_text(casos_sello(p, casos))
         try:
-            r = subprocess.run([sys.executable, "-m", "sello.cli", "test", str(src), str(cj)],
+            r = subprocess.run([sys.executable, "-m", "sello.cli", "test", str(src), str(cj)]
+                               + ([] if prover else ["--no-prover"]),
                                capture_output=True, text=True, timeout=timeout, cwd=ROOT)
         except subprocess.TimeoutExpired:
             return {"error": {"code": "E500", "what": f"timeout after {timeout}s"}, "timeout": True}
