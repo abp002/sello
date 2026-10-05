@@ -252,6 +252,19 @@ predicciones, la media de intentos, no se cumple en una columna: dos sesiones la
 tropiezos del cuerpo. Queda abierto un tercer fallo. Con los helpers enlazados desde el almacén,
 el probador no refuta lo que sí refuta con ellos en el mismo fichero.
 
+**Un candidato que no se reproduce no cierra la búsqueda** (5 de octubre de 2026, prerregistrado el
+mismo día). El tercer fallo del 1 de octubre no era del almacén. Con los helpers en el fichero o
+enlazados, el probador fallaba en la misma consulta. Z3 dejaba un modelo parcial, y que fuera el bug
+(`find_in_list([-1], [14])`) o una entrada correcta lo decidían los nombres de las funciones. El
+probador se quedaba con ese primer candidato. Ahora, lo que queda sin decidir pide hasta tres
+candidatos más, sin las entradas ya ejecutadas, y solo puede refutar: con entradas excluidas, un
+`unsat` no prueba nada. Medido contra el probador anterior, no cambia ninguna prueba: las mismas 175
+tareas de vericoding y los mismos niveles en 877 programas. De 794 mutantes que llegaban a
+producción, mata 13 más en compilación (7 distintos), a cambio de un 20 % más de tiempo en reprobar.
+Una primera versión además «probaba» una tarea más sin probar nada nuevo. Guardaba nodos de Z3
+durante las fases normales, y eso basta para cambiar el orden del E-matching. La versión de `main`
+apunta las entradas como valores del intérprete y construye las exclusiones al final.
+
     uv sync --extra dev
     uv run sello check ejemplos/basicos.sello     # parse, tipos, ejemplos, probador (nivel 2)
     uv run sello add ejemplos/basicos.sello       # al almacén, con certificado
