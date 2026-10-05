@@ -287,25 +287,26 @@ def decide(runs: list, ctx: z3.Context, budget: Budget, confirm_model,
             open_.pop()
 
 
-def search(s: z3.Solver, path: list, prop: z3.BoolRef, seen: list, ctx: z3.Context, budget: Budget,
+def search(s: z3.Solver, path: list, prop: z3.BoolRef, tried: list, ctx: z3.Context, budget: Budget,
            confirm_model, exclude, mbqi: bool, cap: int) -> SelloError | None:
     """Más candidatos para una obligación que quedó sin decidir: cada consulta excluye las
-    entradas ya vistas que el intérprete no reprodujo (`seen`, y después `exclude(modelo)` de cada
-    candidato nuevo). Solo refuta: devuelve el error real o None. Con entradas excluidas, un unsat
-    no prueba nada: se descartaron ejecutando los cuerpos de lo llamado, y el nivel 2 habla de sus
-    contratos."""
+    entradas que ya se ejecutaron sin reproducir (`tried`, que `confirm_model(modelo, tried)`
+    alarga con cada candidato nuevo). Solo refuta: devuelve el error real o None. Con entradas
+    excluidas, un unsat no prueba nada: se descartaron ejecutando los cuerpos de lo llamado, y el
+    nivel 2 habla de sus contratos."""
     open_ = s
     s.push()
     try:
-        s.add(*path, z3.Not(prop), *seen)
+        s.add(*path, z3.Not(prop), *[exclude(a) for a in tried])
         for _ in range(RETRIES):
             got = query(s, ctx, budget, mbqi, cap)
             if got is None or got[0] == z3.unsat or got[1] is None:
                 return None
-            found = confirm_model(got[1])
-            if found is not None:
+            n = len(tried)
+            found = confirm_model(got[1], tried)
+            if found is not None or len(tried) == n:  # sin entrada que excluir, sería la misma consulta
                 return found
-            s.add(exclude(got[1]))
+            s.add(exclude(tried[-1]))
         return None
     except Stuck:
         open_ = None
@@ -430,6 +431,22 @@ class Translator:
                 dt.declare("Some", ("val", self.sort(t.elem)))
                 self.options[key] = dt.create()
             return self.options[key]
+        raise Unsupported(f"type {t}")
+
+    def term(self, v: object, t: Type) -> z3.ExprRef:
+        """Un valor del intérprete como término de Z3: lo contrario de `value`."""
+        if isinstance(t, TBool):
+            return z3.BoolVal(v, self.ctx)
+        if isinstance(t, TInt):
+            return self.int(v)
+        if isinstance(t, TText):
+            return z3.StringVal(v, self.ctx)
+        if isinstance(t, TList):
+            items = [z3.Unit(self.term(x, t.elem)) for x in v]
+            return z3.Empty(self.sort(t)) if not items else items[0] if len(items) == 1 else z3.Concat(*items)
+        if isinstance(t, TOption):
+            s = self.sort(t)
+            return s.constructor(0)() if v is NONE else s.constructor(1)(self.term(v.value, t.elem))
         raise Unsupported(f"type {t}")
 
     def at_fn(self, elem: z3.SortRef) -> z3.FuncDeclRef:
@@ -885,14 +902,17 @@ def too_big(v: object) -> bool:
 
 
 def confirm(program: Program, fn: Fn, params: list, model: z3.ModelRef,
-            interp: Interpreter | None) -> SelloError | None:
-    """Ejecuta la entrada del modelo. Devuelve el error real o None si no reproduce."""
+            interp: Interpreter | None, tried: list | None = None) -> SelloError | None:
+    """Ejecuta la entrada del modelo. Devuelve el error real o None si no reproduce. `tried` recibe
+    la entrada que se ejecuta, en valores del intérprete: no retienen nada del contexto de Z3."""
     try:
         args = [value(model.eval(c, model_completion=True), p.type) for p, c in zip(fn.params, params)]
     except (Unsupported, z3.Z3Exception):
         return None
     if any(too_big(a) for a in args):
         return None
+    if tried is not None:
+        tried.append(args)
     interp = interp or Interpreter(program)
     shown = f"{fn.name}(" + ", ".join(fmt(a) for a in args) + ")"
     interp.fuel = CONFIRM_FUEL  # sin él, un contrato de coste exponencial colgaba el hijo
@@ -1002,22 +1022,21 @@ def prove(program: Program, fn: Fn, interp: Interpreter | None = None,
     except z3.Z3Exception as z:
         return done(UNKNOWN, f"z3: {str(z).strip()[:120]}")
 
-    def exclude(m: z3.ModelRef) -> z3.BoolRef:
-        """La entrada que se ejecutó para el candidato `m` (la misma que lee `confirm`), excluida."""
-        return z3.Or([p != m.eval(p, model_completion=True) for p in params])
+    # Por obligación, las entradas que se ejecutaron sin reproducir, en valores del intérprete. Los
+    # términos que las excluyen se construyen en `search`, al final: guardar algo del contexto de Z3
+    # durante las fases normales (las cláusulas, o el modelo) cambiaba lo que probaban las
+    # siguientes obligaciones (DH0040, 2026-10-05).
+    tried: dict[int, list] = {}
 
-    seen: dict[int, list] = {}  # por obligación, las entradas de los candidatos que no se reprodujeron
+    def exclude(args: list) -> z3.BoolRef:
+        return z3.Or([p != tr.term(a, q.type) for p, a, q in zip(params, args, fn.params)])
 
     def attempt(k: int, phases: list) -> bool | None:
         """Una obligación con esas fases; un contraejemplo real se lanza como Refuted."""
-        def confirm_model(m: z3.ModelRef) -> SelloError | None:
-            found = confirm(program, fn, params, m, interp)
-            if found is None and params:
-                seen.setdefault(k, []).append(exclude(m))
-            return found
         runs = [(kinds[kind][0], kinds[kind][1].obligations[k], mbqi, cap) for kind, mbqi, cap in phases]
+        out = tried.setdefault(k, []) if RETRIES else None  # sin búsqueda, sin apuntes
         valid, err = decide([(sv, o.path, o.prop, mbqi, cap) for sv, o, mbqi, cap in runs], ctx, budget,
-                            confirm_model)
+                            lambda m: confirm(program, fn, params, m, interp, out))
         if valid is False:
             raise Refuted(err)
         return valid
@@ -1050,10 +1069,10 @@ def prove(program: Program, fn: Fn, interp: Interpreter | None = None,
         if kind in kinds:
             sv, trk = kinds[kind]
             for k in undecided:
-                if k in seen and budget.left():
+                if params and tried.get(k) and budget.left():  # sin parámetros no hay entrada que excluir
                     o = trk.obligations[k]
-                    err = search(sv, o.path, o.prop, seen[k], ctx, budget,
-                                 lambda m: confirm(program, fn, params, m, interp), exclude, mbqi, cap)
+                    err = search(sv, o.path, o.prop, tried[k], ctx, budget,
+                                 lambda m, out: confirm(program, fn, params, m, interp, out), exclude, mbqi, cap)
                     if err is not None:
                         raise Refuted(err)
         if undecided:

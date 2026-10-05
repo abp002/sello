@@ -19,7 +19,7 @@ from sello import prover as pr
 from sello.compile import check_source, compile_source, run_examples
 from sello.errors import SelloError
 from sello.interp import NONE, Some
-from sello.nodes import INT, TEXT, TList, TOption
+from sello.nodes import BOOL, INT, TEXT, TList, TOption
 
 
 def verdict(src: str, name: str | None = None) -> pr.Verdict:
@@ -260,6 +260,62 @@ def test_si_el_hijo_no_responde_lo_que_falta_queda_unknown(monkeypatch):
     assert vs["otra"].status == pr.UNKNOWN and "did not answer" in vs["otra"].reason
 
 
+# DH0040 de vericoding (haiku, 12-09, intento 5): decode_cyclic queda sin decidir.
+DH0040 = """
+fn decode_triplet_with_tail(a: Int, b: Int, c: Int, tail: List[Int]) -> List[Int]
+  requires len(tail) >= 0
+  ensures len(result) == 3 + len(tail)
+  ensures result[0] == c
+  ensures result[1] == a
+  ensures result[2] == b
+  ensures forall i in 0..len(tail): result[3 + i] == tail[i]
+  effects pure
+  example decode_triplet_with_tail(0, 1, 2, []) == [2, 0, 1]
+  example decode_triplet_with_tail(0, 1, 2, [3, 4, 5]) == [2, 0, 1, 3, 4, 5]
+{
+  [c, a, b] ++ tail
+}
+
+fn decode_cyclic(s: List[Int]) -> List[Int]
+  requires (len(s) >= 0)
+  ensures (len(s) == len(result))
+  ensures forall i in (len(s) - (len(s) % 3))..len(s): (result[i] == s[i])
+  ensures forall i in 0..(len(s) - (len(s) % 3)): ((not ((i % 3) == 0)) or (result[i] == s[(i + 2)]))
+  ensures forall i in 0..(len(s) - (len(s) % 3)): ((not ((i % 3) == 1)) or (result[i] == s[(i - 1)]))
+  effects pure
+  example decode_cyclic([]) == []
+  example decode_cyclic([1]) == [1]
+  example decode_cyclic([1, 2]) == [1, 2]
+  example decode_cyclic([0, 1, 2]) == [2, 0, 1]
+  example decode_cyclic([0, 1, 2, 3, 4, 5]) == [2, 0, 1, 5, 3, 4]
+{
+  match s {
+    [] => []
+    [a, ..t1] =>
+      match t1 {
+        [] => [a]
+        [b, ..t2] =>
+          match t2 {
+            [] => [a, b]
+            [c, ..t3] => decode_triplet_with_tail(a, b, c, decode_cyclic(t3))
+          }
+      }
+  }
+}
+"""
+
+
+def test_la_busqueda_de_candidatos_no_cambia_lo_que_se_prueba(monkeypatch):
+    """Guardar nodos de Z3 de los candidatos que no se reproducen durante las fases normales (la
+    cláusula que los excluye, o el modelo) cambiaba el E-matching de las obligaciones siguientes, y
+    decode_cyclic pasaba a nivel 2 (2026-10-05). La búsqueda solo puede refutar: con ella o sin
+    ella, el mismo veredicto."""
+    con = verdict(DH0040, "decode_cyclic")
+    monkeypatch.setattr(pr, "RETRIES", 0)
+    sin = verdict(DH0040, "decode_cyclic")
+    assert (con.status, con.reason) == (sin.status, sin.reason)
+
+
 # ---------- piezas ----------
 
 def test_valores_del_modelo_vuelven_al_interprete():
@@ -279,6 +335,34 @@ def test_valores_del_modelo_vuelven_al_interprete():
     assert pr.value(ev(empty), TList(INT)) == []
     assert pr.value(ev(t), TEXT) == "hi"
     assert pr.value(ev(o), TOption(INT)) == Some(3) and pr.value(ev(o2), TOption(INT)) is NONE
+
+
+def _valores(t):
+    if t == INT:
+        return st.integers(-50, 50)
+    if t == BOOL:
+        return st.booleans()
+    if t == TEXT:
+        return st.text(alphabet="ab z", max_size=4)
+    if isinstance(t, TList):
+        return st.lists(_valores(t.elem), max_size=4)
+    return st.one_of(st.just(NONE), _valores(t.elem).map(Some))
+
+
+@settings(max_examples=60, deadline=None)
+@given(data=st.data())
+def test_un_valor_del_interprete_vuelve_a_z3_como_la_misma_entrada(data):
+    """`search` excluye las entradas ya ejecutadas desde sus valores en el intérprete: el término
+    que construye `term` tiene que ser la entrada que `value` había leído del modelo."""
+    t = data.draw(st.sampled_from([INT, BOOL, TEXT, TList(INT), TOption(INT), TList(TOption(INT)), TOption(TList(INT))]))
+    v = data.draw(_valores(t))
+    program, _ = compile_source(FACT)
+    tr = pr.Translator(program, program.fns[0], z3.Context())
+    x = z3.Const("x", tr.sort(t))
+    s = z3.Solver(ctx=tr.ctx)
+    s.add(x == tr.term(v, t))
+    assert s.check() == z3.sat
+    assert pr.value(s.model().eval(x, model_completion=True), t) == v
 
 
 @settings(max_examples=200, deadline=None)
