@@ -364,8 +364,8 @@ def resumen_rejuicio(path: Path, filas: list[dict], when: str) -> str:
     suma = lambda k, o="oracle": sum((r[o] if o == "oracle" else fl(r)[o])[k] for r in juzgadas)  # noqa: E731
     out += ["",
             f"- Soluciones: {len(juzgadas)}; llamadas del oráculo: {sum(len(r['oracle_cases']) for r in juzgadas)}; "
-            f"cambian {sum(len(fl(r)['cambios']) for r in juzgadas)}, en "
-            f"{sum(bool(fl(r)['cambios']) for r in juzgadas)} soluciones.",
+            f"llamadas que cambian: {sum(len(fl(r)['cambios']) for r in juzgadas)}; soluciones con alguna: "
+            f"{sum(bool(fl(r)['cambios']) for r in juzgadas)}.",
             f"- Programas que no cargan: {sum(fl(r)['no_cargo_antes'] for r in juzgadas)} → "
             f"{sum(no_cargo(r['oracle_cases']) for r in juzgadas)}.",
             f"- **Silenciosos {suma('silenciosos', 'oraculo_antes')} → {suma('silenciosos')}** (dominio "

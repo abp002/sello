@@ -265,6 +265,16 @@ Una primera versión además «probaba» una tarea más sin probar nada nuevo. G
 durante las fases normales, y eso basta para cambiar el orden del E-matching. La versión de `main`
 apunta las entradas como valores del intérprete y construye las exclusiones al final.
 
+**El oráculo del flujo juzga lo que el almacén ejecuta** (5 de octubre de 2026, prerregistrado el
+mismo día). El oráculo de `flujo.py` volvía a cargar cada solución como fichero, y esa carga pasa
+el probador. Por el almacén, a producción llega lo que `eval` ejecuta, y `eval` no prueba nada.
+El probador no ve lo mismo en el fichero que en el almacén. Una solución que el almacén había
+aceptado podía no cargar, y entonces todas sus llamadas contaban como rechazadas: un bug del
+dominio habría salido ruidoso en vez de silencioso. Ahora el oráculo juzga en ejecución, con los
+contratos y sin probador. Se rejuzgaron sin modelo las 47 soluciones del 1 de octubre, y cambia
+una sola: los 25 ruidosos de `second_largest` pasan a correctos. No aparece ni desaparece ningún
+silencioso.
+
     uv sync --extra dev
     uv run sello check ejemplos/basicos.sello     # parse, tipos, ejemplos, probador (nivel 2)
     uv run sello add ejemplos/basicos.sello       # al almacén, con certificado
