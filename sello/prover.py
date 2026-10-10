@@ -53,7 +53,7 @@ import z3
 from .builtins import NAMES as BUILTINS
 from .checker import Checker
 from .errors import SelloError
-from .hash import _sccs, callees
+from .hash import _sccs, callees, hash_program, short
 from .interp import NONE, Interpreter, Some, fmt
 from .nodes import (
     Index,
@@ -387,6 +387,11 @@ class Translator:
         self.cats: dict[str, z3.FuncDeclRef] = shared.cats if shared else {}
         self.cat_axioms: set[str] = set()  # lo mismo para el axioma de `cat!`
         self.ufs: dict[str, z3.FuncDeclRef | z3.ExprRef] = shared.ufs if shared else {}
+        # El nombre con que cada función llega a Z3: el de su hash, como la enlaza el almacén. Con el
+        # del fichero, el nivel cambiaba según cómo se llamaran las funciones (SEL-1: 7 programas de
+        # vericoding, DH0104 entre ellos) y el mismo hash quedaba certificado en un nivel u otro.
+        self.canon: dict[str, str] = shared.canon if shared else {
+            n: f"f_{short(h)}" for n, h in hash_program(program).items()}
         self.n = shared.n if shared else 0
         self.obligations: list[Obligation] = []
         self.self_calls: list[tuple[list, list]] = []  # (camino, args) de cada llamada recursiva del cuerpo
@@ -518,9 +523,9 @@ class Translator:
     def uf(self, g: Fn):
         if g.name not in self.ufs:
             if g.params:
-                self.ufs[g.name] = z3.Function(f"fn!{g.name}", *[self.sort(p.type) for p in g.params], self.sort(g.ret))
+                self.ufs[g.name] = z3.Function(f"fn!{self.canon[g.name]}", *[self.sort(p.type) for p in g.params], self.sort(g.ret))
             else:
-                self.ufs[g.name] = z3.Const(f"fn!{g.name}", self.sort(g.ret))
+                self.ufs[g.name] = z3.Const(f"fn!{self.canon[g.name]}", self.sort(g.ret))
         return self.ufs[g.name]
 
     def apply(self, g: Fn, args: list) -> z3.ExprRef:
@@ -965,7 +970,7 @@ def _setup(tr: Translator, fn: Fn, env: Env) -> z3.Solver:
     # cuantificador de más cambia la estrategia de Z3 y `div` pasaba de 10 ms a unknown.
     seen: set[str] = {fn.name}  # el propio contrato no es un axioma: solo hipótesis en cada llamada
     while set(tr.ufs) - seen:
-        name = sorted(set(tr.ufs) - seen)[0]
+        name = min(set(tr.ufs) - seen, key=lambda n: (tr.canon[n], n))  # por hash, no por nombre
         seen.add(name)
         try:
             tr.base.append(tr.axiom(tr.fns[name]))
