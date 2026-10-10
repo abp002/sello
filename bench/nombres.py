@@ -200,6 +200,15 @@ def resumen(rows: list[dict], cmp: dict, when: str, etiqueta: str, carga: list[s
         out.append(f"| {d} | {dir_[('H', d)]} | {dir_[('X', d)]} |")
     out += ["", f"Funciones distintas y estables en todas las repeticiones, sin reloj: **{len(cmp['por_nombres'])}**. "
             f"Con «(wall clock)» en alguna: {len(cmp['por_reloj'])}. Distintas e inestables sin reloj: {len(cmp['inestables'])}.", ""]
+    # Un error tumba el programa entero y arrastra a todas sus funciones: se cuenta también por programa,
+    # separando lo que cambia una refutación (algún esquema da error) de lo que cambia solo un nivel.
+    progs: dict[str, str] = {}
+    for f in cmp["por_nombres"]:
+        refuta = any(x.startswith("error") for reps in f["claves"].values() for x in reps.values())
+        progs[f["id"]] = "refutacion" if refuta or progs.get(f["id"]) == "refutacion" else "nivel"
+    tipos = Counter(progs.values())
+    out += [f"Por programa: **{len(progs)}** distintos por nombres; cambia una refutación en {tipos['refutacion']}, "
+            f"solo el nivel en **{tipos['nivel']}**.", ""]
     for titulo, lista in (("Por nombres", cmp["por_nombres"]), ("Inestables, sin reloj", cmp["inestables"]),
                           ("Con reloj", cmp["por_reloj"])):
         if not lista:
