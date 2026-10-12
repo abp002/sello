@@ -1,7 +1,8 @@
 """El almacén: funciones por hash, nombres como alias, certificados por hash.
 
-Verificada una vez, verificada para siempre: un hash probado (nivel 2) no se vuelve a
-verificar. Uno de nivel 1 sí se reintenta en cada `add`, por si ahora se prueba (ALE-171). Como el hash de un llamador incluye el hash del llamado, cambiar una
+Verificada una vez, verificada mientras no cambie el verificador: un hash probado (nivel 2)
+no se vuelve a verificar con el mismo código de Sello y el mismo Z3 (`verifier`, SEL-7); con
+otros, su certificado es viejo y no cuenta. Uno de nivel 1 sí se reintenta en cada `add`, por si ahora se prueba (ALE-171). Como el hash de un llamador incluye el hash del llamado, cambiar una
 dependencia invalida solo a quien la usa. El nivel 2 es modular: lo que da por bueno se lee
 en su cierre (`closure`).
 
@@ -27,6 +28,7 @@ from .nodes import Call, Expr, Fn, Program
 from .parser import parse
 from .pretty import unparse, unparse_fn
 from .prover import PROVEN, Verdict, prove_program
+from .verifier import fingerprint, same
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS functions (
@@ -35,7 +37,7 @@ CREATE TABLE IF NOT EXISTS functions (
 CREATE TABLE IF NOT EXISTS names (name TEXT PRIMARY KEY, hash TEXT, updated_at TEXT);
 CREATE TABLE IF NOT EXISTS certificates (
   hash TEXT PRIMARY KEY, level INTEGER, ok INTEGER, examples INTEGER, verified_at TEXT, error TEXT,
-  pending INTEGER NOT NULL DEFAULT 0);
+  pending INTEGER NOT NULL DEFAULT 0, verifier TEXT);
 CREATE TABLE IF NOT EXISTS origins (
   hash TEXT PRIMARY KEY, contract TEXT, contract_author TEXT, body_author TEXT);
 """
@@ -69,6 +71,10 @@ class Store:
         if "pending" not in {r["name"] for r in self.db.execute("PRAGMA table_info(certificates)")}:
             self.db.execute("ALTER TABLE certificates ADD COLUMN pending INTEGER NOT NULL DEFAULT 0")
             self.db.commit()
+        # Los de antes de SEL-7 no saben con qué verificador se dieron: todos sus certificados son viejos.
+        if "verifier" not in {r["name"] for r in self.db.execute("PRAGMA table_info(certificates)")}:
+            self.db.execute("ALTER TABLE certificates ADD COLUMN verifier TEXT")
+            self.db.commit()
 
     # ---------- consultas ----------
     def resolve(self, name: str) -> str:
@@ -91,6 +97,9 @@ class Store:
         if row["pending"]:
             d["pending"] = row["pending"]  # ejemplos que llegan a un hueco: ni pasan ni fallan
         d["verified_at"] = row["verified_at"]
+        d["verifier"] = row["verifier"] and json.loads(row["verifier"])
+        if not same(d["verifier"], fingerprint()):
+            d["stale"] = True  # dado con otro verificador: no vale hasta reverificarlo
         if row["error"]:
             d["error"] = json.loads(row["error"])
         return d
@@ -126,7 +135,8 @@ class Store:
         contratos de lo que se llama), así que vale lo que valga lo más flojo de su cierre, como
         un teorema de Lean vale lo que los `sorry` que lista `#print axioms`. `closure_level` es
         el nivel más bajo entre `h` y todo lo que alcanza por sus deps, helpers de los contratos
-        incluidos; `rests_on`, lo de ese cierre que no llega a 2 (0: su verificación falló). Se
+        incluidos; `rests_on`, lo de ese cierre que no llega a 2 (0: su verificación falló o es
+        vieja, `stale`). Se
         calcula al leer y no se guarda: el certificado de una dependencia puede subir con
         `verify` o con otro `add` (ALE-171)."""
         level, rests_on = 2, []
@@ -134,11 +144,12 @@ class Store:
         while pending:
             x = pending.pop()
             row, cert = self.function(x), self.certificate(x)
-            lv = cert["level"] if cert and cert["ok"] else 0
+            lv = cert["level"] if cert and cert["ok"] and not cert.get("stale") else 0
             level = min(level, lv)
             if x != h and lv < 2:
                 rests_on.append({"name": row["name"], "hash": short(x), "level": lv,
-                                 **({"hole": True} if self.is_hole(x) else {})})
+                                 **({"hole": True} if self.is_hole(x) else {}),
+                                 **({"stale": True} if cert and cert.get("stale") else {})})
             for dh in json.loads(row["deps"]).values():
                 if dh not in seen:
                     seen.add(dh)
@@ -290,7 +301,7 @@ class Store:
                      json.dumps(deps_of[fn.name]), _now()))
                 self._record_origin(h, contracts[name], author)
                 cert = self.certificate(h)
-                cached[name] = bool(cert and cert["ok"] and cert["level"] >= 2)
+                cached[name] = bool(cert and cert["ok"] and cert["level"] >= 2 and not cert.get("stale"))
                 if cached[name]:
                     continue
                 if verdicts is None:  # un hueco no se prueba: entra en los demás por su contrato
@@ -396,15 +407,38 @@ class Store:
 
     def _write_certificate(self, h: str, lv: int, ok: bool, examples: int, pending: int,
                            error: str | None) -> None:
-        self.db.execute("INSERT OR REPLACE INTO certificates (hash, level, ok, examples, pending, verified_at, error) "
-                        "VALUES (?,?,?,?,?,?,?)", (h, lv, int(ok), examples, pending, _now(), error))
+        self.db.execute("INSERT OR REPLACE INTO certificates (hash, level, ok, examples, pending, verified_at, error, "
+                        "verifier) VALUES (?,?,?,?,?,?,?,?)",
+                        (h, lv, int(ok), examples, pending, _now(), error, json.dumps(fingerprint())))
 
     def _alias(self, name: str, h: str) -> None:
         self.db.execute("INSERT OR REPLACE INTO names VALUES (?,?,?)", (name, h, _now()))
 
     def verify(self, name: str) -> dict:
         """Vuelve a verificar aunque haya certificado. Para comprobar que el almacén no miente."""
-        h = self.resolve(name)
+        return {"name": name, **self._verify_hash(self.resolve(name))}
+
+    def reverify(self) -> list[dict]:
+        """Vuelve a verificar lo viejo (`stale`) que alcanzan los nombres, tras cambiar Sello o Z3.
+        Un fallo no para la ronda: queda en su certificado y en la lista, con `error`."""
+        out = []
+        for name, h in self.db.execute("SELECT name, hash FROM names ORDER BY name").fetchall():
+            pending, seen = [h], {h}
+            while pending:
+                x = pending.pop()
+                cert = self.certificate(x)
+                if cert is None or cert.get("stale"):
+                    try:
+                        out.append({"name": self.function(x)["name"], **self._verify_hash(x)})
+                    except SelloError as e:
+                        out.append({"name": self.function(x)["name"], "hash": short(x), "error": e.to_dict()})
+                for dh in json.loads(self.function(x)["deps"]).values():
+                    if dh not in seen:
+                        seen.add(dh)
+                        pending.append(dh)
+        return out
+
+    def _verify_hash(self, h: str) -> dict:
         program, _ = self.load_closure([h])
         Checker(program).check()
         target = next(f for f in program.fns if f.name == f"f_{short(h)}")
@@ -415,7 +449,7 @@ class Store:
             self.db.commit()
             raise
         self.db.commit()
-        return {"name": name, "hash": short(h), "certificate": self._report(h)}
+        return {"hash": short(h), "certificate": self._report(h)}
 
     def eval(self, expr_src: str):
         from .interp import fmt

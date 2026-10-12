@@ -125,12 +125,13 @@ The compiler does not compile files. `sello add FILE` parses, checks and hashes 
 function, runs its examples, tries to prove its contract, and stores it with its contract
 and its **certificate**: which verification level passed (2: proven for every input, given
 what the functions it calls promise; 1: the examples passed; 0: nothing yet, see holes
-below), how many examples, when.
+below), how many examples, when, and the `verifier` that gave it (Sello's code, Z3, machine).
 Since level 2 trusts those promises, the certificate also gives `closure_level`, the lowest
 level among the function and everything it reaches through its calls, and `rests_on`, the
 functions in that closure below level 2 (0: a hole, or their verification failed).
 Names are aliases: renaming a function or a parameter does not change its hash. A proven
-function (level 2) is never re-verified; a level-1 one is retried on the next `add`. A caller's hash includes its
+function (level 2) is not re-verified while Sello and Z3 stay the same; a level-1 one is retried on the next `add`.
+A certificate given by another Sello or Z3 is `"stale": true` and counts as 0 until `sello reverify`. A caller's hash includes its
 callees' hashes, so changing a dependency re-verifies only what uses it.
 
 A file may call any function already in the store by its name, without copying it:

@@ -108,6 +108,12 @@ def build(store_path: str, author: str | None = None) -> MCPServer:
 
     @server.tool()
     @_guard
+    def sello_reverify() -> dict:
+        """Re-verify every certificate marked stale (given by another version of Sello or Z3) that the store's names reach."""
+        return {"ok": True, "reverified": store().reverify()}
+
+    @server.tool()
+    @_guard
     def sello_eval(expr: str) -> dict:
         """Evaluate a Sello expression against the store, e.g. max_of([factorial(3), div(9, 2)]). Contracts are checked on every call."""
         return {"ok": True, "value": store().eval(expr)}

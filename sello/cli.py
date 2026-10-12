@@ -64,6 +64,11 @@ def cmd_verify(args):
 
 
 @_guard
+def cmd_reverify(args):
+    return {"ok": True, "reverified": _store(args).reverify()}
+
+
+@_guard
 def cmd_eval(args):
     return {"ok": True, "value": _store(args).eval(args.expr)}
 
@@ -148,6 +153,7 @@ def main(argv: list[str] | None = None) -> int:
         ("users", cmd_users, ["name"], "functions that call this one"),
         ("names", cmd_names, [], "every name in the store"),
         ("verify", cmd_verify, ["name"], "re-run verification and refresh the certificate"),
+        ("reverify", cmd_reverify, [], "re-verify every certificate given by another Sello or Z3"),
         ("eval", cmd_eval, ["expr"], "evaluate an expression against the store"),
     ]:
         sp = sub.add_parser(name, help=help_)
