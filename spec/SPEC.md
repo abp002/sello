@@ -79,8 +79,9 @@ making a function. `x / 0` is a runtime error (`E500`); rule it out with `requir
   the body calls, for all inputs (level 2, an SMT solver). When it finds an input that breaks
   a contract it reports the usual `E201`, `E300` or `E500` for that input, with
   `"found_by": "prover"` and the failing call in `"input"`. When it cannot decide, nothing is
-  rejected: the function simply stays at level 1. A recursive function is proven only if some
-  argument decreases at every recursive call.
+  rejected: the function simply stays at level 1. A level 2 is always sound, but near the
+  solver's work limit the same function can reach it on one run and not on the next. A
+  recursive function is proven only if some argument decreases at every recursive call.
 
 Inside `requires` and `ensures` **only** (using them in a body or an example is `E401`):
 

@@ -66,8 +66,11 @@ from .nodes import (
 from .parser import parse
 from .pretty import unparse, unparse_fn
 
-# Lo que decide es el trabajo de Z3 (`rlimit`), no el reloj: el mismo programa da el mismo
-# veredicto con cualquier carga de la máquina (ALE-175). Calibrado el 2026-09-24 sobre 10.376
+# Lo que decide es el trabajo de Z3 (`rlimit`), no el reloj: la carga de la máquina no cambia el
+# veredicto (ALE-175). Pero Z3 5.1 no gasta siempre el mismo trabajo con la misma entrada (depende
+# de dónde caiga su memoria), así que cerca del tope una función puede salir en nivel 2 o en 1
+# entre ejecuciones; el nivel 2 siempre es cierto (SEL-5, 'El azar del probador está dentro de
+# Z3'). Para medir, SELLO_DETERMINISTA en Linux (bench/README.md). Calibrado el 2026-09-24 sobre 10.376
 # consultas de vericoding (bench/resultados/reprobar-2026-09-24-1935-calibra-1): el tope de cada
 # fase está un poco por encima de la mediana del trabajo que alcanzaban las consultas que cortaba
 # el reloj viejo (300 ms -> 435.000, 700 ms -> 1.260.000). El de función es el de 3 s al ritmo de

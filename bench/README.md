@@ -14,6 +14,19 @@ Aquí vive la métrica. Antes que el compilador.
 | `probador.py` | soluciones de `juez-*.jsonl` y mutantes de `mutantes-*.jsonl` | ¿Cuántas funciones prueba el nivel 2 (Z3) y cuántos mutantes que llegaban a producción mata en compilación? Sin modelo. |
 | `vericoding/harness4.py` | `vericoding/tareas/` | **Fase 4.** Con el contrato del benchmark de vericoding (traducido de Dafny), ¿qué fracción deja el modelo en nivel 2, en cuántos intentos y con qué errores? |
 
+## Cómo se mide lo que pasa por el probador
+
+Z3 5.1 no gasta siempre el mismo trabajo con la misma entrada, y cerca del tope una función
+puede quedar en nivel 2 en una ejecución y en 1 en la siguiente (SEL-5, nota 'El azar del
+probador está dentro de Z3'). No se arregla dentro del proceso; se acota así:
+
+- Una medición prerregistrada que compare niveles se corre en el PC (Linux) con
+  `SELLO_DETERMINISTA=1`: el hijo del probador va sin ASLR, con la semilla de Python fija y
+  con el entorno reducido a `SELLO_*`. Fuera de Linux, el probador falla en vez de medir.
+- Cada brazo, dos corridas. Lo que cambia de nivel entre las dos de un mismo brazo es
+  **inestable**: se cuenta y se informa aparte, y no cuenta como ganancia ni como pérdida.
+- Una diferencia entre brazos vale si es mayor que las inestables de cada brazo.
+
 ## El juez imperfecto (`harness3.py`)
 
 El bucle solo ve el compilador (desde el 2026-09-06, con el probador de nivel 2 dentro) y
