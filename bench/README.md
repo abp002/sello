@@ -12,6 +12,7 @@ Aquí vive la métrica. Antes que el compilador.
 | `mutantes.py` | soluciones de `resultados/juez-*.jsonl` | De los bugs de cuerpo que el juez débil deja pasar, ¿cuántos caza el contrato? Sin modelo. |
 | `cotas.py` | soluciones de `resultados/juez-*.jsonl` | ¿Cuántas funciones principales tienen un `ensures` que solo acota el resultado? Sin modelo. |
 | `probador.py` | soluciones de `juez-*.jsonl` y mutantes de `mutantes-*.jsonl` | ¿Cuántas funciones prueba el nivel 2 (Z3) y cuántos mutantes que llegaban a producción mata en compilación? Sin modelo. |
+| `unicidad.py` | `vericoding/tareas/` y soluciones de `mutantes-*.jsonl` | ¿Fija el contrato una sola respuesta (`sello/unique.py`)? ¿Y caen ahí los silenciosos? Sin modelo. |
 | `vericoding/harness4.py` | `vericoding/tareas/` | **Fase 4.** Con el contrato del benchmark de vericoding (traducido de Dafny), ¿qué fracción deja el modelo en nivel 2, en cuántos intentos y con qué errores? |
 
 ## Cómo se mide lo que pasa por el probador
@@ -148,3 +149,15 @@ como contratos de Sello. Tres piezas:
     uv run python bench/vericoding/harness4.py --model haiku --only DA0003     # humo
     uv run python bench/vericoding/harness4.py --model haiku --muestra 50 --semilla 1 \
         --reusar bench/resultados/vericoding-2026-09-06-1459-haiku-muestra50-semilla1.jsonl   # repetir las sin respuesta
+
+## Unicidad del contrato (`unicidad.py`)
+
+Sin modelo. Para cada contrato, Z3 busca una entrada y dos resultados distintos que lo cumplan
+(`sello/unique.py`): `unique`, `ambiguous` con el testigo ejecutado, o `unknown`. Corpus A: la
+función objetivo de las tareas de vericoding. Corpus B: la función principal de las soluciones de
+Sello con mutantes, con sus silenciosos (control: una `unique` no puede tener ninguno). Cada
+función, dos veces; lo que cambia es inestable. Prerregistrado en el vault: 'Z3 dice si el
+contrato fija una sola respuesta'.
+
+    .venv/bin/python bench/unicidad.py
+    .venv/bin/python bench/unicidad.py --solo B --limite 5   # humo
