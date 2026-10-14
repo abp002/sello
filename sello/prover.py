@@ -41,6 +41,8 @@ from __future__ import annotations
 
 import json
 import os
+import platform
+import shutil
 import subprocess
 import sys
 import threading
@@ -1161,14 +1163,36 @@ def prove_program(program: Program, program_ms: int | None = None,
     return {n: verdicts[n] for n in targets}
 
 
+def _ms(ms: int) -> str:
+    """Milisegundos con ancho fijo: el reloj que queda cambia en cada ejecución y, con otra
+    longitud en los argumentos, la memoria del hijo se reparte de otra forma (SEL-5)."""
+    return f"{ms:09d}"
+
+
+def _child_cmd(args: list[str]) -> tuple[list[str], dict[str, str] | None]:
+    """El comando y el entorno del hijo. Z3 depende de las direcciones de memoria: con la misma
+    entrada gasta otro trabajo según dónde caigan sus objetos, y en el límite eso decide entre
+    nivel 2 y 1 (SEL-5, DA0226:4). Con SELLO_DETERMINISTA, para medir, el hijo va sin ASLR
+    (`setarch -R`, solo Linux), con la semilla de Python fija y con un entorno fijo (solo las
+    variables SELLO_*): las tres cosas mueven la memoria. Donde no se puede, falla."""
+    cmd = [sys.executable, "-m", "sello.prover", *args]
+    if not os.environ.get("SELLO_DETERMINISTA"):
+        return cmd, None
+    if not sys.platform.startswith("linux"):
+        raise RuntimeError(f"SELLO_DETERMINISTA: ASLR cannot be turned off on {sys.platform}; measure on Linux")
+    env = {k: v for k, v in os.environ.items() if k.startswith("SELLO_")}
+    env["PYTHONHASHSEED"] = "0"
+    return [shutil.which("setarch") or "setarch", platform.machine(), "-R", *cmd], env
+
+
 def _child(src: str, names: list[str], ms: int) -> tuple[dict[str, Verdict], str, bool]:
     """Un hijo sobre `names`: (veredictos que llegó a dar, error fatal, se colgó)."""
-    cmd = [sys.executable, "-m", "sello.prover", "--program-ms", str(ms), "--fn-ms", str(FN_MS),
-           "--query-ms", str(QUERY_MS), "--only", ",".join(names)]
+    cmd, env = _child_cmd(["--program-ms", _ms(ms), "--fn-ms", _ms(FN_MS), "--query-ms", _ms(QUERY_MS),
+                           "--only", ",".join(names)])
     hung = False
     try:
         r = subprocess.run(cmd, input=src, capture_output=True, text=True, timeout=ms / 1000 + 5,
-                           cwd=str(Path(__file__).resolve().parents[1]))
+                           cwd=str(Path(__file__).resolve().parents[1]), env=env)
         out = r.stdout
     except subprocess.TimeoutExpired as t:
         out = t.stdout.decode() if isinstance(t.stdout, bytes) else (t.stdout or "")
