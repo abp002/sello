@@ -20,7 +20,7 @@ import sqlite3
 from pathlib import Path
 
 from .checker import Checker, signature
-from .compile import level, run_examples
+from .compile import determine, level, run_examples
 from .errors import SelloError
 from .hash import _sccs, callees, contract_hashes, hash_program, short
 from .interp import Interpreter
@@ -28,6 +28,7 @@ from .nodes import Call, Expr, Fn, Program
 from .parser import parse
 from .pretty import unparse, unparse_fn
 from .prover import PROVEN, Verdict, prove_program
+from .unique import UNIQUE, Uniqueness
 from .verifier import fingerprint, same
 
 SCHEMA = """
@@ -37,7 +38,7 @@ CREATE TABLE IF NOT EXISTS functions (
 CREATE TABLE IF NOT EXISTS names (name TEXT PRIMARY KEY, hash TEXT, updated_at TEXT);
 CREATE TABLE IF NOT EXISTS certificates (
   hash TEXT PRIMARY KEY, level INTEGER, ok INTEGER, examples INTEGER, verified_at TEXT, error TEXT,
-  pending INTEGER NOT NULL DEFAULT 0, verifier TEXT);
+  pending INTEGER NOT NULL DEFAULT 0, verifier TEXT, determined TEXT);
 CREATE TABLE IF NOT EXISTS origins (
   hash TEXT PRIMARY KEY, contract TEXT, contract_author TEXT, body_author TEXT);
 """
@@ -75,6 +76,11 @@ class Store:
         if "verifier" not in {r["name"] for r in self.db.execute("PRAGMA table_info(certificates)")}:
             self.db.execute("ALTER TABLE certificates ADD COLUMN verifier TEXT")
             self.db.commit()
+        # Los de antes de SEL-13 no dicen si su contrato fija la respuesta; su verificador es otro
+        # (la huella incluye `unique`), así que también son viejos.
+        if "determined" not in {r["name"] for r in self.db.execute("PRAGMA table_info(certificates)")}:
+            self.db.execute("ALTER TABLE certificates ADD COLUMN determined TEXT")
+            self.db.commit()
 
     # ---------- consultas ----------
     def resolve(self, name: str) -> str:
@@ -96,6 +102,8 @@ class Store:
         d = {"level": row["level"], "ok": bool(row["ok"]), "examples": row["examples"]}
         if row["pending"]:
             d["pending"] = row["pending"]  # ejemplos que llegan a un hueco: ni pasan ni fallan
+        if row["determined"]:
+            d.update(json.loads(row["determined"]))  # determined y, si es ambiguo, witness
         d["verified_at"] = row["verified_at"]
         d["verifier"] = row["verifier"] and json.loads(row["verifier"])
         if not same(d["verifier"], fingerprint()):
@@ -134,18 +142,20 @@ class Store:
         """Lo que el certificado de `h` da por bueno. El nivel 2 es modular (se prueba con los
         contratos de lo que se llama), así que vale lo que valga lo más flojo de su cierre, como
         un teorema de Lean vale lo que los `sorry` que lista `#print axioms`. `closure_level` es
-        el nivel más bajo entre `h` y todo lo que alcanza por sus deps, helpers de los contratos
-        incluidos; `rests_on`, lo de ese cierre que no llega a 2 (0: su verificación falló o es
-        vieja, `stale`). Se
+        el nivel de `h`, o el más bajo de lo que alcanza por sus deps (helpers de los contratos
+        incluidos) si algo no llega a 2; `rests_on`, lo de ese cierre que no llega a 2 (0: su
+        verificación falló o es vieja, `stale`). Un nivel 3 no baja por depender de un 2: su
+        contrato fija la respuesta si lo llamado cumple el suyo, sea o no único (SEL-13). Se
         calcula al leer y no se guarda: el certificado de una dependencia puede subir con
         `verify` o con otro `add` (ALE-171)."""
-        level, rests_on = 2, []
+        level, rests_on = 3, []
         seen, pending = {h}, [h]
         while pending:
             x = pending.pop()
             row, cert = self.function(x), self.certificate(x)
             lv = cert["level"] if cert and cert["ok"] and not cert.get("stale") else 0
-            level = min(level, lv)
+            if x == h or lv < 2:
+                level = min(level, lv)
             if x != h and lv < 2:
                 rests_on.append({"name": row["name"], "hash": short(x), "level": lv,
                                  **({"hole": True} if self.is_hole(x) else {}),
@@ -287,6 +297,7 @@ class Store:
         deps_of = {f.name: {n: hashes[n] for n in callees(f)} for f in program.fns}
         cached: dict[str, bool] = {}
         verdicts: dict[str, Verdict] | None = None  # el probador, solo si hace falta verificar algo
+        uniq: dict[str, Uniqueness] = {}
         # Lo llamado antes que quien lo llama, y cada ciclo entero antes de darle alias: si algo
         # falla, nada de lo que lo alcanza se queda guardado (regresión 2026-09-29: en el orden
         # del fichero, un llamador que iba delante se quedaba con alias y nivel 2 sobre un
@@ -306,8 +317,9 @@ class Store:
                     continue
                 if verdicts is None:  # un hueco no se prueba: entra en los demás por su contrato
                     verdicts = prove_program(linked, only={n for n, f in own.items() if not f.hole})
+                    uniq = determine(linked, verdicts)
                 try:
-                    self._certify(h, own[name], interp, verdicts.get(name))
+                    self._certify(h, own[name], interp, verdicts.get(name), uniq.get(name))
                 except SelloError:
                     self.db.commit()
                     raise
@@ -390,10 +402,11 @@ class Store:
             by = (hole["contract_author"] if hole else author, author)
         self.db.execute("INSERT OR IGNORE INTO origins VALUES (?,?,?,?)", (h, contract, *by))
 
-    def _certify(self, h: str, fn: Fn, interp: Interpreter, verdict: Verdict | None) -> None:
-        """Ejemplos (nivel 1) y, si el probador la probó, nivel 2 (`compile.level`). Los ejemplos
-        que llegan a un hueco quedan pendientes. Un fallo deja certificado fallido con el error y
-        se relanza."""
+    def _certify(self, h: str, fn: Fn, interp: Interpreter, verdict: Verdict | None,
+                 uniq: Uniqueness | None = None) -> None:
+        """Ejemplos (nivel 1), si el probador la probó nivel 2, y si además su contrato fija la
+        respuesta nivel 3 (`compile.level`). Los ejemplos que llegan a un hueco quedan pendientes.
+        Un fallo deja certificado fallido con el error y se relanza."""
         pending: list[tuple[str, str]] = []
         try:
             n = run_examples(Program([fn]), interp, pending)
@@ -403,13 +416,15 @@ class Store:
             self._write_certificate(h, 1, False, 0, 0, json.dumps(e.to_dict()))
             raise
         proven = verdict is not None and verdict.status == PROVEN
-        self._write_certificate(h, level(proven, len(pending), fn.hole), True, n, len(pending), None)
+        self._write_certificate(h, level(proven, len(pending), fn.hole, uniq is not None and uniq.status == UNIQUE),
+                                True, n, len(pending), None, uniq)
 
     def _write_certificate(self, h: str, lv: int, ok: bool, examples: int, pending: int,
-                           error: str | None) -> None:
+                           error: str | None, uniq: Uniqueness | None = None) -> None:
         self.db.execute("INSERT OR REPLACE INTO certificates (hash, level, ok, examples, pending, verified_at, error, "
-                        "verifier) VALUES (?,?,?,?,?,?,?,?)",
-                        (h, lv, int(ok), examples, pending, _now(), error, json.dumps(fingerprint())))
+                        "verifier, determined) VALUES (?,?,?,?,?,?,?,?,?)",
+                        (h, lv, int(ok), examples, pending, _now(), error, json.dumps(fingerprint()),
+                         uniq and json.dumps(uniq.to_dict(), ensure_ascii=False)))
 
     def _alias(self, name: str, h: str) -> None:
         self.db.execute("INSERT OR REPLACE INTO names VALUES (?,?,?)", (name, h, _now()))
@@ -443,8 +458,9 @@ class Store:
         Checker(program).check()
         target = next(f for f in program.fns if f.name == f"f_{short(h)}")
         verdict = None if target.hole else prove_program(program)[target.name]
+        uniq = determine(program, {target.name: verdict}) if verdict is not None else {}
         try:
-            self._certify(h, target, Interpreter(program), verdict)
+            self._certify(h, target, Interpreter(program), verdict, uniq.get(target.name))
         except SelloError:
             self.db.commit()
             raise

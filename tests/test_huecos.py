@@ -149,7 +149,7 @@ def test_rellenar_el_hueco_mueve_el_nombre_y_dice_que_implementa(store):
     hueco = store.resolve("doble")
     doble = by_name(store.add(IMPLEMENTADA, author="haiku"))["doble"]
     assert doble["implements"] == short(hueco) and "hole" not in doble
-    assert doble["certificate"]["level"] == 2 and doble["certificate"]["examples"] == 1
+    assert doble["certificate"]["level"] == 3 and doble["certificate"]["examples"] == 1
     assert "pending" not in doble["certificate"]
     assert store.resolve("doble") != hueco
     sig = store.sig("doble")
@@ -267,10 +267,10 @@ def test_quien_llama_a_un_hueco_se_prueba_con_su_contrato_y_espera_sus_ejemplos(
     hueco = {"name": "doble", "hash": short(store.resolve("doble")), "level": 0, "hole": True}
     c = by_name(store.add(CUADRUPLE))["cuadruple"]["certificate"]
     for cert in (c, store.sig("cuadruple")["certificate"], store.verify("cuadruple")["certificate"]):
-        assert cert["level"] == 2 and cert["examples"] == 0 and cert["pending"] == 1
+        assert cert["level"] == 3 and cert["examples"] == 0 and cert["pending"] == 1
         assert cert["closure_level"] == 0 and cert["rests_on"] == [hueco]
     [f] = check_source(CUADRUPLE, store=store)["functions"]
-    assert f["level"] == 2 and f["pending"] == 1
+    assert f["level"] == 3 and f["pending"] == 1
 
 
 def test_un_contraejemplo_que_pasa_por_un_hueco_no_se_afirma(store):
@@ -297,7 +297,7 @@ def test_rellenar_el_hueco_dice_quien_sigue_llamandolo(store):
     doble = by_name(store.add(IMPLEMENTADA, author="haiku"))["doble"]
     assert [u["name"] for u in doble["callers_on_hole"]] == ["cuadruple"]
     c = by_name(store.add(CUADRUPLE))["cuadruple"]["certificate"]  # añadida otra vez, enlaza el cuerpo
-    assert c["level"] == 2 and c["examples"] == 1 and c["closure_level"] == 2
+    assert c["level"] == 3 and c["examples"] == 1 and c["closure_level"] == 3
 
 
 # ---------- almacenes de antes ----------
@@ -318,4 +318,4 @@ def test_un_almacen_de_antes_se_abre_y_sigue_funcionando(tmp_path):
     db.close()
     store = Store(tmp_path / "store.db")
     assert by_name(store.add(HUECO))["doble"]["certificate"]["pending"] == 1
-    assert by_name(store.add(IMPLEMENTADA))["doble"]["certificate"]["level"] == 2
+    assert by_name(store.add(IMPLEMENTADA))["doble"]["certificate"]["level"] == 3

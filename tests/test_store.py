@@ -223,7 +223,7 @@ def test_add_enlaza_una_funcion_del_almacen_con_el_mismo_hash_que_en_el_fuente(t
 
 def test_add_enlazado_prueba_con_el_contrato_de_lo_guardado(store):
     store.add(INC)
-    assert store.add(INC2)[0]["certificate"]["level"] == 2
+    assert store.add(INC2)[0]["certificate"]["level"] == 3
 
 
 def test_add_enlazado_caza_un_contrato_que_lo_guardado_contradice(store):
@@ -326,7 +326,7 @@ def test_check_con_almacen_enlaza_y_solo_informa_del_fuente(store):
     store.add(INC)
     out = check_source(INC2, store=store)
     assert [f["name"] for f in out["functions"]] == ["inc2"]
-    assert out["functions"][0]["level"] == 2
+    assert out["functions"][0]["level"] == 3
 
 
 def test_nombre_que_no_esta_ni_en_el_fuente_ni_en_el_almacen_es_E401(store):
@@ -343,7 +343,7 @@ def test_add_sube_un_certificado_de_nivel_1_si_ahora_se_prueba(store):
     store.db.commit()
     out = store.add(INC)
     assert out[0]["cached"] is False
-    assert out[0]["certificate"]["level"] == 2
+    assert out[0]["certificate"]["level"] == 3
 
 
 # ---------- lo que un nivel 2 da por bueno (2026-09-29) ----------
@@ -411,7 +411,7 @@ def test_un_nivel_2_dice_en_que_nivel_1_se_apoya(store):
     g = {f["name"]: f for f in store.add(LLAMA_A_F + NO_TERMINA)}["g"]  # g delante de f
     f = {"name": "f", "hash": store.sig("f")["hash"], "level": 1}
     for cert in (g["certificate"], store.sig("g")["certificate"], store.verify("g")["certificate"]):
-        assert cert["level"] == 2  # modular: con el contrato de f
+        assert cert["level"] == 3  # modular: con el contrato de f
         assert cert["closure_level"] == 1 and cert["rests_on"] == [f]
     assert store.sig("f")["certificate"]["rests_on"] == []  # su propio nivel ya lo dice
 
@@ -426,7 +426,7 @@ fn h(n: Int) -> Int
   example h(0) == 44
 { g(n) + 1 }
 """)
-    assert h["certificate"]["level"] == 2 and h["certificate"]["closure_level"] == 1
+    assert h["certificate"]["level"] == 3 and h["certificate"]["closure_level"] == 1
     assert [d["name"] for d in h["certificate"]["rests_on"]] == ["f"]  # g es nivel 2: no se lista
 
 

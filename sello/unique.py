@@ -20,9 +20,11 @@ las hipótesis.
 from __future__ import annotations
 
 import json
+import subprocess
 import sys
 import time
 from dataclasses import dataclass
+from pathlib import Path
 
 import z3
 
@@ -31,20 +33,33 @@ from .errors import SelloError
 from .interp import Interpreter, fmt
 from .nodes import BOOL, Fn, Program, TList
 from .parser import parse
+from .pretty import unparse_fn
 from .prover import (
-    CONFIRM_FUEL, PHASES, RETRIES, Budget, Env, Stuck, Translator, Unsupported, query, too_big,
-    value,
+    _ABANDONED, CONFIRM_FUEL, PHASES, RETRIES, Budget, Env, Stuck, Translator, Unsupported, _child_cmd,
+    query, too_big, value,
 )
 
 UNIQUE, AMBIGUOUS, UNKNOWN = "unique", "ambiguous", "unknown"
+
+
+UNIQUE_MS = 60_000  # reloj del hijo para todas las funciones de un programa: red, decide el trabajo
 
 
 @dataclass
 class Uniqueness:
     status: str
     reason: str = ""             # para unknown
-    witness: dict | None = None  # para ambiguous: args, results, input
+    witness: dict | None = None  # para ambiguous: args (valores), results (valores), input (texto)
     ms: int = 0
+
+    def to_dict(self) -> dict:
+        """Lo que va al certificado: el veredicto y, si es ambiguo, la entrada y los dos resultados
+        como los imprime el intérprete."""
+        d: dict = {"determined": self.status}
+        if self.witness is not None:
+            d["witness"] = {"input": self.witness["input"],
+                            "results": [r if isinstance(r, str) else fmt(r) for r in self.witness["results"]]}
+        return d
 
 
 def _holds(interp: Interpreter, fn: Fn, args: list, result: object) -> bool:
@@ -177,9 +192,33 @@ def unique(program: Program, fn: Fn, interp: Interpreter | None = None,
     return done(UNKNOWN, reason)
 
 
+def unique_program(program: Program, names: set[str], ms: int = UNIQUE_MS) -> dict[str, Uniqueness]:
+    """`unique` para `names`, en un proceso hijo con reloj de pared, como el probador: Z3 puede
+    colgarse o morir y el compilador no cae por eso. Va después del probador y con su propio
+    presupuesto, así que no le quita trabajo al nivel 2. Lo que no vuelve queda en unknown."""
+    if not names:
+        return {}
+    src = "\n\n".join(unparse_fn(f) for f in program.fns)
+    cmd, env = _child_cmd(["--only", ",".join(sorted(names))], module="sello.unique")
+    try:
+        r = subprocess.run(cmd, input=src, capture_output=True, text=True, timeout=ms / 1000,
+                           cwd=str(Path(__file__).resolve().parents[1]), env=env)
+        out = r.stdout
+    except subprocess.TimeoutExpired as t:
+        out = t.stdout.decode() if isinstance(t.stdout, bytes) else (t.stdout or "")
+    got: dict[str, Uniqueness] = {}
+    for line in out.splitlines():
+        try:
+            d = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if d.get("name") in names:
+            got[d["name"]] = Uniqueness(d["status"], d["reason"], d["witness"], d["ms"])
+    return {n: got.get(n, Uniqueness(UNKNOWN, "the solver did not answer")) for n in names}
+
+
 def _main(argv: list[str]) -> int:
-    """Proceso hijo para bench: programa por stdin, una línea JSON por función de `--only` (o
-    todas). Z3 puede colgarse o morir; quien lo lanza pone el reloj."""
+    """El proceso hijo: programa por stdin, una línea JSON por función de `--only` (o todas)."""
     import argparse
     ap = argparse.ArgumentParser()
     ap.add_argument("--only", default=None)
@@ -197,10 +236,11 @@ def _main(argv: list[str]) -> int:
         if only is not None and fn.name not in only:
             continue
         u = unique(program, fn, interp, budget)
-        w = None if u.witness is None else {
-            "input": u.witness["input"], "results": [fmt(x) for x in u.witness["results"]]}
+        w = u.to_dict().get("witness")
         print(json.dumps({"name": fn.name, "status": u.status, "reason": u.reason, "ms": u.ms,
                           "witness": w}, ensure_ascii=False), flush=True)
+        if _ABANDONED:  # tras un Z3 roto el proceso ya no es de fiar
+            break
     return 0
 
 

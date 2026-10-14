@@ -77,7 +77,7 @@ def evaluar(row: dict, check=comprobar) -> dict:
         out["ok"] = True
         out["error"] = None
         out["funciones"] = [{"name": f["name"], "level": f.get("level", 1),
-                             "motivo": None if f.get("level") == 2 else motivo(f.get("unproven", ""))}
+                             "motivo": None if f.get("level", 0) >= 2 else motivo(f.get("unproven", ""))}
                             for f in r["functions"]]
         principal = next((f for f in out["funciones"] if f["name"] == row["problem"]), None)
         out["principal"] = principal["level"] if principal else None
@@ -153,7 +153,7 @@ def resumen(rows: list[dict], when: str) -> str:
                 elif not r["ok"]:
                     cells.append(f"✗ {r['error']['code']}" + ("" if r["error"]["probador"] else " (herramienta)"))
                 else:
-                    n2 = sum(f["level"] == 2 for f in r["funciones"])
+                    n2 = sum(f["level"] >= 2 for f in r["funciones"])
                     cells.append(f"{r['principal']} · {n2}/{len(r['funciones'])}")
             out.append(f"| {pr} | " + " | ".join(cells) + " |")
         out += ["", "| " + head, sep]
@@ -163,7 +163,7 @@ def resumen(rows: list[dict], when: str) -> str:
         def stat(label, f): out.append(f"| {label} | " + " | ".join(f(c) for c in cols) + " |")
         stat("soluciones", lambda c: str(len(rs(c))))
         stat("**principal en nivel 2**", lambda c: f"**{_pct(sum(r['principal'] == 2 for r in rs(c)), len(rs(c)))}**")
-        stat("funciones en nivel 2", lambda c: _pct(sum(f['level'] == 2 for f in fns(c)), len(fns(c))))
+        stat("funciones en nivel 2", lambda c: _pct(sum(f['level'] >= 2 for f in fns(c)), len(fns(c))))
         for m, label in (("undecided", "· Z3 no decide"), ("timeout", "· sin tiempo"),
                          ("termination", "· sin medida de terminación"), ("mutual recursion", "· recursión mutua"),
                          ("unsupported", "· construcción no traducida"), ("not attempted", "· sin intentar (otra función falló)")):

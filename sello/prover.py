@@ -1172,13 +1172,13 @@ def _ms(ms: int) -> str:
     return f"{ms:09d}"
 
 
-def _child_cmd(args: list[str]) -> tuple[list[str], dict[str, str] | None]:
+def _child_cmd(args: list[str], module: str = "sello.prover") -> tuple[list[str], dict[str, str] | None]:
     """El comando y el entorno del hijo. Z3 depende de las direcciones de memoria: con la misma
     entrada gasta otro trabajo según dónde caigan sus objetos, y en el límite eso decide entre
     nivel 2 y 1 (SEL-5, DA0226:4). Con SELLO_DETERMINISTA, para medir, el hijo va sin ASLR
     (`setarch -R`, solo Linux), con la semilla de Python fija y con un entorno fijo (solo las
     variables SELLO_*): las tres cosas mueven la memoria. Donde no se puede, falla."""
-    cmd = [sys.executable, "-m", "sello.prover", *args]
+    cmd = [sys.executable, "-m", module, *args]
     if not os.environ.get("SELLO_DETERMINISTA"):
         return cmd, None
     if not sys.platform.startswith("linux"):

@@ -20,7 +20,7 @@ import z3
 
 # Lo que decide un certificado. Fuera: el almacén, la CLI, el MCP, el hash (cambiarlo cambia
 # los hashes, no los veredictos), el reimpresor y los mensajes de error.
-MODULES = ("lexer", "parser", "nodes", "builtins", "checker", "interp", "compile", "prover")
+MODULES = ("lexer", "parser", "nodes", "builtins", "checker", "interp", "compile", "prover", "unique")
 
 
 def _sin_docstrings(tree: ast.AST) -> ast.AST:

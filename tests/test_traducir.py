@@ -92,9 +92,10 @@ def test_helper_recursivo_congelado_con_definicion_en_ensures_y_ejemplos_calcula
     assert "fn power(b: Int, e: Int) -> Int\n  requires (e >= 0)\n  ensures (result == (if (e == 0) then 1 else (b * power(b, (e - 1)))))" in t
     assert "example (power(0, 0) == 1)" in t and t.count("example (power(") == 2
     assert "ensures (result == power(b, e))" in t
-    # el helper congelado compila solo, pasa sus ejemplos y el probador lo certifica en nivel 2
+    # el helper congelado compila solo, pasa sus ejemplos y el probador lo certifica en nivel 3:
+    # su ensures es su definición
     r = check_source(unparse_fn(T.contrato(tarea).helpers[0]))
-    assert r["ok"] and r["functions"][0]["level"] == 2
+    assert r["ok"] and r["functions"][0]["level"] == 3
 
 
 def test_abs_supuesto_y_nota_div():

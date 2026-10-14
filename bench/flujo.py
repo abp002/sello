@@ -519,7 +519,7 @@ def resumen(contratos: list[dict], cuerpos: list[dict], when: str, tag: str) -> 
             f"{sum(fl(r).get('view', 0) == 0 and fl(r).get('sig', 0) > 0 for r in corridos)}.",
             f"- E201 en el bucle: {sum(any(x['sello_error'] == 'E201' for x in r['detail']) for r in corridos)} problemas. "
             f"Nombres propios fuera del hueco: {sum(len(fl(r).get('otros_nombres', [])) for r in corridos)}.",
-            f"- Certificados: nivel 2 en {sum((fl(r).get('certificado') or {}).get('level') == 2 for r in rellenos)}, "
+            f"- Certificados: nivel 2 o 3 en {sum((fl(r).get('certificado') or {}).get('level', 0) >= 2 for r in rellenos)}, "
             f"nivel 1 en {sum((fl(r).get('certificado') or {}).get('level') == 1 for r in rellenos)}.",
             f"- Oráculo: **silenciosos {suma('silenciosos') if rellenos else 0}** (dominio "
             f"{suma('dom_silencioso') if rellenos else 0}, ambigua {suma('amb_silencioso') if rellenos else 0}); "

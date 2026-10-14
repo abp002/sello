@@ -49,8 +49,11 @@ def test_postcondicion_violada_es_E201():
 
 def test_todo_correcto_devuelve_resumen_con_firmas():
     r = check_source(FACT)
+    witness = r["functions"][0].pop("witness")  # `result >= 1` deja elegir: nivel 2, con testigo
+    assert witness["input"].startswith("factorial(") and len(witness["results"]) == 2
     assert r == {"ok": True, "examples": 2, "proven": 1,
-                 "functions": [{"name": "factorial", "signature": "factorial(n: Int) -> Int", "examples": 2, "level": 2}]}
+                 "functions": [{"name": "factorial", "signature": "factorial(n: Int) -> Int", "examples": 2,
+                                "level": 2, "determined": "ambiguous"}]}
     assert "level" not in check_source(FACT, prover=False)["functions"][0]
 
 

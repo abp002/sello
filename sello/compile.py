@@ -9,6 +9,7 @@ from .nodes import Binary, Expr, Fn, Program
 from .parser import parse
 from .pretty import unparse
 from .prover import PROVEN, Verdict, first_error, prove_program
+from .unique import UNIQUE, Uniqueness, unique_program
 
 
 def compile_source(src: str) -> tuple[Program, Interpreter]:
@@ -52,15 +53,21 @@ def _run_example(name: str, ex: Expr, interp: Interpreter) -> None:
         raise SelloError("E200", f"`{unparse(ex)}` evaluated to false", ex.line, ex.col, name)
 
 
-def level(proven: bool, pending: int, hole: bool = False) -> int:
-    """El nivel de un certificado. 2: el contrato está probado para toda entrada, dado lo que
-    prometen los contratos de lo que se llama; 1: los ejemplos pasaron, todos; 0: nada establecido
-    todavía, porque la función es un hueco o porque algún ejemplo espera a uno."""
+def level(proven: bool, pending: int, hole: bool = False, unique: bool = False) -> int:
+    """El nivel de un certificado. 3: probada y el contrato fija la respuesta, así que cualquier
+    otro cuerpo que lo cumpla devuelve lo mismo (SEL-13); 2: el contrato está probado para toda
+    entrada, dado lo que prometen los contratos de lo que se llama; 1: los ejemplos pasaron, todos;
+    0: nada establecido todavía, porque la función es un hueco o porque algún ejemplo espera a uno."""
     if hole:
         return 0
     if proven:
-        return 2
+        return 3 if unique else 2
     return 0 if pending else 1
+
+
+def determine(program: Program, verdicts: dict[str, Verdict]) -> dict[str, Uniqueness]:
+    """¿Fija su contrato la respuesta? Solo para lo probado: es lo único que puede llegar a 3."""
+    return unique_program(program, {n for n, v in verdicts.items() if v.status == PROVEN})
 
 
 def prove(program: Program, only: set[str] | None = None) -> dict[str, Verdict]:
@@ -86,9 +93,10 @@ def check_source(src: str, prover: bool = True, store=None) -> dict:
     pending: list[tuple[str, str]] = []
     n = run_examples(Program(own), interp, pending)
     verdicts = prove(program, only={fn.name for fn in own if not fn.hole}) if prover else {}
+    uniq = determine(program, verdicts) if prover else {}
     out: dict = {
         "ok": True,
-        "functions": [_summary(fn, verdicts, sum(1 for f, _ in pending if f == fn.name), prover)
+        "functions": [_summary(fn, verdicts, uniq, sum(1 for f, _ in pending if f == fn.name), prover)
                       for fn in own],
         "examples": n,
     }
@@ -97,13 +105,16 @@ def check_source(src: str, prover: bool = True, store=None) -> dict:
     return out
 
 
-def _summary(fn: Fn, verdicts: dict[str, Verdict], pending: int, prover: bool) -> dict:
+def _summary(fn: Fn, verdicts: dict[str, Verdict], uniq: dict[str, Uniqueness], pending: int,
+             prover: bool) -> dict:
     d: dict = {"name": fn.name, "signature": signature(fn), "examples": len(fn.examples)}
     if fn.name in verdicts:
         d.update(verdicts[fn.name].to_dict())
+    if fn.name in uniq:
+        d.update(uniq[fn.name].to_dict())
     if prover:
         d["level"] = level(verdicts[fn.name].status == PROVEN if fn.name in verdicts else False,
-                           pending, fn.hole)
+                           pending, fn.hole, fn.name in uniq and uniq[fn.name].status == UNIQUE)
     if fn.hole:
         d["hole"] = True
     if pending:

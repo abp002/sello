@@ -82,6 +82,10 @@ making a function. `x / 0` is a runtime error (`E500`); rule it out with `requir
   rejected: the function simply stays at level 1. A level 2 is always sound, but near the
   solver's work limit the same function can reach it on one run and not on the next. A
   recursive function is proven only if some argument decreases at every recursive call.
+- A proven function whose contract leaves no choice, so that for every input that meets
+  `requires` only one value meets `ensures`, is at **level 3**: any other body with the same
+  contract returns the same values. When two values meet it, the function stays at level 2
+  and `"witness"` shows an input and both results. Neither is rejected.
 
 Inside `requires` and `ensures` **only** (using them in a body or an example is `E401`):
 
@@ -124,14 +128,17 @@ fn drop(xs: List[Int], k: Int) -> List[Int]
 
 The compiler does not compile files. `sello add FILE` parses, checks and hashes each
 function, runs its examples, tries to prove its contract, and stores it with its contract
-and its **certificate**: which verification level passed (2: proven for every input, given
-what the functions it calls promise; 1: the examples passed; 0: nothing yet, see holes
-below), how many examples, when, and the `verifier` that gave it (Sello's code, Z3, machine).
-Since level 2 trusts those promises, the certificate also gives `closure_level`, the lowest
-level among the function and everything it reaches through its calls, and `rests_on`, the
-functions in that closure below level 2 (0: a hole, or their verification failed).
+and its **certificate**: which verification level passed (3: proven, and the contract fixes
+the result; 2: proven for every input, given what the functions it calls promise; 1: the
+examples passed; 0: nothing yet, see holes below), `"determined"` (`unique`, `ambiguous` with
+its `"witness"`, or `unknown`) for a proven function, how many examples, when, and the
+`verifier` that gave it (Sello's code, Z3, machine).
+Since levels 2 and 3 trust those promises, the certificate also gives `closure_level`, the
+function's level, or the lowest level in everything it reaches through its calls if some of
+it is below level 2, and `rests_on`, the functions in that closure below level 2 (0: a hole,
+or their verification failed).
 Names are aliases: renaming a function or a parameter does not change its hash. A proven
-function (level 2) is not re-verified while Sello and Z3 stay the same; a level-1 one is retried on the next `add`.
+function (level 2 or 3) is not re-verified while Sello and Z3 stay the same; a level-1 one is retried on the next `add`.
 A certificate given by another Sello or Z3 is `"stale": true` and counts as 0 until `sello reverify`. A caller's hash includes its
 callees' hashes, so changing a dependency re-verifies only what uses it.
 
@@ -190,6 +197,7 @@ All errors are JSON: `{"code", "where", "what", "fix", "example"}`. Codes are st
 `sello check FILE` parses, typechecks, runs every example and proves what it can. Output
 is JSON: `{"ok": true, "functions": [{"name", "signature", "examples", "level"}, ...],
 "proven": N}` or `{"ok": false, "error": {...}}`. A function at level 1 also carries
-`"unproven"`: why the prover could not decide. A hole carries `"hole": true`, and
+`"unproven"`: why the prover could not decide. A proven one carries `"determined"`, and
+`"witness"` when it is `ambiguous`. A hole carries `"hole": true`, and
 `"pending"` counts the examples that reach a hole. `sello mcp` serves the same API to agents
 over MCP (stdio); its `sello_spec` tool returns this document.
