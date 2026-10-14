@@ -1,0 +1,368 @@
+{
+ "fn": "balance",
+ "statement": "xs is a list of transactions applied in order to an account that starts at 0: a positive amount is a deposit and a negative one a withdrawal. A withdrawal that would leave the balance below 0 is skipped. Return the final balance. Must work for any list of non-zero amounts.",
+ "sello": "balance(xs: List[Int]) -> Int",
+ "python": "def balance(xs: list[int]) -> int",
+ "option": false,
+ "visible": [
+  {
+   "args": [
+    [
+     10,
+     -3,
+     -20,
+     5
+    ]
+   ],
+   "expect": 12,
+   "zone": "visible"
+  },
+  {
+   "args": [
+    [
+     -5,
+     2
+    ]
+   ],
+   "expect": 2,
+   "zone": "visible"
+  }
+ ],
+ "oracle": [
+  {
+   "args": [
+    [
+     0
+    ]
+   ],
+   "expect": 0,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     3,
+     0,
+     -3
+    ]
+   ],
+   "expect": 0,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     0,
+     -1
+    ]
+   ],
+   "expect": 0,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     9,
+     -6,
+     7
+    ]
+   ],
+   "expect": 10,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     9,
+     2,
+     -8,
+     2,
+     9,
+     1
+    ]
+   ],
+   "expect": 15,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -7,
+     3,
+     8,
+     -2
+    ]
+   ],
+   "expect": 9,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     7,
+     8,
+     6,
+     -1,
+     4
+    ]
+   ],
+   "expect": 24,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     8,
+     3,
+     -3,
+     -3,
+     -3,
+     -5
+    ]
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    []
+   ],
+   "expect": 0,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -7,
+     3,
+     5
+    ]
+   ],
+   "expect": 8,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     5,
+     8,
+     -6,
+     -4,
+     7
+    ]
+   ],
+   "expect": 10,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     8,
+     -7,
+     -9,
+     -8
+    ]
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1
+    ]
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     1,
+     7,
+     -1,
+     -8,
+     -3,
+     -1
+    ]
+   ],
+   "expect": 0,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     8,
+     -8,
+     -4,
+     8
+    ]
+   ],
+   "expect": 8,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -8,
+     1,
+     -7
+    ]
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     9,
+     -6,
+     2,
+     7,
+     -2,
+     -5,
+     6
+    ]
+   ],
+   "expect": 11,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -3,
+     8,
+     6,
+     6
+    ]
+   ],
+   "expect": 20,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -4,
+     2,
+     8,
+     9,
+     -8
+    ]
+   ],
+   "expect": 11,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -1,
+     -4,
+     -1,
+     -1,
+     3,
+     5
+    ]
+   ],
+   "expect": 8,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -6,
+     6,
+     1,
+     1,
+     7,
+     4,
+     1
+    ]
+   ],
+   "expect": 20,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     9,
+     8,
+     4,
+     1,
+     2,
+     -5
+    ]
+   ],
+   "expect": 19,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -7,
+     4,
+     -5
+    ]
+   ],
+   "expect": 4,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     8
+    ]
+   ],
+   "expect": 8,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -6,
+     -1,
+     -6,
+     8
+    ]
+   ],
+   "expect": 8,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     6,
+     1,
+     4,
+     -4
+    ]
+   ],
+   "expect": 7,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -4,
+     -5,
+     6
+    ]
+   ],
+   "expect": 6,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     2,
+     -5,
+     9,
+     -1
+    ]
+   ],
+   "expect": 11,
+   "zone": "domain"
+  }
+ ]
+}

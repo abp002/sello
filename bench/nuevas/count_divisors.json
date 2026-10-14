@@ -1,0 +1,221 @@
+{
+ "fn": "count_divisors",
+ "statement": "Return how many positive integers divide n exactly. Must work for any n >= 1.",
+ "sello": "count_divisors(n: Int) -> Int",
+ "python": "def count_divisors(n: int) -> int",
+ "option": false,
+ "visible": [
+  {
+   "args": [
+    12
+   ],
+   "expect": 6,
+   "zone": "visible"
+  },
+  {
+   "args": [
+    7
+   ],
+   "expect": 2,
+   "zone": "visible"
+  }
+ ],
+ "oracle": [
+  {
+   "args": [
+    0
+   ],
+   "expect": 0,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    -6
+   ],
+   "expect": 0,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    -1
+   ],
+   "expect": 0,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    87
+   ],
+   "expect": 4,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    56
+   ],
+   "expect": 8,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    72
+   ],
+   "expect": 12,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    75
+   ],
+   "expect": 6,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    44
+   ],
+   "expect": 6,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    69
+   ],
+   "expect": 4,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    32
+   ],
+   "expect": 6,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    55
+   ],
+   "expect": 4,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    73
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    28
+   ],
+   "expect": 6,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    97
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    59
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    54
+   ],
+   "expect": 8,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    15
+   ],
+   "expect": 4,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    22
+   ],
+   "expect": 4,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    37
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    58
+   ],
+   "expect": 4,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    96
+   ],
+   "expect": 12,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    68
+   ],
+   "expect": 6,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    50
+   ],
+   "expect": 6,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    23
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    21
+   ],
+   "expect": 4,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    36
+   ],
+   "expect": 9,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    34
+   ],
+   "expect": 4,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    5
+   ],
+   "expect": 2,
+   "zone": "domain"
+  }
+ ]
+}

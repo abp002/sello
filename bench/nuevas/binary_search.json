@@ -1,0 +1,485 @@
+{
+ "fn": "binary_search",
+ "statement": "xs is sorted in strictly ascending order. Return the 0-based position of x in xs, or nothing if x is not in xs. Must work for any strictly ascending list and any x.",
+ "sello": "binary_search(xs: List[Int], x: Int) -> Option[Int]",
+ "python": "def binary_search(xs: list[int], x: int) -> int | None",
+ "option": true,
+ "visible": [
+  {
+   "args": [
+    [
+     1,
+     4,
+     6,
+     9
+    ],
+    6
+   ],
+   "expect": {
+    "some": 2
+   },
+   "zone": "visible"
+  },
+  {
+   "args": [
+    [
+     1,
+     4,
+     6,
+     9
+    ],
+    5
+   ],
+   "expect": null,
+   "zone": "visible"
+  }
+ ],
+ "oracle": [
+  {
+   "args": [
+    [
+     3,
+     1,
+     2
+    ],
+    1
+   ],
+   "expect": {
+    "some": 1
+   },
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     2,
+     2,
+     5
+    ],
+    2
+   ],
+   "expect": {
+    "some": 0
+   },
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     9,
+     4,
+     1
+    ],
+    9
+   ],
+   "expect": {
+    "some": 0
+   },
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     5,
+     5
+    ],
+    5
+   ],
+   "expect": {
+    "some": 0
+   },
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     -6,
+     -3,
+     0,
+     12,
+     13,
+     15,
+     18
+    ],
+    -3
+   ],
+   "expect": {
+    "some": 1
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -16,
+     -7,
+     -1,
+     2,
+     4
+    ],
+    -1
+   ],
+   "expect": {
+    "some": 2
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -2,
+     4,
+     14,
+     16
+    ],
+    -2
+   ],
+   "expect": {
+    "some": 0
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -10,
+     -6,
+     8,
+     15
+    ],
+    15
+   ],
+   "expect": {
+    "some": 3
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -10,
+     -2,
+     12,
+     13,
+     14
+    ],
+    -2
+   ],
+   "expect": {
+    "some": 1
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -20,
+     -18,
+     7,
+     16,
+     17
+    ],
+    7
+   ],
+   "expect": {
+    "some": 2
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -14,
+     -12,
+     -7,
+     -4,
+     1,
+     20
+    ],
+    20
+   ],
+   "expect": {
+    "some": 5
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -18,
+     -16,
+     -7,
+     -1,
+     17
+    ],
+    -16
+   ],
+   "expect": {
+    "some": 1
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -12,
+     -6,
+     -2,
+     1,
+     4,
+     7,
+     15
+    ],
+    7
+   ],
+   "expect": {
+    "some": 5
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     2
+    ],
+    -4
+   ],
+   "expect": null,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -17,
+     -8,
+     -6,
+     1,
+     11,
+     14
+    ],
+    -17
+   ],
+   "expect": {
+    "some": 0
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -17,
+     -13,
+     -10,
+     4,
+     18,
+     19
+    ],
+    -10
+   ],
+   "expect": {
+    "some": 2
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -20,
+     -11,
+     -10,
+     -8,
+     5,
+     16,
+     17
+    ],
+    -2
+   ],
+   "expect": null,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -15,
+     -10,
+     -5,
+     4,
+     8,
+     20
+    ],
+    8
+   ],
+   "expect": {
+    "some": 4
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -7,
+     9,
+     13,
+     15,
+     16,
+     17,
+     18
+    ],
+    15
+   ],
+   "expect": {
+    "some": 3
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -5,
+     11,
+     20
+    ],
+    20
+   ],
+   "expect": {
+    "some": 2
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -19,
+     -16,
+     -13,
+     -5
+    ],
+    -19
+   ],
+   "expect": {
+    "some": 0
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -17,
+     -16,
+     -15,
+     0,
+     10,
+     13,
+     15
+    ],
+    10
+   ],
+   "expect": {
+    "some": 4
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     8,
+     13
+    ],
+    -14
+   ],
+   "expect": null,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -14,
+     -3,
+     1,
+     15,
+     19
+    ],
+    -3
+   ],
+   "expect": {
+    "some": 1
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -18,
+     -7,
+     -6,
+     9,
+     15,
+     16
+    ],
+    -6
+   ],
+   "expect": {
+    "some": 2
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -9,
+     -1,
+     16,
+     18
+    ],
+    18
+   ],
+   "expect": {
+    "some": 3
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -20,
+     -17,
+     -1,
+     0,
+     4,
+     16,
+     20
+    ],
+    0
+   ],
+   "expect": {
+    "some": 3
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -9,
+     -1,
+     17
+    ],
+    -1
+   ],
+   "expect": {
+    "some": 1
+   },
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     5,
+     13
+    ],
+    -20
+   ],
+   "expect": null,
+   "zone": "domain"
+  }
+ ]
+}

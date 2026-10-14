@@ -163,3 +163,56 @@ def test_harness3_carga_los_contratos_que_compilan_aceptados_o_no(tmp_path):
 def test_harness3_no_corre_un_problema_sin_contrato():
     r = harness3.run_one(INC, harness3.CONTRATO, "haiku", 5, contratos={})
     assert r["sin_contrato"] and r["accepted_at"] is None and r["attempts"] == 0
+
+
+# ---------- SEL-9: el contrato a ciegas en Python y el aviso de ambigüedad ----------
+
+INC_PY = {**INC, "python": "def inc(n: int) -> int", "option": False}
+
+
+def contrato_py(post: str, cuerpo: str = "...") -> str:
+    return f'''
+def inc(n: int) -> int:
+    """
+    pre: n >= 0
+    post: {post}
+    """
+    {cuerpo}
+'''
+
+
+def test_el_juez_del_contrato_python_acepta_un_contrato_que_admite_los_ejemplos():
+    assert contratar.juez_debil_py(contrato_py("__return__ == n + 1"), INC_PY) == (True, "", "ok")
+
+
+def test_el_juez_del_contrato_python_pide_solo_el_contrato():
+    ok, _, fase = contratar.juez_debil_py(contrato_py("__return__ == n + 1", "return n + 1"), INC_PY)
+    assert not ok and fase == "body"
+
+
+def test_el_juez_del_contrato_python_rechaza_el_que_no_admite_lo_correcto():
+    ok, fb, fase = contratar.juez_debil_py(contrato_py("__return__ == n + 2"), INC_PY)
+    assert not ok and fase == "examples" and "inc(1)" in fb
+
+
+def test_un_contrato_python_sin_post_no_cuenta():
+    sin_post = contrato_py("x").replace("    post: x\n", "")
+    assert not contratar.juez_debil_py(sin_post, INC_PY)[0]
+    assert not contratar.compila_py(sin_post, "inc")
+    assert contratar.compila_py(contrato_py("__return__ == n + 1"), "inc")
+
+
+def test_el_aviso_da_el_testigo_si_el_contrato_admite_dos_respuestas():
+    msg = contratar.aviso(contrato("result > n"), "inc")
+    assert msg is not None and "inc(" in msg and "two different results" in msg
+    assert contratar.aviso(contrato("result == n + 1"), "inc") is None
+
+
+def test_la_prueba_de_literales_mide_un_contrato_python():
+    fuerte = lit.medir(contrato_py("__return__ == n + 1"), INC_PY, lit.veredicto_py)
+    assert fuerte["rechaza_correcto"] == 0 and fuerte["admite_incorrecto"] == 0 and fuerte["incorrectos"] == 2
+    flojo = lit.medir(contrato_py("__return__ > n"), INC_PY, lit.veredicto_py)
+    assert flojo["admite_incorrecto"] == 1 and flojo["rechaza_correcto"] == 0  # 6 para inc(0) sí, 3 para inc(5) no
+    # el caso ambiguo (-2) cae fuera del `pre`: rechazado, declarado
+    assert flojo["ambiguos"] == 1 and flojo["ambiguos_rechazados"] == 1
+    assert lit.veredicto_py(contrato_py("__return__ == n + 1"), INC_PY, [-2], 3).que == lit.E300

@@ -29,10 +29,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from harness import RESULTADOS, sello_lit  # noqa: E402
-from harness3 import PROBLEMAS, cargar_contratos, llamada  # noqa: E402
+from harness3 import BATERIA, PROBLEMAS, cargar_contratos, ejecutar_python, llamada  # noqa: E402
 import contrato as ct  # noqa: E402
 from cotas import solo_cotas  # noqa: E402
-import generar_ambiguos as gen  # noqa: E402
+import generar_ambiguos  # noqa: E402
+import generar_nuevas  # noqa: E402
+
+gen = generar_nuevas if BATERIA == "nuevas" else generar_ambiguos
 
 from sello.checker import Checker  # noqa: E402
 from sello.compile import run_examples  # noqa: E402
@@ -107,22 +110,38 @@ def veredicto(c: ct.Contrato, p: dict, args: list, valor: object) -> Veredicto:
     return Veredicto(ADMITE)
 
 
-def medir(c: ct.Contrato, p: dict) -> dict:
-    """Los recuentos de un contrato sobre el oráculo de su problema."""
+def veredicto_py(code: str, p: dict, args: list, valor: object) -> Veredicto:
+    """`veredicto` para un contrato de Python (`contrato_py`): la principal devuelve el literal y se
+    ejecuta con los contratos activos. Un `post` violado es E201; un `pre`, E300. A diferencia de
+    `_Juzgada`, una llamada de la principal a sí misma desde su contrato también recibe el literal."""
+    from contratar import _con_literal
+    r = ejecutar_python(_con_literal(code, p, valor), p, [{"args": args, "expect": valor, "zone": "domain"}],
+                        contratos=True)
+    if isinstance(r, dict):
+        return Veredicto(OTRO, r)
+    got = r[0]["detail"]["got"]
+    que = {"ok": ADMITE, "caught": E201}.get(r[0]["result"], E300 if got.startswith("PreconditionError") else OTRO)
+    return Veredicto(que, None if que == ADMITE else {"got": got})
+
+
+def medir(c, p: dict, juzgar=None) -> dict:
+    """Los recuentos de un contrato sobre el oráculo de su problema. `c` es un `ct.Contrato`, o el
+    código de un contrato de Python con `juzgar=veredicto_py`."""
+    juzgar = juzgar or veredicto
     oraculo = p["oracle"]
     dom = [(i, x) for i, x in enumerate(oraculo) if x["zone"] == "domain"]
-    correctos = [veredicto(c, p, x["args"], x["expect"]).que for _, x in dom]
+    correctos = [juzgar(c, p, x["args"], x["expect"]).que for _, x in dom]
     incorrectos = []
     for i, x in dom:
         otro = oraculo[(i + 1) % len(oraculo)]["expect"]
         if otro != x["expect"]:
-            incorrectos.append(veredicto(c, p, x["args"], otro).que)
-    ambiguos = [veredicto(c, p, x["args"], x["expect"]).que for x in oraculo if x["zone"] == "ambiguous"]
+            incorrectos.append(juzgar(c, p, x["args"], otro).que)
+    ambiguos = [juzgar(c, p, x["args"], x["expect"]).que for x in oraculo if x["zone"] == "ambiguous"]
     return {"dominio": len(dom), "rechaza_correcto": correctos.count(E201),
             "requires_fuera": correctos.count(E300), "otros": correctos.count(OTRO),
             "incorrectos": len(incorrectos), "admite_incorrecto": incorrectos.count(ADMITE),
             "ambiguos": len(ambiguos), "ambiguos_rechazados": sum(v != ADMITE for v in ambiguos),
-            "solo_cotas": solo_cotas(c.principal)}
+            "solo_cotas": solo_cotas(c.principal) if isinstance(c, ct.Contrato) else None}
 
 
 def pct(a: int, b: int) -> str:
@@ -159,14 +178,19 @@ def resumen(filas: list[dict], when: str) -> str:
     stat("admiten lo incorrecto (casos)", lambda fu: pct(sum(m["admite_incorrecto"] for m in ms(fu)),
                                                           sum(m["incorrectos"] for m in ms(fu))))
     stat("**flojos** (admiten el 60 % o más)", lambda fu: f"**{sum(m['incorrectos'] and m['admite_incorrecto'] / m['incorrectos'] >= 0.6 for m in ms(fu))}**")
-    stat("solo cotas (forma, `cotas.py`)", lambda fu: str(sum(m["solo_cotas"] for m in ms(fu))))
+    stat("solo cotas (forma, `cotas.py`; Sello)", lambda fu: str(sum(bool(m["solo_cotas"]) for m in ms(fu))))
     stat("ambiguas rechazadas (declarado)", lambda fu: f"{sum(m['ambiguos_rechazados'] for m in ms(fu))}/{sum(m['ambiguos'] for m in ms(fu))}")
     return "\n".join(out) + "\n"
+
+
+def es_py(path: Path) -> bool:
+    return any(json.loads(line)["cond"] == "contrato_py" for line in path.read_text().splitlines())
 
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("jsonl", nargs="+", type=Path, help="corridas de contratar.py o del juez")
+    ap.add_argument("--tag", default="", help="sufijo del nombre de la corrida")
     args = ap.parse_args()
     probs = {p["fn"]: p for p in (json.loads(f.read_text()) for f in sorted(PROBLEMAS.glob("*.json")))}
     filas = []
@@ -175,13 +199,15 @@ def main() -> int:
         for fn, p in probs.items():
             fila = {"problem": fn, "origen": path.name, "medida": None}
             if fn in contratos:
+                code = contratos[fn]["code"]
                 try:
-                    fila["medida"] = medir(ct.extraer(contratos[fn]["code"], fn), p)
+                    fila["medida"] = (medir(code, p, veredicto_py) if es_py(path)
+                                      else medir(ct.extraer(code, fn), p))
                 except SelloError as e:
                     fila["error"] = e.to_dict()
             filas.append(fila)
     when = dt.datetime.now().strftime("%Y-%m-%d-%H%M")
-    base = RESULTADOS / f"literales-{when}"
+    base = RESULTADOS / (f"literales-{when}" + (f"-{args.tag}" if args.tag else ""))
     base.with_suffix(".jsonl").write_text("".join(json.dumps(f, ensure_ascii=False) + "\n" for f in filas))
     md = resumen(filas, when)
     base.with_suffix(".md").write_text(md)

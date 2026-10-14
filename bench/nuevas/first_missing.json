@@ -1,0 +1,370 @@
+{
+ "fn": "first_missing",
+ "statement": "Return the smallest positive integer that does not appear in xs. Must work for any list of positive integers, including the empty one.",
+ "sello": "first_missing(xs: List[Int]) -> Int",
+ "python": "def first_missing(xs: list[int]) -> int",
+ "option": false,
+ "visible": [
+  {
+   "args": [
+    [
+     1,
+     2,
+     4
+    ]
+   ],
+   "expect": 3,
+   "zone": "visible"
+  },
+  {
+   "args": [
+    [
+     3,
+     5
+    ]
+   ],
+   "expect": 1,
+   "zone": "visible"
+  }
+ ],
+ "oracle": [
+  {
+   "args": [
+    [
+     0,
+     1,
+     2
+    ]
+   ],
+   "expect": 3,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     -1,
+     1
+    ]
+   ],
+   "expect": 2,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     0
+    ]
+   ],
+   "expect": 1,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     -3,
+     -2
+    ]
+   ],
+   "expect": 1,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     4,
+     1
+    ]
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     4
+    ]
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     6,
+     1,
+     1,
+     4,
+     5,
+     3,
+     5
+    ]
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     5,
+     4,
+     4
+    ]
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     2,
+     4,
+     5,
+     1,
+     1,
+     2
+    ]
+   ],
+   "expect": 3,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     4,
+     4,
+     1,
+     1
+    ]
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     4,
+     3,
+     3
+    ]
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    []
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     6,
+     3,
+     4,
+     3,
+     1
+    ]
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     5,
+     2,
+     5,
+     3,
+     4
+    ]
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     6
+    ]
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     4,
+     5
+    ]
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     6,
+     2,
+     1,
+     1,
+     2,
+     2,
+     3
+    ]
+   ],
+   "expect": 4,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     4,
+     2,
+     1,
+     6,
+     3
+    ]
+   ],
+   "expect": 5,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     6
+    ]
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     4,
+     3,
+     4,
+     3,
+     6,
+     1
+    ]
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     6,
+     6
+    ]
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     2,
+     1,
+     6,
+     3
+    ]
+   ],
+   "expect": 4,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     2,
+     5,
+     1
+    ]
+   ],
+   "expect": 3,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     6,
+     4
+    ]
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     4,
+     3,
+     5,
+     2,
+     4
+    ]
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     4,
+     3
+    ]
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     6,
+     5,
+     3,
+     3,
+     3,
+     3
+    ]
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     2,
+     6,
+     6,
+     4,
+     1,
+     4
+    ]
+   ],
+   "expect": 3,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     4,
+     3,
+     1,
+     2,
+     5,
+     6
+    ]
+   ],
+   "expect": 7,
+   "zone": "domain"
+  }
+ ]
+}

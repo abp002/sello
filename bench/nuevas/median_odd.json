@@ -1,0 +1,370 @@
+{
+ "fn": "median_odd",
+ "statement": "Return the median of xs: the value that would be in the middle if xs were sorted. Must work for any list of odd length whose values are all different.",
+ "sello": "median_odd(xs: List[Int]) -> Int",
+ "python": "def median_odd(xs: list[int]) -> int",
+ "option": false,
+ "visible": [
+  {
+   "args": [
+    [
+     5,
+     1,
+     3
+    ]
+   ],
+   "expect": 3,
+   "zone": "visible"
+  },
+  {
+   "args": [
+    [
+     8
+    ]
+   ],
+   "expect": 8,
+   "zone": "visible"
+  }
+ ],
+ "oracle": [
+  {
+   "args": [
+    []
+   ],
+   "expect": 0,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     4,
+     1
+    ]
+   ],
+   "expect": 1,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     2,
+     2,
+     1
+    ]
+   ],
+   "expect": 2,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     9,
+     1,
+     5,
+     3
+    ]
+   ],
+   "expect": 3,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    [
+     -16
+    ]
+   ],
+   "expect": -16,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     0,
+     17,
+     -10,
+     -9,
+     -3,
+     14,
+     -12
+    ]
+   ],
+   "expect": -3,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     19,
+     -9,
+     -11,
+     12,
+     -15
+    ]
+   ],
+   "expect": -9,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     15,
+     -3,
+     -4,
+     -8,
+     19
+    ]
+   ],
+   "expect": -3,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     -16,
+     -1,
+     -2,
+     -11,
+     14,
+     4
+    ]
+   ],
+   "expect": -1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     13
+    ]
+   ],
+   "expect": 13,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     7,
+     -5,
+     11,
+     -8,
+     -11
+    ]
+   ],
+   "expect": -5,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -7,
+     -16,
+     -14
+    ]
+   ],
+   "expect": -14,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -1
+    ]
+   ],
+   "expect": -1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     8,
+     6,
+     0,
+     -3,
+     -7
+    ]
+   ],
+   "expect": 0,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     19,
+     12,
+     9,
+     -14
+    ]
+   ],
+   "expect": 9,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -20,
+     -12,
+     0,
+     -6,
+     -17,
+     8,
+     5
+    ]
+   ],
+   "expect": -6,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -10,
+     2,
+     10
+    ]
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3
+    ]
+   ],
+   "expect": 3,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -15,
+     -4,
+     -5,
+     15,
+     4,
+     9,
+     10
+    ]
+   ],
+   "expect": 4,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     18,
+     4,
+     3
+    ]
+   ],
+   "expect": 4,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     10,
+     0,
+     12
+    ]
+   ],
+   "expect": 10,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -8,
+     20,
+     -3,
+     -13,
+     18
+    ]
+   ],
+   "expect": -3,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     20,
+     12,
+     14
+    ]
+   ],
+   "expect": 14,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     4,
+     -8,
+     2,
+     -4,
+     7
+    ]
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     9,
+     -3,
+     18
+    ]
+   ],
+   "expect": 9,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -14
+    ]
+   ],
+   "expect": -14,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     6,
+     13,
+     2
+    ]
+   ],
+   "expect": 6,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     -6,
+     -9,
+     10
+    ]
+   ],
+   "expect": -6,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     2,
+     -4,
+     6,
+     12,
+     20,
+     -13,
+     -2
+    ]
+   ],
+   "expect": 2,
+   "zone": "domain"
+  }
+ ]
+}

@@ -1,0 +1,325 @@
+{
+ "fn": "is_sorted",
+ "statement": "Return whether every element is less than or equal to the next one. Must work for any list, including the empty one.",
+ "sello": "is_sorted(xs: List[Int]) -> Bool",
+ "python": "def is_sorted(xs: list[int]) -> bool",
+ "option": false,
+ "visible": [
+  {
+   "args": [
+    [
+     1,
+     2,
+     2,
+     5
+    ]
+   ],
+   "expect": true,
+   "zone": "visible"
+  },
+  {
+   "args": [
+    [
+     3,
+     1
+    ]
+   ],
+   "expect": false,
+   "zone": "visible"
+  }
+ ],
+ "oracle": [
+  {
+   "args": [
+    [
+     1,
+     2,
+     3,
+     3,
+     3,
+     5
+    ]
+   ],
+   "expect": true,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     2,
+     3,
+     5,
+     5
+    ]
+   ],
+   "expect": true,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     5,
+     4,
+     3
+    ]
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     5,
+     3,
+     4,
+     2,
+     3,
+     5,
+     1
+    ]
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     2,
+     2,
+     2,
+     3
+    ]
+   ],
+   "expect": true,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     2,
+     5
+    ]
+   ],
+   "expect": true,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     2
+    ]
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     4,
+     5,
+     2,
+     3
+    ]
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     5
+    ]
+   ],
+   "expect": true,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     5,
+     5,
+     4
+    ]
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     5,
+     4
+    ]
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     2,
+     3,
+     4,
+     4,
+     5,
+     5
+    ]
+   ],
+   "expect": true,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     2,
+     2,
+     2,
+     2
+    ]
+   ],
+   "expect": true,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    []
+   ],
+   "expect": true,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     3,
+     2,
+     2,
+     1,
+     1,
+     1
+    ]
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     4,
+     4,
+     4,
+     5,
+     5
+    ]
+   ],
+   "expect": true,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     5,
+     4,
+     2,
+     1
+    ]
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     1,
+     2,
+     2,
+     4
+    ]
+   ],
+   "expect": true,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     4,
+     4
+    ]
+   ],
+   "expect": true,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1
+    ]
+   ],
+   "expect": true,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     4,
+     5
+    ]
+   ],
+   "expect": true,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     5,
+     1,
+     1
+    ]
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     3
+    ]
+   ],
+   "expect": true,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     2,
+     3,
+     5,
+     5,
+     3
+    ]
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     3,
+     4,
+     4,
+     4
+    ]
+   ],
+   "expect": true,
+   "zone": "domain"
+  }
+ ]
+}

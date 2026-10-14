@@ -8,7 +8,11 @@ prerregistración en el vault: 'El juez imperfecto mide lo que llega a producci�
 
 Condiciones: sello · python · python_asserts (Python con la instrucción de poner asserts).
 Aparte, `sello_contrato`: el contrato lo escribió otro (se toma de una corrida anterior con
-`--contratos`, ver `contrato.py`) y el modelo solo escribe el cuerpo. No entra en `all`.
+`--contratos`, ver `contrato.py`) y el modelo solo escribe el cuerpo. No entra en `all`. Su
+gemela en Python, `python_contrato` (SEL-16): el contrato en el docstring (`pre:`/`post:`), que
+se comprueba en cada llamada, y CrossHair en el juez débil como el probador (`contrato_py.py`).
+
+La batería es `ambiguos/`; con SELLO_BATERIA=nuevas, la del experimento decisivo (SEL-9).
 
     uv run python bench/harness3.py --model haiku
     uv run python bench/harness3.py --model haiku --only nth --cond sello   # humo
@@ -21,6 +25,7 @@ from __future__ import annotations
 import argparse
 import datetime as dt
 import json
+import os
 import re
 import subprocess
 import sys
@@ -31,13 +36,16 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from harness import RESULTADOS, ROOT, SPEC, ask, extract, py_val, sello_lit  # noqa: E402
 import contrato as ct  # noqa: E402
+import contrato_py as cp  # noqa: E402
 import juez  # noqa: E402
 
 AQUI = Path(__file__).resolve().parent
-PROBLEMAS = AQUI / "ambiguos"
+BATERIA = os.environ.get("SELLO_BATERIA", "ambiguos")
+PROBLEMAS = AQUI / BATERIA
 CONDS = ["sello", "python", "python_asserts"]
 CONTRATO = "sello_contrato"
-CONDS_TODAS = CONDS + [CONTRATO]
+PY_CONTRATO = "python_contrato"
+CONDS_TODAS = CONDS + [CONTRATO, PY_CONTRATO]
 
 
 def es_sello(cond: str) -> bool:
@@ -61,8 +69,20 @@ def ejemplos(p: dict, lang: str) -> str:
     return "For example: " + "; ".join(out) + "."
 
 
-def prompt(p: dict, cond: str, prev: tuple[str, str] | None, contrato: ct.Contrato | None = None) -> str:
-    if cond == CONTRATO:
+def prompt(p: dict, cond: str, prev: tuple[str, str] | None, contrato=None) -> str:
+    if cond == PY_CONTRATO:
+        assert contrato is not None
+        head = (f"Task: complete the Python code below so that it defines `{p['python']}`. {p['statement']} "
+                f"{ejemplos(p, 'python')}\n"
+                f"The contract is fixed and was written by someone else: the signature and the docstring "
+                f"of `{p['fn']}` (its `pre:` and `post:` conditions, checked on every call; `__return__` "
+                f"is the returned value), and the helper functions shown, must appear unchanged in your "
+                f"code. Write the body of `{p['fn']}` in place of `...`. You may add helper functions of "
+                f"your own. No imports, no input/output, no prints. A tool searches for inputs that break "
+                f"the conditions. Tests will call `{p['fn']}`.\n\n```python\n{contrato.texto}\n```\n\n"
+                f"Reply with one ```python block containing the whole code.")
+        fence, tail = "python", "the whole corrected code"
+    elif cond == CONTRATO:
         assert contrato is not None
         head = (f"Below is the complete specification of Sello, a small programming language.\n\n"
                 f"{SPEC}\n\n---\n\n"
@@ -141,6 +161,9 @@ code, cases, fn = sys.argv[1], json.loads(sys.argv[2]), sys.argv[3]
 ns = {}
 try:
     exec(open(code).read(), ns)
+    if len(sys.argv) > 4:  # contratos activos: el nivel 1 de Python (contrato_py.ENFORCE)
+        exec(sys.argv[4], ns)
+        ns["_contratar"](ns)
     f = ns[fn]
 except Exception:
     print(json.dumps({"error": traceback.format_exc(limit=2)[-1200:]})); sys.exit(1)
@@ -167,13 +190,16 @@ print(json.dumps(out))
 '''
 
 
-def ejecutar_python(code: str, p: dict, casos: list[dict], timeout: int = 60) -> list[dict] | dict:
+def ejecutar_python(code: str, p: dict, casos: list[dict], timeout: int = 60,
+                    contratos: bool = False) -> list[dict] | dict:
+    """Con `contratos`, cada `pre:`/`post:` de un docstring se comprueba en cada llamada: un `post`
+    violado es cazado (AssertionError) y un `pre` violado, rechazo."""
     with tempfile.TemporaryDirectory() as d:
         src = Path(d, "sol.py"); src.write_text(code + "\n")
         drv = Path(d, "driver.py"); drv.write_text(DRIVER)
         cj = json.dumps([{"args": [py_val(a) for a in c["args"]], "expect": py_val(c["expect"])} for c in casos])
         try:
-            r = subprocess.run([sys.executable, str(drv), str(src), cj, p["fn"]],
+            r = subprocess.run([sys.executable, str(drv), str(src), cj, p["fn"]] + ([cp.ENFORCE] if contratos else []),
                                capture_output=True, text=True, timeout=timeout)
         except subprocess.TimeoutExpired:
             return {"error": f"timeout after {timeout}s"}
@@ -188,22 +214,30 @@ def ejecutar_python(code: str, p: dict, casos: list[dict], timeout: int = 60) ->
 
 
 def ejecutar(cond: str, code: str, p: dict, casos: list[dict], timeout: int = 60) -> list[dict] | dict:
+    if cond == PY_CONTRATO:
+        return ejecutar_python(code, p, casos, timeout, contratos=True)
     return (ejecutar_sello if es_sello(cond) else ejecutar_python)(code, p, casos, timeout)
 
 
 # ---------- juez débil ----------
 
-def juez_debil(cond: str, code: str, p: dict, contrato: ct.Contrato | None = None) -> tuple[bool, str, str]:
+def juez_debil(cond: str, code: str, p: dict, contrato=None) -> tuple[bool, str, str]:
     """(aceptado, feedback, fase). Compila y pasa los ejemplos visibles. Con contrato
-    congelado, antes de nada comprueba que el programa lo respeta (fase `contract`)."""
+    congelado, antes de nada comprueba que el programa lo respeta (fase `contract`). En
+    `python_contrato`, tras los ejemplos, CrossHair (fase `prover`): en Sello el probador va dentro
+    del compilador."""
     if contrato is not None:
-        v = ct.violacion(contrato, code)
+        v = (cp.violacion if cond == PY_CONTRATO else ct.violacion)(contrato, code)
         if v:
             return False, v, "contract"
     r = ejecutar(cond, code, p, p["visible"])
     if isinstance(r, dict):
         return False, json.dumps(r, ensure_ascii=False), "compile"
     fallos = [x for x in r if x["result"] != juez.OK]
+    if not fallos and cond == PY_CONTRATO:
+        cx = cp.crosshair(code)
+        if cx:
+            return False, cx, "prover"
     if not fallos:
         return True, "", "ok"
     if es_sello(cond):
@@ -220,15 +254,15 @@ def run_one(p: dict, cond: str, model: str, max_attempts: int, contratos: dict |
     attempts: list[dict] = []
     accepted_at: int | None = None
     code = ""
-    contrato: ct.Contrato | None = None
-    if cond == CONTRATO:
+    contrato = None
+    if cond in (CONTRATO, PY_CONTRATO):
         if p["fn"] not in contratos:  # un contrato a ciegas que no compila: el problema no se corre
             print(f"  {p['fn']:<15} {cond:<15} sin contrato: no se corre", file=sys.stderr, flush=True)
             return {"problem": p["fn"], "cond": cond, "model": model, "accepted_at": None, "contrato": None,
                     "sin_contrato": True, "attempts": 0, "cost": 0.0, "tokens_in": 0, "tokens_out": 0,
                     "thinking": 0, "ms": 0, "code": None, "oracle": {}, "oracle_cases": [], "detail": []}
         origen = contratos[p["fn"]]
-        contrato = ct.extraer(origen["code"], p["fn"])
+        contrato = (cp.extraer if cond == PY_CONTRATO else ct.extraer)(origen["code"], p["fn"])
     for i in range(1, max_attempts + 1):
         a = ask(prompt(p, cond, prev, contrato), model)
         code = extract(a["text"], "sello" if es_sello(cond) else "python")
@@ -284,13 +318,13 @@ def cargar_contratos(path: Path) -> dict[str, dict]:
     for line in path.read_text().splitlines():
         r = json.loads(line)
         if (r["cond"] == "sello" and r.get("code") and r.get("accepted_at")) or \
-                (r["cond"] == "contrato" and r.get("compila")):
+                (r["cond"] in ("contrato", "contrato_py") and r.get("compila")):
             out[r["problem"]] = {"code": r["code"], "model": r["model"], "origen": path.name}
     return out
 
 
 def de_contratar(path: Path) -> bool:
-    return any(json.loads(line)["cond"] == "contrato" for line in path.read_text().splitlines())
+    return any(json.loads(line)["cond"] in ("contrato", "contrato_py") for line in path.read_text().splitlines())
 
 
 def main() -> int:
@@ -302,6 +336,7 @@ def main() -> int:
     ap.add_argument("--only", help="nombre de un problema")
     ap.add_argument("--attempts", type=int, default=5)
     ap.add_argument("--workers", type=int, default=4)
+    ap.add_argument("--tag", default="", help="sufijo del nombre de la corrida")
     args = ap.parse_args()
 
     probs = [json.loads(f.read_text()) for f in sorted(PROBLEMAS.glob("*.json"))]
@@ -309,9 +344,9 @@ def main() -> int:
         probs = [p for p in probs if p["fn"] == args.only]
     conds = CONDS if args.cond == "all" else [args.cond]
     contratos = None
-    if CONTRATO in conds:
+    if CONTRATO in conds or PY_CONTRATO in conds:
         if not args.contratos:
-            ap.error(f"--cond {CONTRATO} necesita --contratos")
+            ap.error(f"--cond {conds[0]} necesita --contratos")
         contratos = cargar_contratos(args.contratos)
         faltan = [p["fn"] for p in probs if p["fn"] not in contratos]
         if faltan and not de_contratar(args.contratos):  # los de contratar.py sin contrato no se corren
@@ -324,9 +359,11 @@ def main() -> int:
         rows = list(ex.map(lambda j: run_one(j[0], j[1], args.model, args.attempts, contratos), jobs))
 
     RESULTADOS.mkdir(exist_ok=True)
-    tag = f"juez-{when}-{args.model}" + ("-contrato" if conds == [CONTRATO] else "")
+    tag = f"juez-{when}-{args.model}" + ("-contrato" if conds == [CONTRATO] else "") \
+        + ("-contrato-py" if conds == [PY_CONTRATO] else "") + ("-nuevas" if BATERIA == "nuevas" else "")
     if contratos is not None and de_contratar(args.contratos):
         tag += "-ciegas"
+    tag += f"-{args.tag}" if args.tag else ""
     base = RESULTADOS / (tag if not args.only else f"humo-{tag}")
     with open(base.with_suffix(".jsonl"), "w") as f:
         for r in rows:

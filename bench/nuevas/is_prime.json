@@ -1,0 +1,221 @@
+{
+ "fn": "is_prime",
+ "statement": "Return whether n is a prime number. Must work for any n >= 2.",
+ "sello": "is_prime(n: Int) -> Bool",
+ "python": "def is_prime(n: int) -> bool",
+ "option": false,
+ "visible": [
+  {
+   "args": [
+    13
+   ],
+   "expect": true,
+   "zone": "visible"
+  },
+  {
+   "args": [
+    15
+   ],
+   "expect": false,
+   "zone": "visible"
+  }
+ ],
+ "oracle": [
+  {
+   "args": [
+    1
+   ],
+   "expect": false,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    0
+   ],
+   "expect": false,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    -7
+   ],
+   "expect": false,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    76
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    89
+   ],
+   "expect": true,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    86
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    46
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    33
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    61
+   ],
+   "expect": true,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    42
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    12
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    85
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    52
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    54
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    94
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    69
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    50
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    79
+   ],
+   "expect": true,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    72
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    21
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    58
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    67
+   ],
+   "expect": true,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    3
+   ],
+   "expect": true,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    74
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    9
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    32
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    87
+   ],
+   "expect": false,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    6
+   ],
+   "expect": false,
+   "zone": "domain"
+  }
+ ]
+}

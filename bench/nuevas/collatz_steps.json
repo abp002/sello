@@ -1,0 +1,221 @@
+{
+ "fn": "collatz_steps",
+ "statement": "Starting from n, repeatedly halve it if it is even or replace it with 3n + 1 if it is odd, until it reaches 1. Return the number of steps. Must work for any n >= 1.",
+ "sello": "collatz_steps(n: Int) -> Int",
+ "python": "def collatz_steps(n: int) -> int",
+ "option": false,
+ "visible": [
+  {
+   "args": [
+    6
+   ],
+   "expect": 8,
+   "zone": "visible"
+  },
+  {
+   "args": [
+    1
+   ],
+   "expect": 0,
+   "zone": "visible"
+  }
+ ],
+ "oracle": [
+  {
+   "args": [
+    0
+   ],
+   "expect": 0,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    -1
+   ],
+   "expect": 0,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    -6
+   ],
+   "expect": 0,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    22
+   ],
+   "expect": 15,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    27
+   ],
+   "expect": 111,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    36
+   ],
+   "expect": 21,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    42
+   ],
+   "expect": 8,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    35
+   ],
+   "expect": 13,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    31
+   ],
+   "expect": 106,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    40
+   ],
+   "expect": 8,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    41
+   ],
+   "expect": 109,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    49
+   ],
+   "expect": 24,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    57
+   ],
+   "expect": 32,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    59
+   ],
+   "expect": 32,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    3
+   ],
+   "expect": 7,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    52
+   ],
+   "expect": 11,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    16
+   ],
+   "expect": 4,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    24
+   ],
+   "expect": 10,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    51
+   ],
+   "expect": 24,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    32
+   ],
+   "expect": 5,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    4
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    13
+   ],
+   "expect": 9,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    53
+   ],
+   "expect": 11,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    56
+   ],
+   "expect": 19,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    9
+   ],
+   "expect": 19,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    29
+   ],
+   "expect": 18,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    58
+   ],
+   "expect": 19,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    45
+   ],
+   "expect": 16,
+   "zone": "domain"
+  }
+ ]
+}

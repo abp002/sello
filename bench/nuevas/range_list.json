@@ -1,0 +1,417 @@
+{
+ "fn": "range_list",
+ "statement": "Return the integers from a to b, both included, in ascending order. Must work for any a and b with a <= b.",
+ "sello": "range_list(a: Int, b: Int) -> List[Int]",
+ "python": "def range_list(a: int, b: int) -> list[int]",
+ "option": false,
+ "visible": [
+  {
+   "args": [
+    2,
+    5
+   ],
+   "expect": [
+    2,
+    3,
+    4,
+    5
+   ],
+   "zone": "visible"
+  },
+  {
+   "args": [
+    -1,
+    -1
+   ],
+   "expect": [
+    -1
+   ],
+   "zone": "visible"
+  }
+ ],
+ "oracle": [
+  {
+   "args": [
+    3,
+    1
+   ],
+   "expect": [],
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    0,
+    -2
+   ],
+   "expect": [],
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    5,
+    4
+   ],
+   "expect": [],
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    -7,
+    -1
+   ],
+   "expect": [
+    -7,
+    -6,
+    -5,
+    -4,
+    -3,
+    -2,
+    -1
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    -9,
+    -7
+   ],
+   "expect": [
+    -9,
+    -8,
+    -7
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    -9,
+    -3
+   ],
+   "expect": [
+    -9,
+    -8,
+    -7,
+    -6,
+    -5,
+    -4,
+    -3
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    7,
+    11
+   ],
+   "expect": [
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    4,
+    10
+   ],
+   "expect": [
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    4,
+    5
+   ],
+   "expect": [
+    4,
+    5
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    0,
+    3
+   ],
+   "expect": [
+    0,
+    1,
+    2,
+    3
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    9,
+    13
+   ],
+   "expect": [
+    9,
+    10,
+    11,
+    12,
+    13
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    -6,
+    -4
+   ],
+   "expect": [
+    -6,
+    -5,
+    -4
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    6,
+    10
+   ],
+   "expect": [
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    -1,
+    4
+   ],
+   "expect": [
+    -1,
+    0,
+    1,
+    2,
+    3,
+    4
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    -5,
+    0
+   ],
+   "expect": [
+    -5,
+    -4,
+    -3,
+    -2,
+    -1,
+    0
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    5,
+    10
+   ],
+   "expect": [
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    -4,
+    2
+   ],
+   "expect": [
+    -4,
+    -3,
+    -2,
+    -1,
+    0,
+    1,
+    2
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    -9,
+    -6
+   ],
+   "expect": [
+    -9,
+    -8,
+    -7,
+    -6
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    6,
+    8
+   ],
+   "expect": [
+    6,
+    7,
+    8
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    2,
+    2
+   ],
+   "expect": [
+    2
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    9,
+    17
+   ],
+   "expect": [
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    -5,
+    2
+   ],
+   "expect": [
+    -5,
+    -4,
+    -3,
+    -2,
+    -1,
+    0,
+    1,
+    2
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    -1,
+    5
+   ],
+   "expect": [
+    -1,
+    0,
+    1,
+    2,
+    3,
+    4,
+    5
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    1,
+    4
+   ],
+   "expect": [
+    1,
+    2,
+    3,
+    4
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    -4,
+    3
+   ],
+   "expect": [
+    -4,
+    -3,
+    -2,
+    -1,
+    0,
+    1,
+    2,
+    3
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    -4,
+    -4
+   ],
+   "expect": [
+    -4
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    6,
+    13
+   ],
+   "expect": [
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    -3,
+    4
+   ],
+   "expect": [
+    -3,
+    -2,
+    -1,
+    0,
+    1,
+    2,
+    3,
+    4
+   ],
+   "zone": "domain"
+  }
+ ]
+}

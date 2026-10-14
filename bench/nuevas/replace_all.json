@@ -1,0 +1,466 @@
+{
+ "fn": "replace_all",
+ "statement": "Return xs with every occurrence of a replaced by b. Must work for any list and any a and b.",
+ "sello": "replace_all(xs: List[Int], a: Int, b: Int) -> List[Int]",
+ "python": "def replace_all(xs: list[int], a: int, b: int) -> list[int]",
+ "option": false,
+ "visible": [
+  {
+   "args": [
+    [
+     1,
+     2,
+     1
+    ],
+    1,
+    7
+   ],
+   "expect": [
+    7,
+    2,
+    7
+   ],
+   "zone": "visible"
+  },
+  {
+   "args": [
+    [
+     3
+    ],
+    4,
+    5
+   ],
+   "expect": [
+    3
+   ],
+   "zone": "visible"
+  }
+ ],
+ "oracle": [
+  {
+   "args": [
+    [],
+    2,
+    1
+   ],
+   "expect": [],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [],
+    3,
+    1
+   ],
+   "expect": [],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     4,
+     1,
+     1
+    ],
+    3,
+    1
+   ],
+   "expect": [
+    1,
+    4,
+    1,
+    1
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     2,
+     4,
+     2
+    ],
+    2,
+    -4
+   ],
+   "expect": [
+    -4,
+    4,
+    -4
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     2,
+     1,
+     2,
+     2,
+     2,
+     2
+    ],
+    4,
+    2
+   ],
+   "expect": [
+    2,
+    1,
+    2,
+    2,
+    2,
+    2
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     4,
+     1,
+     3,
+     4,
+     4,
+     4
+    ],
+    2,
+    -2
+   ],
+   "expect": [
+    4,
+    1,
+    3,
+    4,
+    4,
+    4
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     3
+    ],
+    4,
+    4
+   ],
+   "expect": [
+    3,
+    3
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [],
+    1,
+    -1
+   ],
+   "expect": [],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     2,
+     4,
+     2,
+     1,
+     4
+    ],
+    1,
+    5
+   ],
+   "expect": [
+    5,
+    2,
+    4,
+    2,
+    5,
+    4
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     4,
+     1
+    ],
+    3,
+    4
+   ],
+   "expect": [
+    1,
+    4,
+    1
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     1,
+     1,
+     2,
+     3
+    ],
+    2,
+    0
+   ],
+   "expect": [
+    1,
+    1,
+    1,
+    0,
+    3
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     2,
+     3,
+     2
+    ],
+    1,
+    -3
+   ],
+   "expect": [
+    2,
+    3,
+    2
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [],
+    1,
+    1
+   ],
+   "expect": [],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     4,
+     1,
+     4
+    ],
+    1,
+    -5
+   ],
+   "expect": [
+    4,
+    -5,
+    4
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     2,
+     3
+    ],
+    2,
+    4
+   ],
+   "expect": [
+    4,
+    3
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1,
+     3,
+     3,
+     2,
+     3
+    ],
+    1,
+    0
+   ],
+   "expect": [
+    0,
+    3,
+    3,
+    2,
+    3
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     4,
+     4,
+     1,
+     4,
+     2,
+     1,
+     3
+    ],
+    1,
+    -5
+   ],
+   "expect": [
+    4,
+    4,
+    -5,
+    4,
+    2,
+    -5,
+    3
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     4,
+     1,
+     3,
+     4,
+     3,
+     4
+    ],
+    1,
+    2
+   ],
+   "expect": [
+    4,
+    2,
+    3,
+    4,
+    3,
+    4
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     1
+    ],
+    4,
+    -2
+   ],
+   "expect": [
+    1
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     1,
+     4,
+     2
+    ],
+    3,
+    -4
+   ],
+   "expect": [
+    -4,
+    1,
+    4,
+    2
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3,
+     1,
+     1,
+     1,
+     4,
+     4
+    ],
+    3,
+    -1
+   ],
+   "expect": [
+    -1,
+    1,
+    1,
+    1,
+    4,
+    4
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [],
+    2,
+    0
+   ],
+   "expect": [],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     2,
+     3,
+     4,
+     4
+    ],
+    1,
+    -1
+   ],
+   "expect": [
+    2,
+    3,
+    4,
+    4
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     4,
+     4,
+     2
+    ],
+    3,
+    -4
+   ],
+   "expect": [
+    4,
+    4,
+    2
+   ],
+   "zone": "domain"
+  },
+  {
+   "args": [
+    [
+     3
+    ],
+    2,
+    3
+   ],
+   "expect": [
+    3
+   ],
+   "zone": "domain"
+  }
+ ]
+}

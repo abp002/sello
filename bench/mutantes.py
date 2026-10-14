@@ -25,7 +25,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from harness import RESULTADOS  # noqa: E402
-from harness3 import CONDS, CONDS_TODAS, PROBLEMAS, ejecutar, es_sello  # noqa: E402
+from harness3 import CONDS, CONDS_TODAS, PROBLEMAS, PY_CONTRATO, ejecutar, es_sello  # noqa: E402
+import contrato_py as cp  # noqa: E402
 from flujo import COND as MCP  # noqa: E402
 import juez  # noqa: E402
 
@@ -250,9 +251,11 @@ def _sitios_py(n: ast.AST, slot: Slot, scope: list[str], out: list[Sitio]) -> No
             _sitios_py(value, Slot(n, field), scope, out)
 
 
-def mutar_python(src: str) -> tuple[str, list[dict]]:
+def mutar_python(src: str, congelados: tuple[str, ...] = ()) -> tuple[str, list[dict]]:
+    """`congelados`, como en `mutar_sello`: los helpers del contrato (`python_contrato`) no se mutan.
+    El docstring de la principal tampoco: es una cadena, y ningún operador toca cadenas."""
     tree = ast.parse(src)
-    fns = [n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef)]
+    fns = [n for n in ast.walk(tree) if isinstance(n, ast.FunctionDef) and n.name not in congelados]
 
     def sitios(fn: ast.FunctionDef) -> list[Sitio]:
         a = fn.args
@@ -267,7 +270,7 @@ def mutar_python(src: str) -> tuple[str, list[dict]]:
 
 
 def mutar(cond: str, src: str, congelados: tuple[str, ...] = ()) -> tuple[str, list[dict]]:
-    return mutar_sello(src, congelados) if es_sello(cond) else mutar_python(src)
+    return mutar_sello(src, congelados) if es_sello(cond) else mutar_python(src, congelados)
 
 
 # ---------- ejecución ----------
@@ -295,6 +298,8 @@ def _cuenta(resultados: list[str]) -> dict:
 def evaluar(cond: str, code: str, p: dict) -> dict:
     """Juez débil y, si acepta, oráculo. Devuelve el destino y los recuentos por zona."""
     ok, señal = _señal(cond, ejecutar(cond, code, p, p["visible"], TIMEOUT))
+    if ok and cond == PY_CONTRATO and cp.crosshair(code):  # el juez débil de python_contrato lo lleva
+        ok, señal = False, "crosshair/prover"
     dom: list[str] = []
     amb: list[str] = []
     if ok:
@@ -438,6 +443,7 @@ def main() -> int:
     ap.add_argument("--cond", nargs="+", choices=COLUMNAS, default=COLUMNAS)
     ap.add_argument("--only", help="nombre de un problema")
     ap.add_argument("--workers", type=int, default=8)
+    ap.add_argument("--tag", default="", help="sufijo del nombre de la corrida")
     args = ap.parse_args()
 
     probs = {p["fn"]: p for p in (json.loads(f.read_text()) for f in sorted(PROBLEMAS.glob("*.json")))}
@@ -448,7 +454,7 @@ def main() -> int:
         rows = [procesar(s, probs[s["problem"]], pool) for s in sols]
 
     RESULTADOS.mkdir(exist_ok=True)
-    base = RESULTADOS / (("humo-" if args.only else "") + f"mutantes-{when}")
+    base = RESULTADOS / (("humo-" if args.only else "") + f"mutantes-{when}" + (f"-{args.tag}" if args.tag else ""))
     with open(base.with_suffix(".jsonl"), "w") as f:
         for r in rows:
             f.write(json.dumps(r, ensure_ascii=False) + "\n")

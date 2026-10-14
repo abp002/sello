@@ -1,0 +1,221 @@
+{
+ "fn": "fib",
+ "statement": "Return the n-th Fibonacci number, with fib(0) = 0 and fib(1) = 1. Must work for any n >= 0.",
+ "sello": "fib(n: Int) -> Int",
+ "python": "def fib(n: int) -> int",
+ "option": false,
+ "visible": [
+  {
+   "args": [
+    10
+   ],
+   "expect": 55,
+   "zone": "visible"
+  },
+  {
+   "args": [
+    1
+   ],
+   "expect": 1,
+   "zone": "visible"
+  }
+ ],
+ "oracle": [
+  {
+   "args": [
+    -1
+   ],
+   "expect": 0,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    -2
+   ],
+   "expect": 0,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    -10
+   ],
+   "expect": 0,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    4
+   ],
+   "expect": 3,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    6
+   ],
+   "expect": 8,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    17
+   ],
+   "expect": 1597,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    26
+   ],
+   "expect": 121393,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    16
+   ],
+   "expect": 987,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    0
+   ],
+   "expect": 0,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    7
+   ],
+   "expect": 13,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    2
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    23
+   ],
+   "expect": 28657,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    29
+   ],
+   "expect": 514229,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    9
+   ],
+   "expect": 34,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    12
+   ],
+   "expect": 144,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    20
+   ],
+   "expect": 6765,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    15
+   ],
+   "expect": 610,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    27
+   ],
+   "expect": 196418,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    13
+   ],
+   "expect": 233,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    24
+   ],
+   "expect": 46368,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    5
+   ],
+   "expect": 5,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    14
+   ],
+   "expect": 377,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    30
+   ],
+   "expect": 832040,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    8
+   ],
+   "expect": 21,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    18
+   ],
+   "expect": 2584,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    21
+   ],
+   "expect": 10946,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    11
+   ],
+   "expect": 89,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    28
+   ],
+   "expect": 317811,
+   "zone": "domain"
+  }
+ ]
+}

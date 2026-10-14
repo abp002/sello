@@ -1,0 +1,221 @@
+{
+ "fn": "digit_sum",
+ "statement": "Return the sum of the decimal digits of n. Must work for any n >= 0.",
+ "sello": "digit_sum(n: Int) -> Int",
+ "python": "def digit_sum(n: int) -> int",
+ "option": false,
+ "visible": [
+  {
+   "args": [
+    123
+   ],
+   "expect": 6,
+   "zone": "visible"
+  },
+  {
+   "args": [
+    0
+   ],
+   "expect": 0,
+   "zone": "visible"
+  }
+ ],
+ "oracle": [
+  {
+   "args": [
+    -5
+   ],
+   "expect": 5,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    -123
+   ],
+   "expect": 6,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    -90
+   ],
+   "expect": 9,
+   "zone": "ambiguous"
+  },
+  {
+   "args": [
+    54169
+   ],
+   "expect": 25,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    12688
+   ],
+   "expect": 25,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    7972
+   ],
+   "expect": 25,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    4
+   ],
+   "expect": 4,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    33195
+   ],
+   "expect": 21,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    660
+   ],
+   "expect": 12,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    287
+   ],
+   "expect": 17,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    460
+   ],
+   "expect": 10,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    2
+   ],
+   "expect": 2,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    716
+   ],
+   "expect": 14,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    48582
+   ],
+   "expect": 27,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    879
+   ],
+   "expect": 24,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    7
+   ],
+   "expect": 7,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    62378
+   ],
+   "expect": 26,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    1
+   ],
+   "expect": 1,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    39254
+   ],
+   "expect": 23,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    35352
+   ],
+   "expect": 18,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    86179
+   ],
+   "expect": 31,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    300
+   ],
+   "expect": 3,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    8
+   ],
+   "expect": 8,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    71
+   ],
+   "expect": 8,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    28579
+   ],
+   "expect": 31,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    662
+   ],
+   "expect": 14,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    161
+   ],
+   "expect": 8,
+   "zone": "domain"
+  },
+  {
+   "args": [
+    6
+   ],
+   "expect": 6,
+   "zone": "domain"
+  }
+ ]
+}

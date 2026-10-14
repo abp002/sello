@@ -184,3 +184,23 @@ def test_la_muerte_por_el_probador_se_cuenta_aparte():
     assert mu.causa_muerte("E201/prover") == mu.PROBADOR and mu.causa_muerte("E201") == mu.CONTRATO
     assert mu.clasificar(False, "E201/prover", []) == mu.MUERTO
     assert mu._señal("sello", {"error": {"code": "E201"}}) == (False, "E201")
+
+
+def test_python_contrato_no_muta_los_helpers_congelados_ni_el_docstring():
+    src = '''
+def es_par(n: int) -> bool:
+    return n % 2 == 0
+
+
+def doble(n: int) -> int:
+    """
+    pre: n >= 0
+    post: es_par(__return__) and __return__ == n + n
+    """
+    return n + n
+'''
+    canon, muts = mu.mutar_python(src, ("es_par",))
+    assert muts and all(m["fn"] == "doble" for m in muts)
+    for m in muts:
+        assert "return n % 2 == 0" in m["code"]
+        assert "post: es_par(__return__) and __return__ == n + n" in m["code"]
