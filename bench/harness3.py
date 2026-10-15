@@ -138,8 +138,8 @@ def ejecutar_sello(code: str, p: dict, casos: list[dict], timeout: int = 60,
         src = Path(d, "sol.sello"); src.write_text(code + "\n")
         cj = Path(d, "cases.json"); cj.write_text(casos_sello(p, casos))
         try:
-            r = subprocess.run([sys.executable, "-m", "sello.cli", "test", str(src), str(cj)]
-                               + ([] if prover else ["--no-prover"]),
+            r = subprocess.run([sys.executable, "-m", "sello.cli", "test", str(src), str(cj),
+                                "--case-seconds", str(CASO_S)] + ([] if prover else ["--no-prover"]),
                                capture_output=True, text=True, timeout=timeout, cwd=ROOT)
         except subprocess.TimeoutExpired:
             return {"error": {"code": "E500", "what": f"timeout after {timeout}s"}, "timeout": True}
@@ -155,13 +155,15 @@ def ejecutar_sello(code: str, p: dict, casos: list[dict], timeout: int = 60,
              "detail": fallos.get(llamada(p, c["args"]))} for c in casos]
 
 
+CASO_S = 3  # tope por caso del oráculo, el mismo en Sello y en Python (issue #2)
+
 DRIVER = r'''
 import json, signal, sys, traceback
 code, cases, fn = sys.argv[1], json.loads(sys.argv[2]), sys.argv[3]
 ns = {}
 try:
     exec(open(code).read(), ns)
-    if len(sys.argv) > 4:  # contratos activos: el nivel 1 de Python (contrato_py.ENFORCE)
+    if sys.argv[4]:  # contratos activos: el nivel 1 de Python (contrato_py.ENFORCE)
         exec(sys.argv[4], ns)
         ns["_contratar"](ns)
     f = ns[fn]
@@ -172,7 +174,7 @@ def alarm(*_): raise Timeout()
 signal.signal(signal.SIGALRM, alarm)
 out = []
 for c in cases:
-    signal.alarm(3)
+    signal.alarm(int(sys.argv[5]))
     try:
         got = f(*c["args"])
         exp = c["expect"]
@@ -199,7 +201,7 @@ def ejecutar_python(code: str, p: dict, casos: list[dict], timeout: int = 60,
         drv = Path(d, "driver.py"); drv.write_text(DRIVER)
         cj = json.dumps([{"args": [py_val(a) for a in c["args"]], "expect": py_val(c["expect"])} for c in casos])
         try:
-            r = subprocess.run([sys.executable, str(drv), str(src), cj, p["fn"]] + ([cp.ENFORCE] if contratos else []),
+            r = subprocess.run([sys.executable, str(drv), str(src), cj, p["fn"], cp.ENFORCE if contratos else "", str(CASO_S)],
                                capture_output=True, text=True, timeout=timeout)
         except subprocess.TimeoutExpired:
             return {"error": f"timeout after {timeout}s"}

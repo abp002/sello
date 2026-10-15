@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import signal
 import sys
 from pathlib import Path
 
@@ -108,6 +109,10 @@ def cmd_run(args: argparse.Namespace) -> int:
         return _out({"ok": False, "error": e.to_dict()}, 1)
 
 
+class _CaseTimeout(Exception):
+    pass
+
+
 def cmd_test(args: argparse.Namespace) -> int:
     """Casos ocultos: [{"call": "f(1, 2)", "expect": "3"}, ...]. Es lo que usa el harness."""
     try:
@@ -116,7 +121,12 @@ def cmd_test(args: argparse.Namespace) -> int:
         return _out({"ok": False, "error": e.to_dict()}, 1)
     cases = json.loads(Path(args.cases).read_text())
     failed: list[dict] = []
+    if args.case_seconds:  # cada caso con su tope: uno lento es un rechazo y no tumba a los demás
+        def alarm(*_):
+            raise _CaseTimeout()
+        signal.signal(signal.SIGALRM, alarm)
     for c in cases:
+        signal.alarm(args.case_seconds or 0)
         try:
             call = parse_expr(c["call"])
             ck.type_of(call, {}, None)
@@ -126,6 +136,10 @@ def cmd_test(args: argparse.Namespace) -> int:
                 failed.append({"call": c["call"], "expected": expected, "got": got})
         except SelloError as e:
             failed.append({"call": c["call"], "error": e.to_dict()})
+        except _CaseTimeout:
+            failed.append({"call": c["call"], "error": {"code": "E500", "what": f"case timeout after {args.case_seconds}s"}})
+        finally:
+            signal.alarm(0)
     return _out({"ok": not failed, "passed": len(cases) - len(failed), "total": len(cases),
                  "failed": failed}, 1 if failed else 0)
 
@@ -143,6 +157,7 @@ def main(argv: list[str] | None = None) -> int:
     c.add_argument("--store", default=None, help="link calls to functions in this store")
     r = sub.add_parser("run", help="evaluate an expression"); r.add_argument("file"); r.add_argument("expr"); r.set_defaults(f=cmd_run)
     t = sub.add_parser("test", help="run hidden cases"); t.add_argument("file"); t.add_argument("cases"); t.set_defaults(f=cmd_test)
+    t.add_argument("--case-seconds", type=int, default=0, help="time limit per case (0 = none)")
     for sp in (c, r, t):
         sp.add_argument("--no-prover", action="store_true", help="skip verification level 2 (Z3)")
     for name, fn, extra, help_ in [

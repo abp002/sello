@@ -26,3 +26,16 @@ Prerregistrado en el vault: 'Sello frente a Python con el contrato escrito apart
 - Silenciosos en el dominio, S − P por repetición: [0, 0]; ruido entre repeticiones: S 0, P 0. **EMPATE (dentro del ruido)**.
 - Coste: S 1.21 USD frente a P 0.26 USD (4.7×; si Sello gana con más de 2×, la regla no le da la victoria).
 - Aviso (A frente a S): silenciosos [0, 0] frente a [0, 0]; admite lo incorrecto [0, 0] frente a [0, 0]; ruidosos [25, 25] frente a [25, 25]. **NO ENTRA**.
+
+## Corrección del oráculo (issue #2)
+
+El oráculo de Sello corría los 25 casos con 60 s para el lote y el de Python con 3 s por caso: un caso
+lento tumbaba los demás. Con 3 s por caso en los dos (`reoraculo.py`, sin modelo, sobre los mismos
+cuerpos; ficheros `juez-*-sel9-*-reoraculo.jsonl`) solo cambia `fib`:
+
+| | S·a | S·b | A·a | A·b | P·a | P·b |
+|---|---|---|---|---|---|---|
+| ruidosos en el dominio (llamadas) | 17 | 7 | 5 | 8 | 0 | 0 |
+| silenciosos en el dominio (llamadas) | 0 | 0 | 0 | 0 | 0 | 0 |
+
+La regla no cambia: EMPATE.
