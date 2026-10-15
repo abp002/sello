@@ -7,6 +7,9 @@ enunciado. Cuando acepta, la solución pasa al oráculo (referencia + casos gene
 prerregistración en el vault: 'El juez imperfecto mide lo que llega a producción'.
 
 Condiciones: sello · python · python_asserts (Python con la instrucción de poner asserts).
+Aparte, `python_propio` (issue #3): la gemela en Python de `sello`, con el contrato en el docstring
+escrito por el mismo modelo, comprobado en cada llamada y con CrossHair en el juez débil. Con
+`--aviso`, si el contrato aceptado admite dos respuestas, una vuelta más con el testigo.
 Aparte, `sello_contrato`: el contrato lo escribió otro (se toma de una corrida anterior con
 `--contratos`, ver `contrato.py`) y el modelo solo escribe el cuerpo. No entra en `all`. Su
 gemela en Python, `python_contrato` (SEL-16): el contrato en el docstring (`pre:`/`post:`), que
@@ -45,7 +48,18 @@ PROBLEMAS = AQUI / BATERIA
 CONDS = ["sello", "python", "python_asserts"]
 CONTRATO = "sello_contrato"
 PY_CONTRATO = "python_contrato"
-CONDS_TODAS = CONDS + [CONTRATO, PY_CONTRATO]
+PY_PROPIO = "python_propio"  # issue #3: el contrato de Python lo escribe el mismo modelo que el cuerpo
+CONDS_TODAS = CONDS + [CONTRATO, PY_CONTRATO, PY_PROPIO]
+PY_CONTRATOS = (PY_CONTRATO, PY_PROPIO)  # contratos comprobados en cada llamada y CrossHair en el juez débil
+
+# La guía de contratos de la spec de Sello, dicha para Python (la misma que `contratar.prompt_py`).
+GUIA_PY = ("The conditions are checked on every call, and a tool searches for inputs that break them. "
+           "Preconditions state everything the task lets you assume about the arguments (a value is "
+           "unique, the list has no repeats, `k` is within bounds); whatever is not in them the body must "
+           "handle. Postconditions must reject wrong results: a condition that every return value "
+           "satisfies certifies nothing, and a bound alone (`__return__ >= 1`, `__return__ <= len(xs)`) "
+           "does not reject a wrong value inside the bound. State what the result contains or how it "
+           "relates to the arguments. ")
 
 
 def es_sello(cond: str) -> bool:
@@ -70,7 +84,17 @@ def ejemplos(p: dict, lang: str) -> str:
 
 
 def prompt(p: dict, cond: str, prev: tuple[str, str] | None, contrato=None) -> str:
-    if cond == PY_CONTRATO:
+    if cond == PY_PROPIO:
+        head = (f"Task: write a Python function `{p['python']}`. {p['statement']} {ejemplos(p, 'python')}\n"
+                f"Give `{p['fn']}` a docstring that holds its contract in the format CrossHair reads: one "
+                f"line `pre: <boolean expression on the arguments>` per precondition and one line "
+                f"`post: <boolean expression>` per postcondition, where `__return__` is the returned "
+                f"value; at least one `post:`. {GUIA_PY}Any helper function your conditions call must be "
+                f"complete. No imports, no input/output, no prints. You may add helper functions. Tests "
+                f"will call `{p['fn']}`.\n"
+                f"Reply with one ```python block containing the whole code.")
+        fence, tail = "python", "the whole corrected code"
+    elif cond == PY_CONTRATO:
         assert contrato is not None
         head = (f"Task: complete the Python code below so that it defines `{p['python']}`. {p['statement']} "
                 f"{ejemplos(p, 'python')}\n"
@@ -216,12 +240,31 @@ def ejecutar_python(code: str, p: dict, casos: list[dict], timeout: int = 60,
 
 
 def ejecutar(cond: str, code: str, p: dict, casos: list[dict], timeout: int = 60) -> list[dict] | dict:
-    if cond == PY_CONTRATO:
+    if cond in PY_CONTRATOS:
         return ejecutar_python(code, p, casos, timeout, contratos=True)
     return (ejecutar_sello if es_sello(cond) else ejecutar_python)(code, p, casos, timeout)
 
 
 # ---------- juez débil ----------
+
+def _sin_post(code: str, fn: str) -> str | None:
+    """En `python_propio`, el contrato es obligatorio como en Sello: al menos un `post:`."""
+    import ast
+    try:
+        main = next((n for n in ast.parse(code).body if isinstance(n, ast.FunctionDef) and n.name == fn), None)
+    except SyntaxError:
+        return None  # lo dice la ejecución
+    if main is not None and not cp.condiciones(ast.get_docstring(main))[1]:
+        return f"`{fn}` needs its contract: at least one `post:` line in its docstring."
+    return None
+
+
+def aviso_de(cond: str, code: str, fn: str) -> str | None:
+    """El aviso de ambigüedad del contrato de una solución aceptada (issue #3): el de `contratar`,
+    con `sello.unique` en Sello y CrossHair en Python."""
+    import contratar
+    return (contratar.aviso_py if cond in PY_CONTRATOS else contratar.aviso)(code, fn)
+
 
 def juez_debil(cond: str, code: str, p: dict, contrato=None) -> tuple[bool, str, str]:
     """(aceptado, feedback, fase). Compila y pasa los ejemplos visibles. Con contrato
@@ -232,11 +275,15 @@ def juez_debil(cond: str, code: str, p: dict, contrato=None) -> tuple[bool, str,
         v = (cp.violacion if cond == PY_CONTRATO else ct.violacion)(contrato, code)
         if v:
             return False, v, "contract"
+    if cond == PY_PROPIO:
+        v = _sin_post(code, p["fn"])
+        if v:
+            return False, v, "contract"
     r = ejecutar(cond, code, p, p["visible"])
     if isinstance(r, dict):
         return False, json.dumps(r, ensure_ascii=False), "compile"
     fallos = [x for x in r if x["result"] != juez.OK]
-    if not fallos and cond == PY_CONTRATO:
+    if not fallos and cond in PY_CONTRATOS:
         cx = cp.crosshair(code)
         if cx:
             return False, cx, "prover"
@@ -251,7 +298,8 @@ def juez_debil(cond: str, code: str, p: dict, contrato=None) -> tuple[bool, str,
 
 # ---------- una corrida ----------
 
-def run_one(p: dict, cond: str, model: str, max_attempts: int, contratos: dict | None = None) -> dict:
+def run_one(p: dict, cond: str, model: str, max_attempts: int, contratos: dict | None = None,
+            aviso: bool = False) -> dict:
     prev: tuple[str, str] | None = None
     attempts: list[dict] = []
     accepted_at: int | None = None
@@ -281,6 +329,27 @@ def run_one(p: dict, cond: str, model: str, max_attempts: int, contratos: dict |
             break
         prev = (code, feedback)
 
+    # El aviso (issue #3): si el contrato aceptado admite dos respuestas, una sola vuelta más con el
+    # testigo. No es un rechazo: si lo que vuelve no pasa el juez débil, queda lo ya aceptado.
+    avisado: list[str] = []
+    sustituye = None
+    if aviso and accepted_at:
+        msg = aviso_de(cond, code, p["fn"])
+        if msg:
+            avisado.append(msg)
+            a = ask(prompt(p, cond, (code, msg), contrato), model)
+            nuevo = extract(a["text"], "sello" if es_sello(cond) else "python")
+            ok, feedback, phase = juez_debil(cond, nuevo, p, contrato)
+            attempts.append({"n": len(attempts) + 1, "ok": ok, "phase": "ambiguous" if ok else phase,
+                             "sello_error": None, "cost": a["cost"], "tokens_in": a["tokens_in"],
+                             "tokens_out": a["tokens_out"], "thinking": a.get("thinking", 0), "ms": a["ms"],
+                             "models": a.get("models"), "code": nuevo, "feedback": (msg + "\n" + feedback)[:2000]})
+            sustituye = ok
+            if ok:
+                code = nuevo
+            print(f"  {p['fn']:<15} {cond:<15} aviso: {'sustituye' if ok else 'queda lo aceptado (' + phase + ')'}",
+                  file=sys.stderr, flush=True)
+
     oracle_cases: list[dict] = []
     oracle: dict = {}
     if accepted_at:
@@ -300,7 +369,7 @@ def run_one(p: dict, cond: str, model: str, max_attempts: int, contratos: dict |
                          "fns": contrato.nombres, "texto": contrato.texto,
                          "rechazos": sum(x["phase"] == "contract" for x in attempts)}
     return {"problem": p["fn"], "cond": cond, "model": model, "accepted_at": accepted_at,
-            "contrato": info_contrato,
+            "contrato": info_contrato, "aviso": aviso, "avisado": avisado, "aviso_sustituye": sustituye,
             "attempts": len(attempts), "cost": sum(x["cost"] for x in attempts),
             "tokens_in": sum(x["tokens_in"] for x in attempts),
             "tokens_out": sum(x["tokens_out"] for x in attempts),
@@ -319,7 +388,7 @@ def cargar_contratos(path: Path) -> dict[str, dict]:
     out: dict[str, dict] = {}
     for line in path.read_text().splitlines():
         r = json.loads(line)
-        if (r["cond"] == "sello" and r.get("code") and r.get("accepted_at")) or \
+        if (r["cond"] in ("sello", PY_PROPIO) and r.get("code") and r.get("accepted_at")) or \
                 (r["cond"] in ("contrato", "contrato_py") and r.get("compila")):
             out[r["problem"]] = {"code": r["code"], "model": r["model"], "origen": path.name}
     return out
@@ -339,6 +408,8 @@ def main() -> int:
     ap.add_argument("--attempts", type=int, default=5)
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--tag", default="", help="sufijo del nombre de la corrida")
+    ap.add_argument("--aviso", action="store_true",
+                    help="issue #3: si el contrato aceptado admite dos respuestas, una vuelta más con el testigo")
     args = ap.parse_args()
 
     probs = [json.loads(f.read_text()) for f in sorted(PROBLEMAS.glob("*.json"))]
@@ -358,11 +429,12 @@ def main() -> int:
     print(f"{len(jobs)} corridas, modelo {args.model}, hasta {args.attempts} intentos", file=sys.stderr)
 
     with ThreadPoolExecutor(max_workers=args.workers) as ex:
-        rows = list(ex.map(lambda j: run_one(j[0], j[1], args.model, args.attempts, contratos), jobs))
+        rows = list(ex.map(lambda j: run_one(j[0], j[1], args.model, args.attempts, contratos, args.aviso), jobs))
 
     RESULTADOS.mkdir(exist_ok=True)
     tag = f"juez-{when}-{args.model}" + ("-contrato" if conds == [CONTRATO] else "") \
-        + ("-contrato-py" if conds == [PY_CONTRATO] else "") + ("-nuevas" if BATERIA == "nuevas" else "")
+        + ("-contrato-py" if conds == [PY_CONTRATO] else "") + ("-propio-py" if conds == [PY_PROPIO] else "") \
+        + ("-nuevas" if BATERIA == "nuevas" else "") + ("-aviso" if args.aviso else "")
     if contratos is not None and de_contratar(args.contratos):
         tag += "-ciegas"
     tag += f"-{args.tag}" if args.tag else ""

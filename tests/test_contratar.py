@@ -216,3 +216,19 @@ def test_la_prueba_de_literales_mide_un_contrato_python():
     # el caso ambiguo (-2) cae fuera del `pre`: rechazado, declarado
     assert flojo["ambiguos"] == 1 and flojo["ambiguos_rechazados"] == 1
     assert lit.veredicto_py(contrato_py("__return__ == n + 1"), INC_PY, [-2], 3).que == lit.E300
+
+
+def test_el_aviso_python_da_el_testigo_si_el_contrato_admite_dos_respuestas():
+    cota = '''
+def count_greater(xs: list[int], t: int) -> int:
+    """
+    pre: len(xs) <= 4
+    post: __return__ >= 0
+    post: __return__ <= len(xs)
+    """
+    ...
+'''
+    msg = contratar.aviso_py(cota, "count_greater")
+    assert msg is not None and "count_greater(" in msg and "```python" in msg
+    assert contratar.aviso_py(cota.replace("post: __return__ >= 0\n    post: __return__ <= len(xs)",
+                                    "post: __return__ == sum(1 for x in xs if x > t)"), "count_greater") is None

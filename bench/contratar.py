@@ -25,7 +25,7 @@ Para el experimento decisivo (SEL-9), dos variantes:
   --lang python  el mismo encargo en Python (`contrato_py.py`): la principal con su docstring de
                  `pre:`/`post:` y `...` por cuerpo; su juez débil es igual (cuerpo, compila, los
                  ejemplos visibles con la respuesta visible por cuerpo, ejecutados con contratos).
-  --aviso        (Sello, SEL-14) si el contrato aceptado admite dos respuestas para una entrada
+  --aviso        (SEL-14; en Python, issue #3 con CrossHair) si el contrato aceptado admite dos respuestas para una entrada
                  (`sello.unique`), una sola vuelta más con el testigo. No es un rechazo: lo que el
                  modelo devuelva tras el aviso vale si compila y admite los ejemplos.
 """
@@ -156,6 +156,18 @@ def aviso(code: str, fn: str) -> str | None:
             f"the contract as it is. Reply with the whole program in one ```sello block either way.")
 
 
+def aviso_py(code: str, fn: str) -> str | None:
+    """`aviso` para un contrato de Python: el testigo lo busca CrossHair (`contrato_py.ambiguo`)."""
+    w = cp.ambiguo(code, fn)
+    if w is None:
+        return None
+    args, r1, r2 = w
+    return (f"Your contract accepts two different results for {fn}({', '.join(map(repr, args))}): {r1!r} and "
+            f"{r2!r}. If the task fixes the result for that input, make the `post:` conditions say it. If "
+            f"the task really leaves it open, or the input is outside what the task requires, keep the "
+            f"contract as it is. Reply with the whole code in one ```python block either way.")
+
+
 def prompt(p: dict, prev: tuple[str, str] | None) -> str:
     head = (f"Below is the complete specification of Sello, a small programming language.\n\n"
             f"{SPEC}\n\n---\n\n"
@@ -231,7 +243,7 @@ def run_one(p: dict, model: str, max_attempts: int, lang: str = "sello", con_avi
         ok, feedback, phase = (juez_debil_py if lang == "python" else juez_debil)(code, p)
         if ok and con_aviso and not avisado:
             avisado = True
-            msg = aviso(code, p["fn"])
+            msg = (aviso_py if lang == "python" else aviso)(code, p["fn"])
             if msg:
                 ok, feedback, phase = False, msg, "ambiguous"
         m = re.search(r'"code":\s*"(E\d{3})"', feedback) if not ok else None
@@ -287,11 +299,9 @@ def main() -> int:
     ap.add_argument("--attempts", type=int, default=3)
     ap.add_argument("--workers", type=int, default=4)
     ap.add_argument("--lang", choices=["sello", "python"], default="sello")
-    ap.add_argument("--aviso", action="store_true", help="Sello: una vuelta con el testigo si el contrato es ambiguo")
+    ap.add_argument("--aviso", action="store_true", help="una vuelta con el testigo si el contrato es ambiguo (Sello: sello.unique; Python: CrossHair)")
     ap.add_argument("--tag", default="", help="sufijo del nombre de la corrida")
     args = ap.parse_args()
-    if args.aviso and args.lang != "sello":
-        ap.error("--aviso es de Sello")
     probs = [json.loads(f.read_text()) for f in sorted(PROBLEMAS.glob("*.json"))]
     if args.only:
         probs = [p for p in probs if p["fn"] == args.only]

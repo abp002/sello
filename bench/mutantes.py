@@ -25,7 +25,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from harness import RESULTADOS  # noqa: E402
-from harness3 import CONDS, CONDS_TODAS, PROBLEMAS, PY_CONTRATO, ejecutar, es_sello  # noqa: E402
+from harness3 import CONDS, CONDS_TODAS, PROBLEMAS, PY_CONTRATOS, ejecutar, es_sello  # noqa: E402
 import contrato_py as cp  # noqa: E402
 from flujo import COND as MCP  # noqa: E402
 import juez  # noqa: E402
@@ -298,7 +298,7 @@ def _cuenta(resultados: list[str]) -> dict:
 def evaluar(cond: str, code: str, p: dict) -> dict:
     """Juez débil y, si acepta, oráculo. Devuelve el destino y los recuentos por zona."""
     ok, señal = _señal(cond, ejecutar(cond, code, p, p["visible"], TIMEOUT))
-    if ok and cond == PY_CONTRATO and cp.crosshair(code):  # el juez débil de python_contrato lo lleva
+    if ok and cond in PY_CONTRATOS and cp.crosshair(code):  # el juez débil de python_contrato y python_propio lo lleva
         ok, señal = False, "crosshair/prover"
     dom: list[str] = []
     amb: list[str] = []

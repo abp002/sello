@@ -109,3 +109,48 @@ def first(xs: list[int]) -> int:
 '''
     r = h3.ejecutar_python(src, {"fn": "first", "option": False}, [caso([[1, 2, 3]], 1)], contratos=True)
     assert r[0]["result"] == "ok", r[0]["detail"]
+
+
+# ---------- unicidad del contrato en Python (issue #3): el nivel 3 con CrossHair ----------
+
+COTA = '''
+def count_greater(xs: list[int], t: int) -> int:
+    """
+    pre: len(xs) <= 4
+    post: __return__ >= 0
+    post: __return__ <= len(xs)
+    """
+    ...
+'''
+
+CONTENIDO = '''
+def greater(xs: list[int], t: int) -> list[int]:
+    return [x for x in xs if x > t]
+
+
+def count_greater(xs: list[int], t: int) -> int:
+    """
+    pre: len(xs) <= 4
+    post: __return__ == len(greater(xs, t))
+    """
+    ...
+'''
+
+
+def test_un_contrato_de_cotas_es_ambiguo_y_el_testigo_se_confirma():
+    w = cp.ambiguo(COTA, "count_greater")
+    assert w is not None
+    args, r1, r2 = w
+    assert r1 != r2 and len(args) == 2
+    assert 0 <= r1 <= len(args[0]) and 0 <= r2 <= len(args[0])
+
+
+def test_un_contrato_que_fija_la_respuesta_no_da_testigo():
+    assert cp.ambiguo(CONTENIDO, "count_greater") is None
+
+
+def test_un_testigo_que_no_cumple_el_contrato_no_se_da_por_bueno():
+    assert cp.confirma_ambiguo(COTA, "count_greater", [[1], 0], 0, 1)
+    assert not cp.confirma_ambiguo(COTA, "count_greater", [[1], 0], 0, 2)   # 2 > len(xs)
+    assert not cp.confirma_ambiguo(COTA, "count_greater", [[1], 0], 1, 1)   # no son distintos
+    assert not cp.confirma_ambiguo(COTA, "count_greater", [[1, 2, 3, 4, 5], 0], 0, 1)  # fuera del pre

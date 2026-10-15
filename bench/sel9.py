@@ -75,6 +75,7 @@ def medir(brazo: str, rep: str) -> dict | None:
         "rechazan_correcto": sum(m["rechaza_correcto"] > 0 for m in lm),
         "mut_llegan": sum(k["llegan"] for k in rec), "mut_sil": sum(k["silencioso"] for k in rec),
         "mut_caz": sum(k["cazado"] for k in rec), "mut_gen": sum(k["generados"] for k in rec),
+        "mut_prover": sum(k["muerto_probador"] for k in rec),
     }
     if brazo != "P":
         d["unicidad"] = unicidad(contratos)

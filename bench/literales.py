@@ -29,13 +29,13 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from harness import RESULTADOS, sello_lit  # noqa: E402
-from harness3 import BATERIA, PROBLEMAS, cargar_contratos, ejecutar_python, llamada  # noqa: E402
+from harness3 import PROBLEMAS, cargar_contratos, ejecutar_python, llamada  # noqa: E402
 import contrato as ct  # noqa: E402
 from cotas import solo_cotas  # noqa: E402
 import generar_ambiguos  # noqa: E402
 import generar_nuevas  # noqa: E402
 
-gen = generar_nuevas if BATERIA == "nuevas" else generar_ambiguos
+GENS = (generar_nuevas, generar_ambiguos)  # por nombre: no se repiten entre baterías (n3 junta las dos)
 
 from sello.checker import Checker  # noqa: E402
 from sello.compile import run_examples  # noqa: E402
@@ -59,8 +59,8 @@ def referencia(p: dict):
     None si el problema no la tiene."""
     if "ref" in p:  # un problema hecho a mano trae la suya
         return p["ref"]
-    d = next((q for q in gen.PROBLEMAS if q["fn"] == p["fn"]), None)
-    return None if d is None else (lambda *a: gen.neutro(d["ref"](*a), d["opt"]))
+    g, d = next(((g, q) for g in GENS for q in g.PROBLEMAS if q["fn"] == p["fn"]), (None, None))
+    return None if d is None else (lambda *a: g.neutro(d["ref"](*a), d["opt"]))
 
 
 class _Juzgada(Interpreter):
@@ -184,7 +184,7 @@ def resumen(filas: list[dict], when: str) -> str:
 
 
 def es_py(path: Path) -> bool:
-    return any(json.loads(line)["cond"] == "contrato_py" for line in path.read_text().splitlines())
+    return any(json.loads(line)["cond"] in ("contrato_py", "python_propio") for line in path.read_text().splitlines())
 
 
 def main() -> int:

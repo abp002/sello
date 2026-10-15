@@ -177,3 +177,68 @@ def crosshair(code: str, timeout: int = CROSSHAIR_S) -> str | None:
     if code_ == 1:
         raise RuntimeError(f"crosshair exit 1 without a counterexample line: {out[-600:]}")
     return None
+
+
+# ---------- unicidad del contrato (issue #3): el nivel 3 de Sello, con CrossHair ----------
+
+DOS = "__sello_dos"
+
+
+def _dos(code: str, fn: str) -> str:
+    """El programa del contrato más una función que CrossHair intenta romper: sus `pre` son el `pre`
+    del contrato y su `post` para dos resultados, `__r1` y `__r2`; su `post`, que son iguales. Un
+    contraejemplo es una entrada con dos respuestas que el contrato admite."""
+    main = _fns(code)[fn]
+    pres, posts = condiciones(ast.get_docstring(main))
+    params = ", ".join(ast.unparse(a) for a in main.args.args)
+    ret = ast.unparse(main.returns) if main.returns else "object"
+    conds = [f"pre: {c}" for c in pres]
+    for r in ("__r1", "__r2"):
+        conds += [f"pre: {re.sub(r'\b__return__\b', r, c)}" for c in posts]
+    doc = "\n    ".join(conds + ["post: __r1 == __r2"])
+    return f'{code}\n\n\ndef {DOS}({params}, __r1: {ret}, __r2: {ret}) -> bool:\n    """\n    {doc}\n    """\n    return True\n'
+
+
+def confirma_ambiguo(code: str, fn: str, args: list, r1: object, r2: object) -> bool:
+    """¿`r1` y `r2` son dos respuestas distintas que el contrato admite para `args`? Se evalúa con
+    las condiciones tal cual, fuera de CrossHair: un testigo no se afirma sin ejecutarlo."""
+    ns: dict = {}
+    try:
+        exec(code, ns)
+        main = ns[fn]
+        env = dict(__import__("inspect").signature(main).bind(*args).arguments)
+        pres, posts = condiciones(main.__doc__)
+        if r1 == r2 or not all(eval(c, {**ns, **env}) for c in pres):
+            return False
+        return all(eval(c, {**ns, **env, "__return__": r}) for r in (r1, r2) for c in posts)
+    except Exception:
+        return False
+
+
+def ambiguo(code: str, fn: str, timeout: int = CROSSHAIR_S) -> tuple[list, object, object] | None:
+    """Una entrada y dos respuestas distintas que el contrato admite, confirmadas, o None si
+    CrossHair no encontró ninguna a tiempo. A diferencia de `sello.unique`, no puede decir que el
+    contrato fija la respuesta: solo busca."""
+    with tempfile.TemporaryDirectory() as d:
+        Path(d, "contrato.py").write_text(_dos(code, fn))
+        try:
+            r = subprocess.run([*CROSSHAIR, f"--per_condition_timeout={CONDICION_S}", f"contrato.{DOS}"],
+                               capture_output=True, text=True, timeout=timeout, cwd=d)
+            out = r.stdout
+            if r.returncode not in (0, 1):
+                raise RuntimeError(f"crosshair exit {r.returncode}: {(r.stdout + r.stderr)[-600:]}")
+        except subprocess.TimeoutExpired as t:
+            out = t.stdout.decode() if isinstance(t.stdout, bytes) else (t.stdout or "")
+    for line in out.splitlines():
+        m = re.search(rf"error: false when calling ({DOS}\(.*\)) \(which returns", line)
+        if not m:
+            continue
+        try:
+            call = ast.parse(m.group(1), mode="eval").body
+            vals = [ast.literal_eval(a) for a in call.args]
+        except (SyntaxError, ValueError):
+            continue
+        *args, r1, r2 = vals
+        if confirma_ambiguo(code, fn, args, r1, r2):
+            return args, r1, r2
+    return None
