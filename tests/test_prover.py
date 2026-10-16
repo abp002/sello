@@ -622,13 +622,15 @@ def test_una_obligacion_que_agota_su_trabajo_da_siempre_el_mismo_veredicto():
     assert len(vs) == 1 and "wall clock" not in next(iter(vs))[1]
 
 
+# El caso de ALE-175 era un `ensures` que se llama a sí mismo, 2^n sin memoizar; desde el issue #4
+# es lineal. Lo que el combustible guarda sigue igual con un contrato caro sin llamadas repetidas.
 EXPONENCIAL = """
 fn f(n: Int) -> Int
   requires n >= 0
-  ensures result == (if n == 0 then 0 else f(n - 1) + 1)
+  ensures forall i in 0..(n * n * n * n): i >= 0
   effects pure
   example f(3) == 3
-{ if n == 0 then 0 else f(n - 1) + 1 }
+{ n }
 """
 
 

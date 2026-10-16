@@ -88,3 +88,42 @@ def test_semantica_del_indice_y_del_rango():
         with pytest.raises(SelloError) as ei:
             ev(src)
         assert ei.value.code == "E500" and "out of range" in ei.value.detail
+
+
+FIB = """
+fn fib(n: Int) -> Int
+  requires n >= 0
+  ensures (n <= 1 and result == n) or (n >= 2 and result == fib(n - 1) + fib(n - 2))
+  effects pure
+  example fib(10) == 55
+{
+  if n <= 1 then n else fib(n - 1) + fib(n - 2)
+}
+"""
+
+
+def test_un_contrato_recursivo_no_es_exponencial():
+    """Issue #4: el `ensures` que define `fib` por recursión, comprobado en cada llamada, era
+    exponencial (SEL-9 y el issue #3: `fib(15)` no acababa en 30 s). Las funciones son puras, así
+    que cada llamada que acaba bien se guarda: con combustible lineal, `fib(40)` termina."""
+    from sello.compile import compile_source
+    _, interp = compile_source(FIB)
+    interp.fuel = 20_000
+    assert interp.call("fib", [40]) == 102334155
+
+
+def test_una_violacion_del_contrato_no_se_guarda():
+    """Lo guardado es solo lo que pasó `requires` y `ensures`: la misma llamada mala vuelve a fallar,
+    y una buena tras una mala no hereda nada."""
+    from sello.compile import compile_source
+    from sello.errors import SelloError
+    _, interp = compile_source(
+        "fn f(n: Int) -> Int\n  requires n >= 0\n  ensures result < 5\n  effects pure\n  example f(1) == 1\n{ n }")
+    for _ in range(2):
+        with pytest.raises(SelloError) as ei:
+            interp.call("f", [7])
+        assert ei.value.code == "E201"
+        with pytest.raises(SelloError) as ei:
+            interp.call("f", [-1])
+        assert ei.value.code == "E300"
+    assert interp.call("f", [3]) == 3

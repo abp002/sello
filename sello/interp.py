@@ -62,15 +62,33 @@ def fmt(v: Value) -> str:
 Env = dict[str, Value]
 
 
+def _key(v: Value) -> object:
+    """Un valor como clave de diccionario: las listas pasan a tuplas y `true` no choca con `1`."""
+    if isinstance(v, bool):
+        return ("B", v)
+    if isinstance(v, list):
+        return ("L", tuple(_key(x) for x in v))
+    if isinstance(v, Some):
+        return ("S", _key(v.value))
+    return v
+
+
 class Interpreter:
     def __init__(self, program: Program) -> None:
         self.fns: dict[str, Fn] = {f.name: f for f in program.fns}
         # Combustible: evaluaciones que quedan, o None sin límite. Lo pone el probador al ejecutar
         # un contraejemplo candidato, cuyo coste no está acotado (ALE-175).
         self.fuel: int | None = None
+        # Las funciones son puras (v0 solo admite `effects pure`): cada llamada que pasa `requires`
+        # y `ensures` se guarda y no se vuelve a evaluar. Sin esto, un contrato recursivo como
+        # `result == fib(n - 1) + fib(n - 2)` es exponencial (issue #4). Lo que falla no se guarda.
+        self.memo: dict[tuple, Value] = {}
 
     def call(self, name: str, args: list[Value], line: int = 0, col: int = 0,
              caller: str | None = None) -> Value:
+        key = (name, tuple(_key(a) for a in args))
+        if key in self.memo:
+            return self.memo[key]
         fn = self.fns[name]
         env: Env = {p.name: a for p, a in zip(fn.params, args)}
         shown = f"{name}(" + ", ".join(fmt(a) for a in args) + ")"
@@ -90,6 +108,7 @@ class Interpreter:
                 raise SelloError("E201", f"{shown} returned {fmt(value)}, which violates "
                                  f"`ensures {unparse(en)}`", fn.line, fn.col, name,
                                  {"call": shown, "got": fmt(value)})
+        self.memo[key] = value
         return value
 
     def eval(self, e: Expr, env: Env, fn: str | None = None) -> Value:

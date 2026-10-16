@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Vuelve a pasar el oráculo sobre los cuerpos ya entregados de una corrida de `harness3.py`, sin
 llamar al modelo. Para corregir una medida cuando cambia el oráculo y no las soluciones (issue #2:
-tope por caso en Sello). Escribe `<fichero>-reoraculo.jsonl` al lado.
+tope por caso en Sello) o el intérprete (issue #4: memoizar). Escribe `<fichero>-<sufijo>.jsonl`
+al lado; el sufijo es `reoraculo` salvo que se pase `--sufijo`.
 
     SELLO_BATERIA=nuevas .venv/bin/python bench/reoraculo.py resultados/juez-...-sel9-S-a.jsonl ...
 """
@@ -17,7 +18,10 @@ import juez
 
 
 def main() -> int:
-    for f in map(Path, sys.argv[1:]):
+    args, sufijo = sys.argv[1:], "reoraculo"
+    if args[:1] == ["--sufijo"]:
+        sufijo, args = args[1], args[2:]
+    for f in map(Path, args):
         out = []
         for r in map(json.loads, f.read_text().splitlines()):
             if r.get("accepted_at"):
@@ -31,7 +35,7 @@ def main() -> int:
                           f"{r['oracle']['dom_ruidoso']}, silenciosos dom {antes['dom_silencioso']} -> "
                           f"{r['oracle']['dom_silencioso']}", flush=True)
             out.append(json.dumps(r, ensure_ascii=False))
-        f.with_name(f.stem + "-reoraculo.jsonl").write_text("\n".join(out) + "\n")
+        f.with_name(f"{f.stem}-{sufijo}.jsonl").write_text("\n".join(out) + "\n")
     return 0
 
 
