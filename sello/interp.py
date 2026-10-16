@@ -185,6 +185,10 @@ class Interpreter:
             else:
                 dom = self.eval(e.subject, env, fn)
             holds = (self.eval(e.body, {**env, e.var: x}, fn) for x in dom)  # type: ignore[union-attr]
+            if e.kind == "count":
+                return sum(1 for h in holds if h)
+            if e.kind == "sum":
+                return sum(holds)  # type: ignore[arg-type]
             return all(holds) if e.kind == "forall" else any(holds)
         raise TypeError(f"nodo desconocido: {e!r}")
 

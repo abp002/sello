@@ -70,8 +70,9 @@ making a function. `x / 0` is a runtime error (`E500`); rule it out with `requir
 - `ensures` must reject wrong results: a clause that every return value satisfies
   certifies nothing. A bound alone (`result >= 1`, `result <= len(xs)`) does not reject
   a wrong value inside the bound. State what `result` contains or how it relates to the
-  arguments: `contains(xs, result) and forall x in xs: x <= result`. When the words
-  below cannot say it, write a `Bool` helper `fn` and call it: `ensures is_sorted_desc(result)`.
+  arguments: `contains(xs, result) and forall x in xs: x <= result`. To say how many or how
+  much, count or sum: `result == (count x in xs: x > t)`. When the words below cannot say it,
+  write a `Bool` helper `fn` and call it: `ensures is_sorted_desc(result)`.
   It is checked on every return. A body that returns a value violating `ensures` is
   error `E201`. `result` names the return value.
 - Both are checked by execution on every call (verification level 1). The compiler also
@@ -101,9 +102,12 @@ Inside `requires` and `ensures` **only** (using them in a body or an example is 
 | `exists x in xs: P` | `Bool` | `P` holds for some element `x` of `xs` (false for `[]`) |
 | `forall i in a..b: P` | `Bool` | `P` holds for every `Int` `i` with `a <= i < b` (true when `b <= a`) |
 | `exists i in a..b: P` | `Bool` | `P` holds for some `Int` `i` with `a <= i < b` (false when `b <= a`) |
+| `count x in xs: P` | `Int` | how many elements `x` of `xs` satisfy `P` (also `count i in a..b: P`) |
+| `sum x in xs: e` | `Int` | the sum of the `Int` `e` over the elements of `xs` (also `sum i in a..b: e`); 0 for none |
 
 A quantifier may follow `and`, `or` or `not`; its body extends to the end of the clause
-(or to the closing parenthesis). `a..b` includes `a` and excludes `b`, and exists only as the
+(or to the closing parenthesis), so put `count` and `sum` in parentheses when something follows
+them: `(count x in xs: x > t) == 1`. `a..b` includes `a` and excludes `b`, and exists only as the
 domain of a quantifier. Write `xs[i]` with no space before `[`. To speak about positions,
 quantify over the range and index: `forall i in 0..len(xs): xs[i] <= result`. To speak about
 values, quantify over the list. These names are reserved (`E402`).

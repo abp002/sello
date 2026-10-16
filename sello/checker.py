@@ -177,8 +177,9 @@ class Checker:
                                      f"in `{unparse(e.subject)}`", e.line, e.col, _name(fn),
                                      {"expected": "List[T] or lo..hi", "actual": str(st)})
                 elem = st.elem if isinstance(st, TList) else ANY
-            self.expect(e.body, {**env, e.var: elem}, BOOL, fn, f"body of `{e.kind}` must be Bool")
-            return BOOL
+            want = INT if e.kind == "sum" else BOOL
+            self.expect(e.body, {**env, e.var: elem}, want, fn, f"body of `{e.kind}` must be {want}")
+            return INT if e.kind in ("count", "sum") else BOOL
         raise TypeError(f"nodo desconocido: {e!r}")
 
     def only_in_contract(self, word: str, e: Expr, fn: Fn | None) -> None:

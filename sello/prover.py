@@ -58,7 +58,7 @@ from .errors import SelloError
 from .hash import _sccs, callees, hash_program, short
 from .interp import NONE, Interpreter, Some, fmt
 from .nodes import (
-    Index,
+    Hole, Index, children,
     BOOL, INT, Binary, BoolLit, Call, Expr, Fn, If, IntLit, ListLit, Match, Name, NoneLit,
     PCons, PEmpty, PNone, PSome, PWild, Pattern, Program, Quant, RangeExpr, SomeExpr, TAny, TBool, TextLit,
     TInt, TList, TOption, TText, Type, Unary, unify,
@@ -129,6 +129,24 @@ class Verdict:
         if self.status == UNKNOWN:
             d["unproven"] = self.reason
         return d
+
+
+def _walk(e: Expr):
+    yield e
+    for c in children(e):
+        yield from _walk(c)
+
+
+def _free(e: Expr, bound: set[str]) -> set[str]:
+    """Los nombres de variable que usa `e` sin ligarlos él (los cuantificadores ligan la suya)."""
+    if isinstance(e, Name):
+        return set() if e.id in bound else {e.id}
+    if isinstance(e, Quant):
+        return _free(e.subject, bound) | _free(e.body, bound | {e.var})
+    out: set[str] = set()
+    for c in children(e):
+        out |= _free(c, bound)
+    return out
 
 
 class Unsupported(Exception):
@@ -387,6 +405,7 @@ class Translator:
         # el mismo.
         self.options: dict[str, z3.DatatypeSortRef] = shared.options if shared else {}
         self.counts: dict[str, z3.FuncDeclRef] = shared.counts if shared else {}
+        self.aggs: dict[str, z3.FuncDeclRef] = shared.aggs if shared else {}  # `count`/`sum` con condición
         self.ats: dict[str, z3.FuncDeclRef] = shared.ats if shared else {}
         self.at_axioms: set[str] = set()  # sorts cuyos axiomas de `at` ya están en los hechos de este traductor
         self.cats: dict[str, z3.FuncDeclRef] = shared.cats if shared else {}
@@ -728,7 +747,85 @@ class Translator:
         """`patterns=` para un cuantificador generado, en el traductor con patrones."""
         return {"patterns": [p]} if self.patterns else {}
 
+    def aggregate(self, e: Quant, env: Env, path: list) -> z3.ExprRef:
+        """`count x in d: P` y `sum x in d: e` (issue #5) como función recursiva de Z3.
+
+        Las variables libres del cuerpo son parámetros de la función, no constantes: así la misma
+        forma en el contrato de una llamada recursiva (con otros argumentos) y en el objetivo es
+        la misma función y la inducción cierra, y una variable de un cuantificador de fuera sigue
+        ligada por él. Sobre una lista se despliega por la cabeza, como `[h, ..t]`. Sobre un rango
+        `a..b` hay dos funciones: una quita el último y otra el primero, para que cierren las dos
+        recursiones naturales (`k - 1` e `i + 1`). Que son iguales (un teorema de la suma finita) va
+        como hecho sin cuantificar en cada término que sale de aquí: con un axioma `forall`, Z3
+        ya no encuentra modelos y la terminación, que refuta medidas falsas con un modelo, se
+        gastaba el presupuesto (16 s para una suma de `i` a `n`)."""
+        bound_inside: list = []
+        for sub in _walk(e.body):
+            if isinstance(sub, Call) and sub.name not in BUILTINS:
+                raise Unsupported(f"a call to `{sub.name}` inside `{e.kind}`")
+            if isinstance(sub, (Match, Hole)):
+                raise Unsupported(f"{type(sub).__name__} inside `{e.kind}`")
+        free = sorted(_free(e.body, {e.var}) & set(env.vals))
+        # Las obligaciones del cuerpo (índices, divisiones) son las de `forall` sobre el mismo
+        # dominio: el intérprete evalúa el cuerpo en todos los elementos.
+        check = e.body if e.kind == "count" else Binary("==", e.body, e.body, line=e.line, col=e.col)
+        self.quant(Quant("forall", e.var, e.subject, check, line=e.line, col=e.col), env, path)
+        rng = isinstance(e.subject, RangeExpr)
+        if rng:
+            elem_t: Type = INT
+        else:
+            st = self.type_at(e.subject, env, None)
+            assert isinstance(st, TList)
+            elem_t = st.elem
+        key = f"{e.kind}|{'range' if rng else str(elem_t)}|{e.var}|{unparse(e.body)}|" + \
+            ",".join(f"{n}:{env.types[n]}" for n in free)
+        fsorts = [self.sort(env.types[n]) for n in free]
+        I = z3.IntSort(self.ctx)
+        if key not in self.aggs:
+            name = f"{e.kind}!{len(self.aggs)}"
+            formals = [z3.Const(f"{n}!{name}", s) for n, s in zip(free, fsorts)]
+            base = Env({n: v for n, v in zip(free, formals)}, {n: env.types[n] for n in free})
+            saved, self.binders, self.collect = (self.binders, self.collect), [], False
+            try:
+                if rng:
+                    f = z3.RecFunction(name, I, I, *fsorts, I)
+                    g = z3.RecFunction(f"{name}!up", I, I, *fsorts, I)
+                    a, b = z3.Int(f"a!{name}", self.ctx), z3.Int(f"b!{name}", self.ctx)
+                    last = self.agg_step(e, base.bind(e.var, b - 1, INT))
+                    first = self.agg_step(e, base.bind(e.var, a, INT))
+                    z3.RecAddDefinition(f, [a, b, *formals],
+                                        z3.If(b <= a, self.int(0), f(a, b - 1, *formals) + last))
+                    z3.RecAddDefinition(g, [a, b, *formals],
+                                        z3.If(b <= a, self.int(0), first + g(a + 1, b, *formals)))
+                    self.aggs[key + "|up"] = g
+                else:
+                    seq = self.sort(TList(elem_t))
+                    f = z3.RecFunction(name, seq, *fsorts, I)
+                    s = z3.Const(f"s!{name}", seq)
+                    step = self.agg_step(e, base.bind(e.var, self.at(s, self.int(0)), elem_t))
+                    z3.RecAddDefinition(f, [s, *formals], z3.If(
+                        z3.Length(s) == 0, self.int(0),
+                        step + f(z3.SubSeq(s, self.int(1), z3.Length(s) - 1), *formals)))
+            finally:
+                self.binders, self.collect = saved
+            self.aggs[key] = f
+        f = self.aggs[key]
+        args = [env.vals[n] for n in free]
+        if rng:
+            lo = self.expr(e.subject.lo, env, path, INT)
+            hi = self.expr(e.subject.hi, env, path, INT)
+            self.facts.append(f(lo, hi, *args) == self.aggs[key + "|up"](lo, hi, *args))
+            return f(lo, hi, *args)
+        return f(self.expr(e.subject, env, path, TList(elem_t)), *args)
+
+    def agg_step(self, e: Quant, env: Env) -> z3.ArithRef:
+        if e.kind == "sum":
+            return self.expr(e.body, env, [], INT)
+        return z3.If(self.expr(e.body, env, [], BOOL), self.int(1), self.int(0))
+
     def quant(self, e: Quant, env: Env, path: list) -> z3.ExprRef:
+        if e.kind in ("count", "sum"):
+            return self.aggregate(e, env, path)
         i = z3.Int(self.fresh("i"), self.ctx)
         if isinstance(e.subject, RangeExpr):
             # `forall i in lo..hi`: el índice recorre los enteros de lo a hi, hi excluido.

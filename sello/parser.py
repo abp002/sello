@@ -11,6 +11,11 @@ from .nodes import (
 )
 
 
+# Cuantificadores que dan un Int. No son palabras reservadas: `count(xs, x)` sigue siendo una
+# llamada y solo `count x in ...` es la forma nueva.
+AGGREGATES = ("count", "sum")
+
+
 class Parser:
     def __init__(self, tokens: list[Token]) -> None:
         self.toks = tokens
@@ -260,6 +265,9 @@ class Parser:
             self.expect_sym(")")
             return e
         if t.kind == "NAME":
+            if t.value in AGGREGATES and self.toks[self.i + 1].kind == "NAME" and \
+                    self.toks[self.i + 2].kind == "KW" and self.toks[self.i + 2].value == "in":
+                return self.quant()  # `count x in xs: P`, `sum i in a..b: e` (issue #5)
             self.advance()
             if self.at_sym("("):
                 self.advance()

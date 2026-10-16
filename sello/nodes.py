@@ -192,9 +192,10 @@ class RangeExpr(Expr):
 
 @dataclass
 class Quant(Expr):
-    """`forall x in xs: body` / `exists x in xs: body`. El dominio es una lista o un rango.
-    Solo en contratos."""
-    kind: str  # 'forall' | 'exists'
+    """`forall x in xs: body` / `exists x in xs: body`, y los que dan un Int (issue #5):
+    `count x in xs: body` (cuántos cumplen) y `sum x in xs: body` (la suma). El dominio es una
+    lista o un rango. Solo en contratos."""
+    kind: str  # 'forall' | 'exists' | 'count' | 'sum'
     var: str
     subject: Expr
     body: Expr
