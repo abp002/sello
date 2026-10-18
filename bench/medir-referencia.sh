@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ¿Cierra la guía del helper de referencia los contratos de las tareas definidas por un proceso? (issue #6), prerregistrado en el
-# vault: 'El helper de referencia cierra los contratos de las tareas definidas por un proceso'. Corre en un worktree fijado al commit del prerregistro: lo que se
+# vault: 'Una frase en la spec no basta para que el contrato fije el resultado'. Corre en un worktree fijado al commit del prerregistro: lo que se
 # toque en main mientras corre no entra. Cada paso deja un .hecho y, si se corta, la siguiente
 # vez sigue por el primero que falte. Uso: bench/medir-referencia.sh <commit>
 set -euo pipefail

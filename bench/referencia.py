@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """El análisis prerregistrado del issue #6: ¿cierra la guía del helper de referencia los contratos de
-las tareas definidas por un proceso? Sin modelo. Nota del vault: 'El helper de referencia cierra los
-contratos de las tareas definidas por un proceso'.
+las tareas definidas por un proceso? Sin modelo. Nota del vault: 'Una frase en la spec no basta para que el contrato fije el resultado'.
 
 Brazo U: el brazo T del issue #5 repetido con la spec que guía el helper de referencia (haiku,
 contrato propio, sin aviso; etiquetas `n3-U-<rep>`, de `medir-referencia.sh`). Se compara con T y se
@@ -50,8 +49,8 @@ def main() -> int:
     m = {(b, r): medir(b, r) for b in ("T", "U", "P") for r in REPS}
     cols = [c for c in m if m[c]]
     out = ["# El helper de referencia (issue #6)", "",
-           "Prerregistrado en el vault: 'El helper de referencia cierra los contratos de las tareas "
-           "definidas por un proceso'. U es T con la spec que guía el helper de referencia.", "",
+           "Prerregistrado en el vault: 'Una frase en la spec no basta para que el contrato fije el "
+           "resultado'. U es T con la spec que guía el helper de referencia.", "",
            "| | " + " | ".join(f"{b}·{r}" for b, r in cols) + " |", "|---|" + "---|" * len(cols)]
 
     def fila(nombre, f):

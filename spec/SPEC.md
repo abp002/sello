@@ -73,10 +73,6 @@ making a function. `x / 0` is a runtime error (`E500`); rule it out with `requir
   arguments: `contains(xs, result) and forall x in xs: x <= result`. To say how many or how
   much, count or sum: `result == (count x in xs: x > t)`. When the words below cannot say it,
   write a `Bool` helper `fn` and call it: `ensures is_sorted_desc(result)`.
-  When the task defines the result by a process (repeat a step until a condition, apply
-  items in order, a recurrence), write a helper `fn` that computes it the plain way the task
-  describes and pin the result to it: `ensures result == steps_naive(n)`. The body may take
-  another way. A finished call is remembered, so a plain recursive helper stays cheap.
   It is checked on every return. A body that returns a value violating `ensures` is
   error `E201`. `result` names the return value.
 - Both are checked by execution on every call (verification level 1). The compiler also
