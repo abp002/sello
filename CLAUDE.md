@@ -8,9 +8,8 @@ Bitácora: SEL
 ## Cómo se trabaja aquí
 
 - **La documentación del proceso NO va en el repo.** Decisiones, bitácora y estado del
-  arte viven en el vault de Obsidian: `~/Desktop/vault/Proyectos/Lenguaje para IA/`
-  (una nota por decisión, título como afirmación; la bitácora es `Bitácora de Sello.md`).
-  Una decisión que no está escrita allí no está tomada.
+  arte viven fuera del repo, en las notas del autor (una nota por decisión, título como
+  afirmación). Una decisión que no está escrita allí no está tomada.
 - **La bitácora se escribe al cerrar cada sesión de trabajo**, con fecha absoluta: qué se
   hizo, qué se midió, qué falló.
 - **La spec (`spec/`) está en inglés** porque es el prompt que lee el modelo. El resto del
